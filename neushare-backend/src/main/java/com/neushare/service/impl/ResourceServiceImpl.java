@@ -2,6 +2,7 @@ package com.neushare.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -88,11 +89,9 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
 
     @Override
     public void incrementViewCount(Long id) {
-        Resource resource = getById(id);
-        if (resource != null) {
-            resource.setViewCount(resource.getViewCount() + 1);
-            updateById(resource);
-        }
+        update(new LambdaUpdateWrapper<Resource>()
+                .eq(Resource::getId, id)
+                .setSql("view_count = view_count + 1"));
     }
 
     @Override
@@ -114,19 +113,16 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
 
     @Override
     public void incrementLikeCount(Long id) {
-        Resource resource = getById(id);
-        if (resource != null) {
-            resource.setLikeCount(resource.getLikeCount() + 1);
-            updateById(resource);
-        }
+        update(new LambdaUpdateWrapper<Resource>()
+                .eq(Resource::getId, id)
+                .setSql("like_count = like_count + 1"));
     }
 
     @Override
     public void decrementLikeCount(Long id) {
-        Resource resource = getById(id);
-        if (resource != null && resource.getLikeCount() > 0) {
-            resource.setLikeCount(resource.getLikeCount() - 1);
-            updateById(resource);
-        }
+        update(new LambdaUpdateWrapper<Resource>()
+                .eq(Resource::getId, id)
+                .gt(Resource::getLikeCount, 0)
+                .setSql("like_count = like_count - 1"));
     }
 }

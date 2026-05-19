@@ -1,5 +1,6 @@
 package com.neushare.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -47,9 +48,10 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
         favorite.setResourceId(resourceId);
         favorite.setCreateTime(LocalDateTime.now());
         save(favorite);
-        // 更新收藏数
-        resource.setFavoriteCount(resource.getFavoriteCount() + 1);
-        resourceService.updateById(resource);
+        // 原子更新收藏数
+        resourceService.update(new LambdaUpdateWrapper<Resource>()
+                .eq(Resource::getId, resourceId)
+                .setSql("favorite_count = favorite_count + 1"));
     }
 
     @Override
@@ -60,12 +62,10 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
             throw new BusinessException("未收藏该资源");
         }
         removeById(favorite.getId());
-        // 更新收藏数
-        Resource resource = resourceService.getById(resourceId);
-        if (resource != null && resource.getFavoriteCount() > 0) {
-            resource.setFavoriteCount(resource.getFavoriteCount() - 1);
-            resourceService.updateById(resource);
-        }
+        resourceService.update(new LambdaUpdateWrapper<Resource>()
+                .eq(Resource::getId, resourceId)
+                .gt(Resource::getFavoriteCount, 0)
+                .setSql("favorite_count = favorite_count - 1"));
     }
 
     @Override

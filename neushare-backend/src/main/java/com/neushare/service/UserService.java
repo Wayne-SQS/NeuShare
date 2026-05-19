@@ -12,9 +12,9 @@ import com.neushare.vo.UserVO;
 public interface UserService extends IService<User> {
 
     /**
-     * 用户登录
+     * 用户登录，校验通过返回 User
      */
-    String login(LoginDTO loginDTO);
+    User login(LoginDTO loginDTO);
 
     /**
      * 用户注册

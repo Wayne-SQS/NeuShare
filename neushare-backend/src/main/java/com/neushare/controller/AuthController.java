@@ -1,11 +1,13 @@
 package com.neushare.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.neushare.common.Result;
 import com.neushare.dto.LoginDTO;
 import com.neushare.dto.RegisterDTO;
 import com.neushare.dto.UpdateUserDTO;
 import com.neushare.entity.User;
 import com.neushare.service.UserService;
+import com.neushare.util.JwtUtil;
 import com.neushare.util.Md5Util;
 import com.neushare.vo.UserVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,14 +28,18 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     /**
      * 用户登录
      */
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO loginDTO) {
-        String token = userService.login(loginDTO);
-        User user = userService.getByUsername(loginDTO.getUsername());
-        UserVO userVO = userService.getUserVOById(user.getId());
+        User user = userService.login(loginDTO);
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
+        UserVO userVO = new UserVO();
+        BeanUtil.copyProperties(user, userVO);
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
         result.put("user", userVO);

@@ -2,6 +2,7 @@ package com.neushare.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.neushare.dto.LoginDTO;
 import com.neushare.dto.RegisterDTO;
@@ -27,18 +28,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private JwtUtil jwtUtil;
 
     @Override
-    public String login(LoginDTO loginDTO) {
-        // 查询用户
+    public User login(LoginDTO loginDTO) {
         User user = getByUsername(loginDTO.getUsername());
         if (user == null || !Md5Util.verify(loginDTO.getPassword(), user.getPassword())) {
             throw new BusinessException("用户名或密码错误");
         }
-        // 验证状态
         if (user.getStatus() == 0) {
             throw new BusinessException("账号已被禁用");
         }
-        // 生成Token
-        return jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
+        return user;
     }
 
     @Override
@@ -56,7 +54,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setAvatarUrl(registerDTO.getAvatarUrl());
         user.setCollege(registerDTO.getCollege());
         user.setGrade(registerDTO.getGrade());
-        user.setRole("user");
+        user.setRole("student");
         user.setStatus(1);
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
@@ -85,8 +83,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
-        user.setStatus(status);
-        user.setUpdateTime(LocalDateTime.now());
-        updateById(user);
+        update(new LambdaUpdateWrapper<User>()
+                .eq(User::getId, id)
+                .set(User::getStatus, status)
+                .set(User::getUpdateTime, LocalDateTime.now()));
     }
 }
