@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+target/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.iml
+.trae/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Claude Code (project config, not project source)
+.claude/
