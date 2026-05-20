@@ -10,7 +10,13 @@
       <div class="card-meta">
         <div class="meta-item">
           <el-icon><User /></el-icon>
-          <span>{{ resource.uploadNickname || '匿名' }}</span>
+          <router-link
+            :to="`/user/${resource.uploadUserId}`"
+            @click.stop
+            class="uploader-link"
+          >
+            {{ resource.uploadNickname || '匿名' }}
+          </router-link>
         </div>
         <div class="meta-item">
           <el-icon><View /></el-icon>
@@ -139,5 +145,15 @@ const handleClick = () => {
 .time {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.uploader-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.uploader-link:hover {
+  color: var(--accent);
 }
 </style>

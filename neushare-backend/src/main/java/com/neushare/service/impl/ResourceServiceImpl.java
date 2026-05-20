@@ -112,6 +112,12 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
     }
 
     @Override
+    public IPage<ResourceVO> getUserResources(Integer pageNum, Integer pageSize, Long userId, Integer status) {
+        Page<ResourceVO> page = new Page<>(pageNum, pageSize);
+        return resourceMapper.selectUserResourcesByStatus(page, userId, status);
+    }
+
+    @Override
     public void incrementLikeCount(Long id) {
         update(new LambdaUpdateWrapper<Resource>()
                 .eq(Resource::getId, id)

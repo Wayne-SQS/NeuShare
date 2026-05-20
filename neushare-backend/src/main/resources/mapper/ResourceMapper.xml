@@ -68,4 +68,16 @@
         ORDER BY r.create_time DESC
     </select>
 
+    <select id="selectUserResourcesByStatus" resultMap="ResourceVOMap">
+        SELECT r.*, u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar, c.name as category_name
+        FROM resource r
+        LEFT JOIN user u ON r.upload_user_id = u.id
+        LEFT JOIN category c ON r.category_id = c.id
+        WHERE r.upload_user_id = #{userId}
+        <if test="status != null">
+            AND r.status = #{status}
+        </if>
+        ORDER BY r.create_time DESC
+    </select>
+
 </mapper>

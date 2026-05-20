@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neushare.mapper.FollowMapper">
+
+    <select id="selectByFollowerIdAndFollowedId" resultType="com.neushare.entity.Follow">
+        SELECT * FROM follow WHERE follower_id = #{followerId} AND followed_id = #{followedId}
+    </select>
+
+    <select id="selectFollowing" resultType="com.neushare.vo.UserVO">
+        SELECT u.id, u.username, u.role, u.nickname, u.avatar_url, u.college, u.grade, u.status
+        FROM follow f
+        LEFT JOIN user u ON f.followed_id = u.id
+        WHERE f.follower_id = #{followerId}
+        ORDER BY f.create_time DESC
+    </select>
+
+    <select id="selectFollowers" resultType="com.neushare.vo.UserVO">
+        SELECT u.id, u.username, u.role, u.nickname, u.avatar_url, u.college, u.grade, u.status
+        FROM follow f
+        LEFT JOIN user u ON f.follower_id = u.id
+        WHERE f.followed_id = #{followedId}
+        ORDER BY f.create_time DESC
+    </select>
+
+</mapper>

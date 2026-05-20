@@ -8,7 +8,9 @@
           <div class="meta">
             <span class="meta-item">
               <el-icon><User /></el-icon>
-              {{ resource.uploadNickname || '匿名' }}
+              <router-link :to="`/user/${resource.uploadUserId}`" class="uploader-link">
+                {{ resource.uploadNickname || '匿名' }}
+              </router-link>
             </span>
             <span class="meta-divider"></span>
             <span class="meta-item">
@@ -490,5 +492,14 @@ onMounted(async () => {
 
 .comment-actions {
   margin-top: 6px;
+}
+
+.uploader-link {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.uploader-link:hover {
+  color: var(--accent);
 }
 </style>

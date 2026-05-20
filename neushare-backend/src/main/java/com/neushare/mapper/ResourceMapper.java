@@ -35,4 +35,9 @@ public interface ResourceMapper extends BaseMapper<Resource> {
      * 查询用户上传的资源列表
      */
     IPage<ResourceVO> selectUserResources(Page<ResourceVO> page, @Param("userId") Long userId);
+
+    /**
+     * 按状态查询用户上传的资源列表
+     */
+    IPage<ResourceVO> selectUserResourcesByStatus(Page<ResourceVO> page, @Param("userId") Long userId, @Param("status") Integer status);
 }

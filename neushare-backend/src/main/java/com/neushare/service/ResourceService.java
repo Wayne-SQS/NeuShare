@@ -59,6 +59,11 @@ public interface ResourceService extends IService<Resource> {
     IPage<ResourceVO> getUserResources(Integer pageNum, Integer pageSize, Long userId);
 
     /**
+     * 按状态获取用户上传的资源
+     */
+    IPage<ResourceVO> getUserResources(Integer pageNum, Integer pageSize, Long userId, Integer status);
+
+    /**
      * 增加点赞数
      */
     void incrementLikeCount(Long id);
