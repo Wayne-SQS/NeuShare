@@ -3,14 +3,13 @@
     <!-- Banner Carousel -->
     <section class="banner-section">
       <el-carousel
-        v-if="banners.length > 0"
         :interval="5000"
         arrow="hover"
-        height="420px"
+        height="620px"
         trigger="click"
       >
-        <el-carousel-item v-for="banner in banners" :key="banner.id">
-          <div class="banner-slide" :style="{ backgroundImage: `url(${banner.imageUrl})` }">
+        <el-carousel-item v-for="(item, index) in localImages" :key="index">
+          <div class="banner-slide" :style="{ backgroundImage: `url(${item.imageUrl})` }">
             <div class="banner-overlay"></div>
           </div>
         </el-carousel-item>
@@ -32,31 +31,6 @@
             <el-button class="hero-btn-outline" size="large" @click="$router.push('/upload')">
               <el-icon><Upload /></el-icon>上传分享
             </el-button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fallback when no banners -->
-      <div v-if="banners.length === 0" class="banner-fallback">
-        <div class="hero-blob hero-blob--1"></div>
-        <div class="hero-blob hero-blob--2"></div>
-        <div class="hero-blob hero-blob--3"></div>
-        <div class="hero-content">
-          <div class="hero-glass-card">
-            <div class="hero-badge">
-              <span class="badge-dot"></span>
-              东北大学专属
-            </div>
-            <h1 class="hero-title">发现优质<br>学习资料</h1>
-            <p class="hero-subtitle">与同学们一起，让学习更高效</p>
-            <div class="hero-actions">
-              <el-button class="hero-btn-primary" size="large" @click="$router.push('/resource')">
-                <el-icon><Search /></el-icon>浏览资源
-              </el-button>
-              <el-button class="hero-btn-outline" size="large" @click="$router.push('/upload')">
-                <el-icon><Upload /></el-icon>上传分享
-              </el-button>
-            </div>
           </div>
         </div>
       </div>
@@ -207,14 +181,21 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ResourceCard from '@/components/ResourceCard.vue'
 import { getHotResources, getResourceList } from '@/api/resource'
-import { getBannerList } from '@/api/banner'
 import { coursesByGrade } from '@/utils/courseData'
 
 const router = useRouter()
 
-const banners = ref([])
 const hotResources = ref([])
 const latestResources = ref([])
+
+const localImages = [
+  { imageUrl: '/images/banner/南湖主楼.png' },
+  { imageUrl: '/images/banner/秋天东大.jpg' },
+  { imageUrl: '/images/banner/红砖.jpg' },
+  { imageUrl: '/images/banner/火箭落日.jpg' },
+  { imageUrl: '/images/banner/冬天东大.jpg' },
+  { imageUrl: '/images/banner/秋天.jpg' }
+]
 
 const gradeSemesterOptions = [
   { key: '1-1', label: '大一上' },
@@ -253,14 +234,12 @@ const goToCourseResources = (course) => {
 
 const fetchData = async () => {
   try {
-    const [hotRes, latestRes, bannerRes] = await Promise.all([
+    const [hotRes, latestRes] = await Promise.all([
       getHotResources(4),
-      getResourceList({ pageNum: 1, pageSize: 4, status: 1 }),
-      getBannerList()
+      getResourceList({ pageNum: 1, pageSize: 4, status: 1 })
     ])
     hotResources.value = hotRes.data || []
     latestResources.value = (latestRes.data?.records || []).slice(0, 4)
-    banners.value = bannerRes.data || []
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
@@ -279,12 +258,12 @@ onMounted(() => {
 /* ========== Banner Carousel ========== */
 .banner-section {
   position: relative;
-  margin-top: -1px; /* Flush against header border */
+  margin-top: -1px;
 }
 
 .banner-slide {
   width: 100%;
-  height: 420px;
+  height: 620px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -295,9 +274,10 @@ onMounted(() => {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.3) 0%,
-    rgba(255, 255, 255, 0.6) 50%,
-    rgba(248, 249, 251, 0.92) 100%
+    rgba(0, 0, 0, 0.08) 0%,
+    transparent 40%,
+    transparent 70%,
+    rgba(0, 0, 0, 0.15) 100%
   );
 }
 
@@ -308,68 +288,8 @@ onMounted(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
-  max-width: 620px;
-  width: 90%;
-}
-
-/* Fallback when no banners */
-.banner-fallback {
-  position: relative;
-  padding: 110px 20px 120px;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 50% at 80% 80%, rgba(37, 99, 235, 0.04) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 50% at 20% 70%, rgba(16, 185, 129, 0.03) 0%, transparent 70%),
-    linear-gradient(180deg, #f0f4ff 0%, var(--bg-base) 40%, var(--bg-deep) 100%);
-}
-.hero-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-  animation: blobFloat 12s ease-in-out infinite;
-}
-
-.hero-blob--1 {
-  width: 500px;
-  height: 500px;
-  top: -200px;
-  right: -100px;
-  background: rgba(37, 99, 235, 0.10);
-  animation-delay: 0s;
-}
-
-.hero-blob--2 {
-  width: 350px;
-  height: 350px;
-  bottom: -80px;
-  left: -80px;
-  background: rgba(59, 130, 246, 0.07);
-  animation-delay: -4s;
-}
-
-.hero-blob--3 {
-  width: 200px;
-  height: 200px;
-  top: 50%;
-  left: 50%;
-  background: rgba(16, 185, 129, 0.06);
-  animation-delay: -8s;
-}
-
-@keyframes blobFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -40px) scale(1.05); }
-  50% { transform: translate(-20px, 20px) scale(0.95); }
-  75% { transform: translate(10px, 30px) scale(1.02); }
-}
-
-.hero-content {
-  position: relative;
-  z-index: 1;
-  max-width: 720px;
-  margin: 0 auto;
+  max-width: 420px;
+  width: 88%;
 }
 
 /* Glass-morphism card */
@@ -379,8 +299,9 @@ onMounted(() => {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius-xl);
-  padding: 56px 48px;
+  padding: 40px 36px;
   text-align: center;
+  aspect-ratio: 1 / 1;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.04),
     0 2px 8px rgba(0, 0, 0, 0.02),
@@ -415,14 +336,14 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 16px;
+  padding: 5px 14px;
   background: rgba(37, 99, 235, 0.06);
   border: 1px solid rgba(37, 99, 235, 0.12);
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: 12px;
   color: var(--accent);
   font-weight: 500;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .badge-dot {
@@ -439,12 +360,12 @@ onMounted(() => {
 }
 
 .hero-title {
-  font-size: 3.5rem;
+  font-size: 2.6rem;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.15;
-  letter-spacing: -0.04em;
-  margin-bottom: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
   background: linear-gradient(135deg, #111827 0%, #2563eb 50%, #1d4ed8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -452,9 +373,9 @@ onMounted(() => {
 }
 
 .hero-subtitle {
-  font-size: 18px;
+  font-size: 15px;
   color: var(--text-secondary);
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 }
 
 .hero-actions {
@@ -597,13 +518,15 @@ onMounted(() => {
   border-radius: var(--radius-lg);
   padding: 28px;
   border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-sm);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.03),
+    0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .grade-semester-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 20px;
 }
 
@@ -612,59 +535,104 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 18px 14px;
+  gap: 10px;
+  padding: 20px 14px;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
   color: #fff;
   font-weight: 500;
+  overflow: hidden;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Shine highlight at top */
+.grade-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 40%;
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%);
+  pointer-events: none;
+  transition: opacity 0.35s ease;
 }
 
 .grade-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Color each grade row */
-.grade-btn:nth-child(1) { background: linear-gradient(135deg, #2563eb, #3b82f6); }
-.grade-btn:nth-child(2) { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
-.grade-btn:nth-child(3) { background: linear-gradient(135deg, #0d9488, #14b8a6); }
-.grade-btn:nth-child(4) { background: linear-gradient(135deg, #0f766e, #0d9488); }
-.grade-btn:nth-child(5) { background: linear-gradient(135deg, #d97706, #f59e0b); }
-.grade-btn:nth-child(6) { background: linear-gradient(135deg, #b45309, #d97706); }
-.grade-btn:nth-child(7) { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
-.grade-btn:nth-child(8) { background: linear-gradient(135deg, #6d28d9, #7c3aed); }
+.grade-btn:hover::before {
+  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%);
+}
+
+.grade-btn:active {
+  transform: translateY(-1px) scale(0.98);
+  transition: all 0.15s ease;
+}
+
+/* Color each grade row — richer 3-stop gradients */
+.grade-btn:nth-child(1) { background: linear-gradient(160deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%); }
+.grade-btn:nth-child(2) { background: linear-gradient(160deg, #4f46e5 0%, #3730a3 50%, #312e81 100%); }
+.grade-btn:nth-child(3) { background: linear-gradient(160deg, #2dd4bf 0%, #0d9488 50%, #0f766e 100%); }
+.grade-btn:nth-child(4) { background: linear-gradient(160deg, #14b8a6 0%, #0f766e 50%, #115e59 100%); }
+.grade-btn:nth-child(5) { background: linear-gradient(160deg, #fbbf24 0%, #d97706 50%, #b45309 100%); }
+.grade-btn:nth-child(6) { background: linear-gradient(160deg, #f59e0b 0%, #d97706 50%, #92400e 100%); }
+.grade-btn:nth-child(7) { background: linear-gradient(160deg, #a78bfa 0%, #7c3aed 50%, #6d28d9 100%); }
+.grade-btn:nth-child(8) { background: linear-gradient(160deg, #8b5cf6 0%, #7c3aed 50%, #5b21b6 100%); }
 
 .grade-btn--active {
-  transform: scale(1.05);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.06) translateY(-1px);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .grade-btn__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.2);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.85);
-  transition: var(--transition);
+  font-size: 19px;
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.35s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.grade-btn:hover .grade-btn__icon {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .grade-btn--active .grade-btn__icon {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.32);
   color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 }
 
 .grade-btn__label {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 650;
   color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.02em;
 }
 
 .courses-panel {
@@ -672,6 +640,9 @@ onMounted(() => {
   border-radius: var(--radius);
   padding: 24px;
   border: 1px solid var(--border-subtle);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .courses-header {
@@ -718,12 +689,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 15px 18px;
   background: var(--bg-elevated);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--border-subtle);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.02);
   animation: fadeInUp 0.3s ease-out both;
 }
 
@@ -733,34 +706,48 @@ onMounted(() => {
 }
 
 .course-card:hover {
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-sm);
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow:
+    0 4px 16px rgba(37, 99, 235, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.course-card:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .course-card__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: rgba(37, 99, 235, 0.08);
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
   font-size: 18px;
   flex-shrink: 0;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 0 rgba(37, 99, 235, 0.08);
+}
+
+.course-card:hover .course-card__icon {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0.08));
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12), inset 0 1px 0 rgba(37, 99, 235, 0.12);
 }
 
 .course-card__content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .course-card__name {
   font-size: 14px;
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 550;
 }
 
 .course-card__hint {
@@ -771,12 +758,12 @@ onMounted(() => {
 .course-card__arrow {
   color: var(--text-muted);
   font-size: 15px;
-  transition: var(--transition-fast);
+  transition: all 0.3s ease;
 }
 
 .course-card:hover .course-card__arrow {
   color: var(--accent);
-  transform: translateX(3px);
+  transform: translateX(4px);
 }
 
 /* Resource grids */
@@ -803,41 +790,60 @@ onMounted(() => {
 
 .feature-card {
   text-align: center;
-  padding: 36px 24px;
+  padding: 40px 28px;
   border-radius: var(--radius-lg);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  transition: var(--transition);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .feature-card:hover {
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-sm);
+  border-color: rgba(37, 99, 235, 0.15);
+  box-shadow:
+    0 8px 28px rgba(37, 99, 235, 0.07),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-4px);
+}
+
+.feature-card:active {
+  transform: translateY(-1px) scale(0.98);
 }
 
 .feature-card__icon {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius);
-  background: rgba(37, 99, 235, 0.08);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0.04) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
-  font-size: 22px;
-  margin: 0 auto 16px;
+  font-size: 24px;
+  margin: 0 auto 18px;
+  transition: all 0.35s ease;
+  box-shadow: inset 0 1px 0 rgba(37, 99, 235, 0.1);
+}
+
+.feature-card:hover .feature-card__icon {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(37, 99, 235, 0.08) 100%);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15), inset 0 1px 0 rgba(37, 99, 235, 0.15);
+  transform: scale(1.06);
 }
 
 .feature-card h3 {
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 8px;
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
 }
 
 .feature-card p {
   font-size: 14px;
   color: var(--text-muted);
-  line-height: 1.6;
+  line-height: 1.65;
   margin: 0;
 }
 
@@ -849,7 +855,7 @@ onMounted(() => {
 
 /* Element Plus Carousel overrides */
 :deep(.el-carousel__container) {
-  height: 420px;
+  height: 620px;
 }
 
 :deep(.el-carousel__indicator) {

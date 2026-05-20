@@ -28,6 +28,9 @@ public class FileUploadUtil {
         }
         String filename = UUID.randomUUID().toString() + extension;
         Path dir = Paths.get(uploadPath);
+        if (!dir.isAbsolute()) {
+            dir = Paths.get(System.getProperty("user.dir")).resolve(uploadPath);
+        }
         if (!Files.exists(dir)) {
             Files.createDirectories(dir);
         }

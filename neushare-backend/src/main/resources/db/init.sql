@@ -88,14 +88,14 @@ CREATE TABLE IF NOT EXISTS `category` (
 
 -- ==================== 用户数据（密码均为 123456） ====================
 INSERT INTO `user` (`id`, `username`, `password`, `role`, `nickname`, `college`, `grade`, `status`) VALUES
-(1,  'admin',     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin',   '管理员小明',   '软件学院',  NULL, 1),
-(2,  '20240001',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'student', '张三',         '软件学院',  2,     1),
-(3,  '20240002',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'student', '李四',         '计算机学院', 3,     1),
-(4,  '20240003',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'student', '王五',         '软件学院',  1,     1),
-(5,  '20230001',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'student', '赵六',         '信息学院',  3,     1),
-(6,  'T20240001', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'teacher', '王老师',       '软件学院',  NULL, 1),
-(7,  'T20240002', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'teacher', '李老师',       '计算机学院', NULL, 1),
-(8,  '20240004',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'student', '孙七',         '软件学院',  2,     0);
+(1,  'admin',     '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'admin',   '管理员小明',   '软件学院',  NULL, 1),
+(2,  '20240001',  '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'student', '张三',         '软件学院',  2,     1),
+(3,  '20240002',  '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'student', '李四',         '计算机学院', 3,     1),
+(4,  '20240003',  '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'student', '王五',         '软件学院',  1,     1),
+(5,  '20230001',  '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'student', '赵六',         '信息学院',  3,     1),
+(6,  'T20240001', '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'teacher', '王老师',       '软件学院',  NULL, 1),
+(7,  'T20240002', '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'teacher', '李老师',       '计算机学院', NULL, 1),
+(8,  '20240004',  '$2a$10$iucvRyIMdYuUPUbj6aDt2etGfR1o1omNqypNApJpv52GldwmhoRcS', 'student', '孙七',         '软件学院',  2,     0);
 
 -- ==================== 分类数据 ====================
 INSERT INTO `category` (`id`, `name`, `sort`) VALUES
