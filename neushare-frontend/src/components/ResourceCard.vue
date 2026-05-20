@@ -89,7 +89,7 @@ const handleClick = () => {
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: rgba(200, 164, 78, 0.1);
+  background: rgba(37, 99, 235, 0.08);
   padding: 3px 8px;
   border-radius: var(--radius-xs);
 }

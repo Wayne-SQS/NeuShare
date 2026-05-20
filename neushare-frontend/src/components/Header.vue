@@ -83,7 +83,7 @@ const handleCommand = (command) => {
 .header-bg {
   position: absolute;
   inset: 0;
-  background: rgba(13, 17, 23, 0.82);
+  background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
 }
@@ -115,7 +115,7 @@ const handleCommand = (command) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0d1117;
+  color: #fff;
 }
 
 .logo-text {
@@ -170,7 +170,7 @@ const handleCommand = (command) => {
 .btn-register {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0d1117;
+  color: #fff;
   font-weight: 600;
 }
 

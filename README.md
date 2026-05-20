@@ -34,9 +34,33 @@
 | 数据库 | MySQL 8.0 |
 | 设计 | 极简白底 · 蓝色主题(#2563eb) · 玻璃拟态导航 |
 
+## 环境要求
+
+| 工具 | 版本 | 用途 |
+|------|------|------|
+| JDK | 8+ | Java 运行时 |
+| Maven | 3.6+ | 后端构建工具 — 管理依赖(MyBatis-Plus、JWT、BCrypt等)、编译打包、启动 SpringBoot |
+| MySQL | 8.0 | 数据库 |
+| Node.js | 16+ | 前端运行时 |
+| npm | 8+ | 前端包管理器 |
+
+> Maven 是 Java 项目的构建工具（类似前端的 npm），`pom.xml` 相当于 `package.json`。项目中所有 `.jar` 依赖由 Maven 自动下载，无需手动管理。启动后端时用 `mvn spring-boot:run`，打包部署用 `mvn package -DskipTests`。
+
+### Maven 配置（Windows）
+
+```bash
+# 解压 Maven 到纯英文路径（中文路径会导致 Git Bash 中 PATH 失效）
+# 编辑 ~/.bashrc，添加：
+export MAVEN_HOME="E:/apache-maven-3.6.1"
+export PATH="$MAVEN_HOME/bin:$PATH"
+```
+
 ## 快速启动
 
 ```bash
+# 0. 确认 Maven 可用
+mvn --version
+
 # 1. 初始化数据库
 mysql -u root -p < neushare-backend/src/main/resources/db/init.sql
 

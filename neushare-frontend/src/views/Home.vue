@@ -1,20 +1,63 @@
 <template>
   <div class="home-page">
-    <section class="hero-section">
-      <div class="hero-content">
-        <div class="hero-badge animate-fade-in">
-          <span class="badge-dot"></span>
-          东北大学专属
+    <!-- Banner Carousel -->
+    <section class="banner-section">
+      <el-carousel
+        v-if="banners.length > 0"
+        :interval="5000"
+        arrow="hover"
+        height="420px"
+        trigger="click"
+      >
+        <el-carousel-item v-for="banner in banners" :key="banner.id">
+          <div class="banner-slide" :style="{ backgroundImage: `url(${banner.imageUrl})` }">
+            <div class="banner-overlay"></div>
+          </div>
+        </el-carousel-item>
+      </el-carousel>
+
+      <!-- Glass hero card overlaid on carousel -->
+      <div class="banner-hero-overlay">
+        <div class="hero-glass-card">
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            东北大学专属
+          </div>
+          <h1 class="hero-title">发现优质<br>学习资料</h1>
+          <p class="hero-subtitle">与同学们一起，让学习更高效</p>
+          <div class="hero-actions">
+            <el-button class="hero-btn-primary" size="large" @click="$router.push('/resource')">
+              <el-icon><Search /></el-icon>浏览资源
+            </el-button>
+            <el-button class="hero-btn-outline" size="large" @click="$router.push('/upload')">
+              <el-icon><Upload /></el-icon>上传分享
+            </el-button>
+          </div>
         </div>
-        <h1 class="hero-title animate-slide-up">发现优质<br>学习资料</h1>
-        <p class="hero-subtitle animate-slide-up stagger-1">与同学们一起，让学习更高效</p>
-        <div class="hero-actions animate-slide-up stagger-2">
-          <el-button class="hero-btn-primary" size="large" @click="$router.push('/resource')">
-            <el-icon><Search /></el-icon>浏览资源
-          </el-button>
-          <el-button class="hero-btn-outline" size="large" @click="$router.push('/upload')">
-            <el-icon><Upload /></el-icon>上传分享
-          </el-button>
+      </div>
+
+      <!-- Fallback when no banners -->
+      <div v-if="banners.length === 0" class="banner-fallback">
+        <div class="hero-blob hero-blob--1"></div>
+        <div class="hero-blob hero-blob--2"></div>
+        <div class="hero-blob hero-blob--3"></div>
+        <div class="hero-content">
+          <div class="hero-glass-card">
+            <div class="hero-badge">
+              <span class="badge-dot"></span>
+              东北大学专属
+            </div>
+            <h1 class="hero-title">发现优质<br>学习资料</h1>
+            <p class="hero-subtitle">与同学们一起，让学习更高效</p>
+            <div class="hero-actions">
+              <el-button class="hero-btn-primary" size="large" @click="$router.push('/resource')">
+                <el-icon><Search /></el-icon>浏览资源
+              </el-button>
+              <el-button class="hero-btn-outline" size="large" @click="$router.push('/upload')">
+                <el-icon><Upload /></el-icon>上传分享
+              </el-button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -164,10 +207,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ResourceCard from '@/components/ResourceCard.vue'
 import { getHotResources, getResourceList } from '@/api/resource'
+import { getBannerList } from '@/api/banner'
 import { coursesByGrade } from '@/utils/courseData'
 
 const router = useRouter()
 
+const banners = ref([])
 const hotResources = ref([])
 const latestResources = ref([])
 
@@ -208,13 +253,14 @@ const goToCourseResources = (course) => {
 
 const fetchData = async () => {
   try {
-    const [hotRes, latestRes] = await Promise.all([
+    const [hotRes, latestRes, bannerRes] = await Promise.all([
       getHotResources(4),
-      getResourceList({ pageNum: 1, pageSize: 4, status: 1 })
+      getResourceList({ pageNum: 1, pageSize: 4, status: 1 }),
+      getBannerList()
     ])
     hotResources.value = hotRes.data || []
-    const latestData = latestRes.data?.records || []
-    latestResources.value = latestData.slice(0, 4)
+    latestResources.value = (latestRes.data?.records || []).slice(0, 4)
+    banners.value = bannerRes.data || []
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
@@ -230,12 +276,93 @@ onMounted(() => {
   min-height: 100%;
 }
 
-/* Hero */
-.hero-section {
+/* ========== Banner Carousel ========== */
+.banner-section {
   position: relative;
-  padding: 100px 20px 120px;
+  margin-top: -1px; /* Flush against header border */
+}
+
+.banner-slide {
+  width: 100%;
+  height: 420px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(248, 249, 251, 0.92) 100%
+  );
+}
+
+/* Glass hero card overlaid on carousel */
+.banner-hero-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  max-width: 620px;
+  width: 90%;
+}
+
+/* Fallback when no banners */
+.banner-fallback {
+  position: relative;
+  padding: 110px 20px 120px;
   overflow: hidden;
-  background: linear-gradient(180deg, #f8fafc 0%, #f0f4ff 50%, #f5f5f7 100%);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 80% 80%, rgba(37, 99, 235, 0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 70%, rgba(16, 185, 129, 0.03) 0%, transparent 70%),
+    linear-gradient(180deg, #f0f4ff 0%, var(--bg-base) 40%, var(--bg-deep) 100%);
+}
+.hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: blobFloat 12s ease-in-out infinite;
+}
+
+.hero-blob--1 {
+  width: 500px;
+  height: 500px;
+  top: -200px;
+  right: -100px;
+  background: rgba(37, 99, 235, 0.10);
+  animation-delay: 0s;
+}
+
+.hero-blob--2 {
+  width: 350px;
+  height: 350px;
+  bottom: -80px;
+  left: -80px;
+  background: rgba(59, 130, 246, 0.07);
+  animation-delay: -4s;
+}
+
+.hero-blob--3 {
+  width: 200px;
+  height: 200px;
+  top: 50%;
+  left: 50%;
+  background: rgba(16, 185, 129, 0.06);
+  animation-delay: -8s;
+}
+
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -40px) scale(1.05); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(10px, 30px) scale(1.02); }
 }
 
 .hero-content {
@@ -243,20 +370,59 @@ onMounted(() => {
   z-index: 1;
   max-width: 720px;
   margin: 0 auto;
+}
+
+/* Glass-morphism card */
+.hero-glass-card {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-xl);
+  padding: 56px 48px;
   text-align: center;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.02),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  animation: cardShadowPulse 6s ease-in-out infinite;
+  transition: box-shadow var(--transition-slow);
+}
+
+.hero-glass-card:hover {
+  box-shadow:
+    0 16px 48px rgba(37, 99, 235, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes cardShadowPulse {
+  0%, 100% {
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.04),
+      0 2px 8px rgba(0, 0, 0, 0.02),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 12px 40px rgba(37, 99, 235, 0.08),
+      0 4px 12px rgba(0, 0, 0, 0.04),
+      inset 0 0 0 1px rgba(37, 99, 235, 0.12);
+  }
 }
 
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid var(--border-default);
+  padding: 6px 16px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.12);
   border-radius: var(--radius-full);
   font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 24px;
-  background: var(--bg-elevated);
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 28px;
 }
 
 .badge-dot {
@@ -264,20 +430,30 @@ onMounted(() => {
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
 }
 
 .hero-title {
-  font-size: 4rem;
+  font-size: 3.5rem;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: -0.04em;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #111827 0%, #2563eb 50%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .hero-subtitle {
   font-size: 18px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 36px;
 }
 
@@ -297,15 +473,20 @@ onMounted(() => {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
+  border-radius: var(--radius) !important;
+  transition: all 0.3s ease !important;
 }
 
 .hero-btn-primary:hover {
   background: var(--accent-dim) !important;
-  box-shadow: var(--shadow-accent) !important;
+  border-color: var(--accent-dim) !important;
+  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.3) !important;
+  transform: translateY(-2px);
 }
 
 .hero-btn-outline {
-  background: var(--bg-elevated) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
   border: 1px solid var(--border-default) !important;
   color: var(--text-primary) !important;
   font-weight: 500 !important;
@@ -314,11 +495,16 @@ onMounted(() => {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
+  border-radius: var(--radius) !important;
+  transition: all 0.3s ease !important;
 }
 
 .hero-btn-outline:hover {
   border-color: var(--accent) !important;
   color: var(--accent) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
 }
 
 /* Sections */
@@ -428,49 +614,57 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 18px 14px;
-  background: var(--bg-hover);
   border-radius: var(--radius);
   cursor: pointer;
   transition: var(--transition);
   border: 1px solid transparent;
+  color: #fff;
+  font-weight: 500;
 }
 
 .grade-btn:hover {
-  border-color: var(--border-default);
-  background: var(--bg-elevated);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
+
+/* Color each grade row */
+.grade-btn:nth-child(1) { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.grade-btn:nth-child(2) { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+.grade-btn:nth-child(3) { background: linear-gradient(135deg, #0d9488, #14b8a6); }
+.grade-btn:nth-child(4) { background: linear-gradient(135deg, #0f766e, #0d9488); }
+.grade-btn:nth-child(5) { background: linear-gradient(135deg, #d97706, #f59e0b); }
+.grade-btn:nth-child(6) { background: linear-gradient(135deg, #b45309, #d97706); }
+.grade-btn:nth-child(7) { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+.grade-btn:nth-child(8) { background: linear-gradient(135deg, #6d28d9, #7c3aed); }
 
 .grade-btn--active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.grade-btn--active:hover {
-  background: var(--accent-dim);
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .grade-btn__icon {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.85);
   transition: var(--transition);
 }
 
 .grade-btn--active .grade-btn__icon {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
   color: #fff;
 }
 
 .grade-btn__label {
   font-size: 14px;
   font-weight: 600;
+  color: #fff;
 }
 
 .courses-panel {
@@ -652,6 +846,45 @@ onMounted(() => {
 .slide-fade-leave-active { transition: all 0.2s ease-in; }
 .slide-fade-enter-from { transform: translateY(10px); opacity: 0; }
 .slide-fade-leave-to { transform: translateY(-10px); opacity: 0; }
+
+/* Element Plus Carousel overrides */
+:deep(.el-carousel__container) {
+  height: 420px;
+}
+
+:deep(.el-carousel__indicator) {
+  padding: 8px 4px;
+}
+
+:deep(.el-carousel__indicator .el-carousel__button) {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 0.5;
+  background: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+:deep(.el-carousel__indicator.is-active .el-carousel__button) {
+  width: 24px;
+  border-radius: 4px;
+  background: #fff;
+  opacity: 1;
+}
+
+:deep(.el-carousel__arrow) {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-carousel__arrow:hover) {
+  background: rgba(255, 255, 255, 0.85);
+}
 
 /* Responsive */
 @media (max-width: 1200px) {

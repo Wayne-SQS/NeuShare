@@ -154,13 +154,13 @@ const initResourceChart = (resources) => {
       xAxis: {
         type: 'category',
         data: labels,
-        axisLine: { lineStyle: { color: '#333' } },
-        axisLabel: { color: '#8b949e' }
+        axisLine: { lineStyle: { color: '#d1d5db' } },
+        axisLabel: { color: '#9ca3af' }
       },
       yAxis: {
         type: 'value',
-        splitLine: { lineStyle: { color: '#21262d' } },
-        axisLabel: { color: '#8b949e' }
+        splitLine: { lineStyle: { color: '#e5e7eb' } },
+        axisLabel: { color: '#9ca3af' }
       },
       series: [{
         name: '上传数量',
@@ -168,8 +168,8 @@ const initResourceChart = (resources) => {
         data: data,
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#c8a44e' },
-            { offset: 1, color: '#8b7535' }
+            { offset: 0, color: '#3b82f6' },
+            { offset: 1, color: '#2563eb' }
           ])
         }
       }]
@@ -184,13 +184,13 @@ const initResourceChart = (resources) => {
     xAxis: {
       type: 'category',
       data: months,
-      axisLine: { lineStyle: { color: '#333' } },
-      axisLabel: { color: '#8b949e' }
+      axisLine: { lineStyle: { color: '#d1d5db' } },
+      axisLabel: { color: '#9ca3af' }
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#21262d' } },
-      axisLabel: { color: '#8b949e' }
+      splitLine: { lineStyle: { color: '#e5e7eb' } },
+      axisLabel: { color: '#9ca3af' }
     },
     series: [{
       name: '上传数量',
@@ -198,8 +198,8 @@ const initResourceChart = (resources) => {
       data: counts,
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#c8a44e' },
-          { offset: 1, color: '#8b7535' }
+          { offset: 0, color: '#3b82f6' },
+          { offset: 1, color: '#2563eb' }
         ])
       }
     }]
@@ -231,14 +231,14 @@ const initCategoryChart = (categories, resources) => {
     ]
     const option = {
       tooltip: { trigger: 'item' },
-      legend: { bottom: 0, textStyle: { color: '#8b949e' } },
+      legend: { bottom: 0, textStyle: { color: '#6b7280' } },
       series: [{
         type: 'pie',
         radius: ['40%', '70%'],
         avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 8, borderColor: '#19202e', borderWidth: 2 },
+        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
         label: { show: false },
-        emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#e8eaef' } },
+        emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#111827' } },
         labelLine: { show: false },
         data: demoData
       }]
@@ -249,14 +249,14 @@ const initCategoryChart = (categories, resources) => {
 
   const option = {
     tooltip: { trigger: 'item' },
-    legend: { bottom: 0, textStyle: { color: '#8b949e' } },
+    legend: { bottom: 0, textStyle: { color: '#6b7280' } },
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 8, borderColor: '#19202e', borderWidth: 2 },
+      itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
       label: { show: false },
-      emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#e8eaef' } },
+      emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#111827' } },
       labelLine: { show: false },
       data: data
     }]

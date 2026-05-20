@@ -154,7 +154,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0d1117;
+  color: #fff;
 }
 
 .brand-text {
