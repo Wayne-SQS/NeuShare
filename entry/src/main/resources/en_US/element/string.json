@@ -1,0 +1,197 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "NEUShare Learning Resource Module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "NEUShare Main Entry"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "NEU Share"
+    },
+    {
+      "name": "app_name",
+      "value": "NEU Share"
+    },
+
+    {
+      "name": "tab_home",
+      "value": "Home"
+    },
+    {
+      "name": "tab_category",
+      "value": "Categories"
+    },
+    {
+      "name": "tab_search",
+      "value": "Search"
+    },
+    {
+      "name": "tab_profile",
+      "value": "Profile"
+    },
+
+    {
+      "name": "section_categories",
+      "value": "Categories"
+    },
+    {
+      "name": "section_all_categories",
+      "value": "All Categories"
+    },
+    {
+      "name": "section_hot",
+      "value": "Popular"
+    },
+    {
+      "name": "section_related",
+      "value": "Related"
+    },
+
+    {
+      "name": "button_view_all",
+      "value": "View All >"
+    },
+    {
+      "name": "button_view",
+      "value": "View >"
+    },
+    {
+      "name": "button_access",
+      "value": "Access Resource"
+    },
+    {
+      "name": "button_no_link",
+      "value": "No Link Available"
+    },
+
+    {
+      "name": "model_compare_entry_title",
+      "value": "Model Price & Performance"
+    },
+    {
+      "name": "model_compare_entry_subtitle",
+      "value": "DeepSeek / Claude / GPT / Qwen — Real-time prices + 4D scores"
+    },
+    {
+      "name": "model_compare_page_title",
+      "value": "Model Price & Performance Comparison"
+    },
+    {
+      "name": "model_sort_overall",
+      "value": "Overall"
+    },
+    {
+      "name": "model_sort_price",
+      "value": "Price"
+    },
+    {
+      "name": "model_sort_coding",
+      "value": "Coding"
+    },
+    {
+      "name": "model_sort_chinese",
+      "value": "Chinese"
+    },
+    {
+      "name": "model_provider_all",
+      "value": "All"
+    },
+
+    {
+      "name": "profile_title",
+      "value": "Profile"
+    },
+    {
+      "name": "profile_username",
+      "value": "NEU Student"
+    },
+    {
+      "name": "profile_subtitle",
+      "value": "NEU Software College"
+    },
+    {
+      "name": "profile_favorites_tab",
+      "value": "Favorites"
+    },
+    {
+      "name": "profile_history_tab",
+      "value": "History"
+    },
+    {
+      "name": "profile_stat_favorites",
+      "value": "Favorites"
+    },
+    {
+      "name": "profile_stat_history",
+      "value": "History"
+    },
+
+    {
+      "name": "detail_loading",
+      "value": "Loading..."
+    },
+    {
+      "name": "detail_source_prefix",
+      "value": "Source: "
+    },
+    {
+      "name": "detail_intro",
+      "value": "About"
+    },
+
+    {
+      "name": "search_placeholder",
+      "value": "Search resources, tags, authors..."
+    },
+    {
+      "name": "search_empty_hint",
+      "value": "Enter keywords to search"
+    },
+    {
+      "name": "search_support_hint",
+      "value": "Search by title, tags, description, or author"
+    },
+    {
+      "name": "search_no_result",
+      "value": "No results found"
+    },
+    {
+      "name": "search_result_count",
+      "value": "Found %d results"
+    },
+
+    {
+      "name": "empty_no_resource",
+      "value": "No resources yet"
+    },
+    {
+      "name": "empty_no_favorites",
+      "value": "No favorites yet"
+    },
+    {
+      "name": "empty_no_favorites_hint",
+      "value": "Tap ☆ on any resource to bookmark it"
+    },
+    {
+      "name": "empty_no_history",
+      "value": "No browsing history"
+    },
+
+    {
+      "name": "banner_new_resources",
+      "value": "New semester resources updated"
+    },
+    {
+      "name": "banner_ai_tutorials",
+      "value": "LLM programming tutorials now live"
+    },
+    {
+      "name": "banner_book_list",
+      "value": "Recommended book list released"
+    }
+  ]
+}

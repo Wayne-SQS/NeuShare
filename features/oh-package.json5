@@ -1,0 +1,12 @@
+{
+  "modelVersion": "6.0.2",
+  "name": "@neushare/features",
+  "version": "1.0.0",
+  "description": "NEUShare 基础特性层 - 资源浏览、搜索检索、用户管理、模型对比",
+  "main": "Index.ets",
+  "author": "NEU Software College",
+  "license": "ISC",
+  "dependencies": {
+    "@neushare/common": "file:../common"
+  }
+}

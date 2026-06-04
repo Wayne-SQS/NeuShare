@@ -1,0 +1,10 @@
+{
+  "modelVersion": "6.0.2",
+  "name": "@neushare/common",
+  "version": "1.0.0",
+  "description": "NEUShare 公共能力层 - UI组件库、主题系统、工具类",
+  "main": "Index.ets",
+  "author": "NEU Software College",
+  "license": "ISC",
+  "dependencies": {}
+}

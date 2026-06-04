@@ -1,0 +1,197 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "NEUShare学习资料共享模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "NEUShare主入口"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "NEU Share"
+    },
+    {
+      "name": "app_name",
+      "value": "NEU Share"
+    },
+
+    {
+      "name": "tab_home",
+      "value": "首页"
+    },
+    {
+      "name": "tab_category",
+      "value": "分类"
+    },
+    {
+      "name": "tab_search",
+      "value": "搜索"
+    },
+    {
+      "name": "tab_profile",
+      "value": "我的"
+    },
+
+    {
+      "name": "section_categories",
+      "value": "学习分类"
+    },
+    {
+      "name": "section_all_categories",
+      "value": "全部学习分类"
+    },
+    {
+      "name": "section_hot",
+      "value": "热门推荐"
+    },
+    {
+      "name": "section_related",
+      "value": "相关推荐"
+    },
+
+    {
+      "name": "button_view_all",
+      "value": "查看全部 >"
+    },
+    {
+      "name": "button_view",
+      "value": "查看 >"
+    },
+    {
+      "name": "button_access",
+      "value": "访问资源"
+    },
+    {
+      "name": "button_no_link",
+      "value": "暂无可访问链接"
+    },
+
+    {
+      "name": "model_compare_entry_title",
+      "value": "主流模型价格与性能对比"
+    },
+    {
+      "name": "model_compare_entry_subtitle",
+      "value": "DeepSeek / Claude / GPT / Qwen — 实时价格 + 四维评分"
+    },
+    {
+      "name": "model_compare_page_title",
+      "value": "主流模型价格与性能对比"
+    },
+    {
+      "name": "model_sort_overall",
+      "value": "综合分"
+    },
+    {
+      "name": "model_sort_price",
+      "value": "价格"
+    },
+    {
+      "name": "model_sort_coding",
+      "value": "编程"
+    },
+    {
+      "name": "model_sort_chinese",
+      "value": "中文"
+    },
+    {
+      "name": "model_provider_all",
+      "value": "全部"
+    },
+
+    {
+      "name": "profile_title",
+      "value": "个人中心"
+    },
+    {
+      "name": "profile_username",
+      "value": "软件学院学子"
+    },
+    {
+      "name": "profile_subtitle",
+      "value": "NEU Software College"
+    },
+    {
+      "name": "profile_favorites_tab",
+      "value": "我的收藏"
+    },
+    {
+      "name": "profile_history_tab",
+      "value": "浏览历史"
+    },
+    {
+      "name": "profile_stat_favorites",
+      "value": "收藏"
+    },
+    {
+      "name": "profile_stat_history",
+      "value": "浏览记录"
+    },
+
+    {
+      "name": "detail_loading",
+      "value": "加载中..."
+    },
+    {
+      "name": "detail_source_prefix",
+      "value": "来源："
+    },
+    {
+      "name": "detail_intro",
+      "value": "资源介绍"
+    },
+
+    {
+      "name": "search_placeholder",
+      "value": "搜索资源、标签、作者..."
+    },
+    {
+      "name": "search_empty_hint",
+      "value": "输入关键词搜索"
+    },
+    {
+      "name": "search_support_hint",
+      "value": "支持搜索标题、标签、描述、作者"
+    },
+    {
+      "name": "search_no_result",
+      "value": "未找到相关资源"
+    },
+    {
+      "name": "search_result_count",
+      "value": "找到 %d 个相关资源"
+    },
+
+    {
+      "name": "empty_no_resource",
+      "value": "暂无资源"
+    },
+    {
+      "name": "empty_no_favorites",
+      "value": "还没有收藏"
+    },
+    {
+      "name": "empty_no_favorites_hint",
+      "value": "浏览资源时点击 ☆ 即可收藏"
+    },
+    {
+      "name": "empty_no_history",
+      "value": "还没有浏览记录"
+    },
+
+    {
+      "name": "banner_new_resources",
+      "value": "新学期学习资料已更新"
+    },
+    {
+      "name": "banner_ai_tutorials",
+      "value": "大模型编程教程全面上线"
+    },
+    {
+      "name": "banner_book_list",
+      "value": "软件学院推荐书单发布"
+    }
+  ]
+}

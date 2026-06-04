@@ -1,0 +1,10 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/CategoryPage",
+    "pages/DetailPage",
+    "pages/SearchPage",
+    "pages/ProfilePage",
+    "pages/ModelComparePage"
+  ]
+}

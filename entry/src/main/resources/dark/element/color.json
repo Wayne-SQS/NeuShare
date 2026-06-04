@@ -1,0 +1,32 @@
+{
+  "color": [
+    {
+      "name": "page_background",
+      "value": "#0f0f1a"
+    },
+    {
+      "name": "card_background",
+      "value": "#1a1a2e"
+    },
+    {
+      "name": "text_primary",
+      "value": "#e8e8f0"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#a0a0b8"
+    },
+    {
+      "name": "text_hint",
+      "value": "#6a6a80"
+    },
+    {
+      "name": "input_background",
+      "value": "#252540"
+    },
+    {
+      "name": "divider",
+      "value": "#2a2a40"
+    }
+  ]
+}

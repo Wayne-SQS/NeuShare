@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "title": "大模型编程教程全面上线",
+    "subtitle": "DeepSeek · Claude · GPT API 从入门到实战",
+    "emoji": "🤖",
+    "gradientStart": "#2C3E6B",
+    "gradientEnd": "#4A6594",
+    "imageUrl": "",
+    "linkType": "category",
+    "linkValue": "4"
+  },
+  {
+    "id": 2,
+    "title": "吴恩达AI课 + Hello算法",
+    "subtitle": "Andrew Ng机器学习 · 开源动画算法书",
+    "emoji": "🧠",
+    "gradientStart": "#C0392B",
+    "gradientEnd": "#E74C3C",
+    "imageUrl": "",
+    "linkType": "category",
+    "linkValue": "1"
+  },
+  {
+    "id": 3,
+    "title": "软件学院推荐书单发布",
+    "subtitle": "CSAPP · 设计模式 · Hello算法 · 大模型实战",
+    "emoji": "📚",
+    "gradientStart": "#D4914A",
+    "gradientEnd": "#E8B86D",
+    "imageUrl": "",
+    "linkType": "category",
+    "linkValue": "2"
+  },
+  {
+    "id": 4,
+    "title": "GitHub加速 · Watt Toolkit",
+    "subtitle": "微软商城免费下载 · 开源网络加速工具",
+    "emoji": "⚡",
+    "gradientStart": "#3A8C6E",
+    "gradientEnd": "#5CB89A",
+    "imageUrl": "",
+    "linkType": "category",
+    "linkValue": "3"
+  }
+]
