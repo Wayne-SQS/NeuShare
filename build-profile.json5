@@ -39,18 +39,6 @@
       ]
     },
     {
-      "name": "features",
-      "srcPath": "./features",
-      "targets": [
-        {
-          "name": "default",
-          "applyToProducts": [
-            "default"
-          ]
-        }
-      ]
-    },
-    {
       "name": "entry",
       "srcPath": "./entry",
       "targets": [

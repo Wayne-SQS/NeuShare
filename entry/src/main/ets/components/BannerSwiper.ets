@@ -31,6 +31,10 @@ export struct BannerSwiper {
     return indices;
   }
 
+  isPostBanner(item: BannerItem): boolean {
+    return item.linkType === 'post';
+  }
+
   build() {
     Column() {
       Swiper(this.swiperController) {
@@ -51,14 +55,24 @@ export struct BannerSwiper {
 
             // Content overlay
             Row() {
-              // Left: text
               Column() {
+                // Post badge
+                if (this.isPostBanner(item)) {
+                  Text('🔥 热门帖子 #' + (index - 4 + 1).toString())
+                    .fontSize(11).fontWeight(FontWeight.Bold)
+                    .fontColor('#FFD700')
+                    .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+                    .backgroundColor('#FFFFFF20')
+                    .borderRadius(8).margin({ bottom: 8 })
+                }
+
                 Text(item.title)
                   .fontSize(20)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(ColorTokens.TEXT_WHITE)
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
+
                 Text(item.subtitle)
                   .fontSize(13)
                   .fontColor('#D0D8E8')
@@ -71,7 +85,7 @@ export struct BannerSwiper {
               .layoutWeight(1)
               .padding({ left: 24 })
 
-              // Right: emoji hero
+              // Right: emoji
               Text(item.emoji)
                 .fontSize(64)
                 .margin({ right: 20 })

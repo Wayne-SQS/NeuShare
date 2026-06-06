@@ -7,7 +7,6 @@
   "license": "",
   "dependencies": {
     "@neushare/common": "file:../common",
-    "@neushare/features": "file:../features"
   }
 }
 

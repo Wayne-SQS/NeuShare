@@ -1,79 +1,37 @@
 [
   {
     "id": 1,
-    "title": "专业课网课资源",
+    "title": "网课",
     "icon": "🎬",
     "color": "#E74C3C",
-    "description": "教师上传视频、MOOC链接、课程PPT与讲义"
+    "description": "学科课程 · 考研精讲 · 期末速成"
   },
   {
     "id": 2,
-    "title": "专业课推荐书籍",
+    "title": "书籍",
     "icon": "📖",
     "color": "#F39C12",
-    "description": "图书馆对接、豆瓣评分、教师推荐阅读清单"
+    "description": "专业教材 · 经典黑皮书 · 教辅资料"
   },
   {
     "id": 3,
-    "title": "先进编程软件学习",
-    "icon": "💻",
+    "title": "开源资源",
+    "icon": "📦",
     "color": "#3498DB",
-    "description": "编程工具推荐、技术栈指南、学习路径"
+    "description": "GitHub仓库 · API文档 · 开发工具 · 算法平台"
   },
   {
     "id": 4,
-    "title": "AI与Git教程",
-    "icon": "🤖",
-    "color": "#2ECC71",
-    "description": "DeepSeek、Claude、GitHub学习路径"
+    "title": "教学软件",
+    "icon": "🖥️",
+    "color": "#9B59B6",
+    "description": "录课工具 · 白板 · 学习平台 · 机房管理"
   },
   {
     "id": 5,
-    "title": "数学题库与算法练习",
-    "icon": "📐",
-    "color": "#E67E22",
-    "description": "校内练习系统、LeetCode、编程竞赛题库"
-  },
-  {
-    "id": 6,
-    "title": "课上学习教材资源",
-    "icon": "📚",
-    "color": "#1ABC9C",
-    "description": "教务系统课程同步、历年真题、配套PPT"
-  },
-  {
-    "id": 7,
-    "title": "应用教学软件",
-    "icon": "🖥️",
-    "color": "#9B59B6",
-    "description": "教学白板、微课录制、机房管理工具"
-  },
-  {
-    "id": 8,
-    "title": "DeepSeek API教程",
-    "icon": "🧠",
-    "color": "#8E44AD",
-    "description": "API文档、代码示例、高级特性与限制"
-  },
-  {
-    "id": 9,
-    "title": "GitHub教程学习路径",
-    "icon": "🔧",
-    "color": "#2C3E50",
-    "description": "六阶段路径：入门→原理→协作→工程化→CI/CD→治理"
-  },
-  {
-    "id": 10,
-    "title": "JAVA语言学习教程",
-    "icon": "☕",
-    "color": "#C0392B",
-    "description": "阶段式学习地图：基础→Web→框架→微服务→优化→面试"
-  },
-  {
-    "id": 11,
     "title": "考研",
     "icon": "🎓",
     "color": "#2E86C1",
-    "description": "院校信息 · 科目复习 · 真题演练 · 经验分享 · 复试调剂"
+    "description": "院校信息 → 数学 → 英语 → 政治 → 408"
   }
 ]

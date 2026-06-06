@@ -1,3 +1,4 @@
+import router from '@ohos.router';
 import { ColorTokens, ResourceTypeUtils } from '@neushare/common';
 import { ResourceItem } from '../models/ResourceModel';
 
@@ -36,13 +37,14 @@ export struct ResourceCard {
               .padding({ left: 7, right: 7, top: 3, bottom: 3 })
               .backgroundColor(ColorTokens.PRIMARY_LIGHT)
               .borderRadius(6).margin({ right: 6 })
+              .onClick(() => { router.pushUrl({ url: 'pages/SearchPage', params: { keyword: tag } }); })
           })
           Blank()
           Row() {
             Text('★').fontSize(13).fontColor(ColorTokens.ACCENT)
-            Text(this.resource.rating.toFixed(1))
-              .fontSize(13).fontWeight(FontWeight.Bold)
-              .fontColor(ColorTokens.ACCENT).margin({ left: 2 })
+            Text(this.resource.rating > 0 ? this.resource.rating.toFixed(1) : '暂无')
+              .fontSize(this.resource.rating > 0 ? 13 : 10).fontWeight(this.resource.rating > 0 ? FontWeight.Bold : FontWeight.Regular)
+              .fontColor(this.resource.rating > 0 ? ColorTokens.ACCENT : ColorTokens.TEXT_HINT).margin({ left: 2 })
           }
         }
         .width('100%').margin({ top: 8 })
@@ -56,7 +58,7 @@ export struct ResourceCard {
     .shadow({ radius: 8, color: '#12000000', offsetX: 0, offsetY: 2 })
     .border({ width: 1, color: '#0A000000', radius: 16 })
     .scale({ x: this.pressed ? 0.97 : 1, y: this.pressed ? 0.97 : 1 })
-    .animation({ curve: Curve.Spring, duration: 150 })
+    .animation({ curve: Curve.FastOutSlowIn, duration: 150 })
     .onClick(() => {
       this.onTap();
     })

@@ -17,7 +17,7 @@ export default class EntryAbility extends UIAbility {
     // Register multi-device breakpoint system
     BreakpointSystem.register();
 
-    windowStage.loadContent('pages/Index', (err) => {
+    windowStage.loadContent('pages/SplashPage', (err) => {
       if (err.code) {
         console.error('Failed to load content: ' + JSON.stringify(err));
         return;

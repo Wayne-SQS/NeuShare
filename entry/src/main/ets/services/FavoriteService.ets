@@ -1,14 +1,13 @@
-import preferences from '@ohos.data.preferences';
 import { Context } from '@ohos.abilityAccessCtrl';
+import { PreferencesStore } from '@neushare/common';
 
-const STORE_NAME = 'neushare_preferences';
 const FAVORITES_KEY = 'favorite_ids';
 const HISTORY_KEY = 'history_ids';
 const MAX_HISTORY = 20;
 
 export class FavoriteService {
   private static instance: FavoriteService;
-  private prefs: preferences.Preferences | null = null;
+  private store: PreferencesStore = new PreferencesStore('neushare_preferences');
 
   private constructor() {}
 
@@ -20,25 +19,22 @@ export class FavoriteService {
   }
 
   async init(context: Context): Promise<void> {
-    this.prefs = await preferences.getPreferences(context, STORE_NAME);
+    await this.store.init(context);
   }
 
   async getFavoriteIds(): Promise<Set<number>> {
-    if (!this.prefs) return new Set();
-    const str = await this.prefs.get(FAVORITES_KEY, '[]') as string;
-    return new Set(JSON.parse(str));
+    const str = await this.store.get<string>(FAVORITES_KEY, '[]');
+    try {
+      return new Set(JSON.parse(str));
+    } catch {
+      return new Set();
+    }
   }
 
   async toggleFavorite(id: number): Promise<boolean> {
-    if (!this.prefs) return false;
     const ids = await this.getFavoriteIds();
-    if (ids.has(id)) {
-      ids.delete(id);
-    } else {
-      ids.add(id);
-    }
-    await this.prefs.put(FAVORITES_KEY, JSON.stringify(Array.from(ids)));
-    await this.prefs.flush();
+    if (ids.has(id)) { ids.delete(id); } else { ids.add(id); }
+    await this.store.set(FAVORITES_KEY, JSON.stringify(Array.from(ids)));
     return ids.has(id);
   }
 
@@ -48,20 +44,17 @@ export class FavoriteService {
   }
 
   async getHistory(): Promise<number[]> {
-    if (!this.prefs) return [];
-    const str = await this.prefs.get(HISTORY_KEY, '[]') as string;
-    return JSON.parse(str);
+    const str = await this.store.get<string>(HISTORY_KEY, '[]');
+    try { return JSON.parse(str); } catch { return []; }
   }
 
   async addHistory(id: number): Promise<void> {
-    if (!this.prefs) return;
     let history = await this.getHistory();
     history = history.filter(h => h !== id);
     history.unshift(id);
     if (history.length > MAX_HISTORY) {
       history = history.slice(0, MAX_HISTORY);
     }
-    await this.prefs.put(HISTORY_KEY, JSON.stringify(history));
-    await this.prefs.flush();
+    await this.store.set(HISTORY_KEY, JSON.stringify(history));
   }
 }

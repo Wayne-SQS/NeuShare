@@ -35,7 +35,7 @@ export struct CategoryCard {
     .shadow({ radius: 8, color: '#0E000000', offsetX: 0, offsetY: 2 })
     .border({ width: 1, color: '#08000000', radius: 18 })
     .scale({ x: this.tapped ? 0.95 : 1, y: this.tapped ? 0.95 : 1 })
-    .animation({ curve: Curve.Spring, duration: 120 })
+    .animation({ curve: Curve.FastOutSlowIn, duration: 120 })
     .onClick(() => { this.onTap(); })
     .onTouch((event: TouchEvent) => {
       if (event.type === TouchType.Down) {

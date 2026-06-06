@@ -17,21 +17,28 @@ export class BreakpointSystem {
   static register(): void {
     const query = '(min-width: 840vp)';
     BreakpointSystem.listener = mediaquery.matchMediaSync(query);
-    BreakpointSystem.updateBreakpoint(BreakpointSystem.listener);
-
-    BreakpointSystem.listener.on('change', (result: mediaquery.MediaQueryResult) => {
-      BreakpointSystem.updateBreakpoint(result);
-    });
+    if (BreakpointSystem.listener) {
+      BreakpointSystem.listener.on('change', (result: mediaquery.MediaQueryResult) => {
+        BreakpointSystem.updateBreakpoint(result);
+      });
+    }
 
     const mdQuery = '(min-width: 600vp) and (max-width: 839vp)';
-    const mdListener = mediaquery.matchMediaSync(mdQuery);
+    const mdListener: mediaquery.MediaQueryListener = mediaquery.matchMediaSync(mdQuery);
     mdListener.on('change', (result: mediaquery.MediaQueryResult) => {
       if (result.matches) {
         AppStorage.setOrCreate('currentBreakpoint', BreakpointType.MD);
       }
     });
 
-    AppStorage.setOrCreate('currentBreakpoint', BreakpointType.SM);
+    // Evaluate initial state
+    if (BreakpointSystem.listener && BreakpointSystem.listener.matches) {
+      AppStorage.setOrCreate('currentBreakpoint', BreakpointType.LG);
+    } else if (mdListener.matches) {
+      AppStorage.setOrCreate('currentBreakpoint', BreakpointType.MD);
+    } else {
+      AppStorage.setOrCreate('currentBreakpoint', BreakpointType.SM);
+    }
   }
 
   private static updateBreakpoint(result: mediaquery.MediaQueryResult): void {

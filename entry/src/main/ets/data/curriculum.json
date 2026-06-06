@@ -1,0 +1,192 @@
+{
+  "grades": {
+    "大一": {
+      "description": "打好数理与编程基础，适应大学学习节奏",
+      "courses": [
+        {
+          "name": "C语言程序设计",
+          "emoji": "💻",
+          "categoryIds": [1, 3, 5, 10],
+          "searchTags": ["C语言", "C程序设计", "编程入门"],
+          "description": "编程入门第一课，掌握基本语法与算法思维"
+        },
+        {
+          "name": "高等数学",
+          "emoji": "📐",
+          "categoryIds": [5, 6, 2],
+          "searchTags": ["高等数学", "微积分", "数学分析"],
+          "description": "大学数学基石，极限、微分、积分与无穷级数"
+        },
+        {
+          "name": "线性代数",
+          "emoji": "🧮",
+          "categoryIds": [5, 6, 2],
+          "searchTags": ["线性代数", "矩阵", "向量空间"],
+          "description": "矩阵运算与线性变换，机器学习必备数学基础"
+        },
+        {
+          "name": "离散数学",
+          "emoji": "🔢",
+          "categoryIds": [5, 6, 2],
+          "searchTags": ["离散数学", "逻辑", "集合论", "图论"],
+          "description": "数理逻辑、集合论与图论，计算机科学的数学语言"
+        },
+        {
+          "name": "电子技术基础",
+          "emoji": "⚡",
+          "categoryIds": [6, 1, 2],
+          "searchTags": ["电子技术", "电路基础", "数字电路"],
+          "description": "模拟与数字电路入门，理解计算机硬件底层原理"
+        },
+        {
+          "name": "大学英语",
+          "emoji": "🌍",
+          "categoryIds": [6, 1, 2],
+          "searchTags": ["大学英语", "英语", "四六级"],
+          "description": "提升英语综合能力，为阅读英文文献打好基础"
+        }
+      ]
+    },
+    "大二": {
+      "description": "专业核心课程集中发力，构建计算机知识体系",
+      "courses": [
+        {
+          "name": "数据结构与算法",
+          "emoji": "🌲",
+          "categoryIds": [5, 1, 6, 10],
+          "searchTags": ["数据结构", "算法", "LeetCode"],
+          "description": "核心中的核心！掌握常见数据结构和经典算法"
+        },
+        {
+          "name": "C++程序设计",
+          "emoji": "⚙️",
+          "categoryIds": [3, 10, 1, 5],
+          "searchTags": ["C++", "面向对象", "STL"],
+          "description": "面向对象编程范式，类的封装继承多态"
+        },
+        {
+          "name": "计算机组成原理",
+          "emoji": "🖥️",
+          "categoryIds": [6, 1, 2, 4],
+          "searchTags": ["计算机组成", "CPU", "内存", "指令集"],
+          "description": "揭示计算机内部构造：运算器、存储器、控制器"
+        },
+        {
+          "name": "数据库概论",
+          "emoji": "🗄️",
+          "categoryIds": [3, 4, 1, 10],
+          "searchTags": ["数据库", "SQL", "MySQL", "关系代数"],
+          "description": "关系数据库原理与SQL实战，企业级应用必备"
+        },
+        {
+          "name": "计算机网络",
+          "emoji": "🌐",
+          "categoryIds": [1, 6, 3, 4],
+          "searchTags": ["计算机网络", "TCP/IP", "HTTP", "网络安全"],
+          "description": "五层协议栈、TCP/IP体系结构、网络应用开发基础"
+        },
+        {
+          "name": "概率论与数理统计",
+          "emoji": "📊",
+          "categoryIds": [5, 6, 2],
+          "searchTags": ["概率论", "数理统计", "随机过程"],
+          "description": "不确定性世界的数学工具，AI和大数据理论基础"
+        }
+      ]
+    },
+    "大三": {
+      "description": "软件工程全流程训练 + 专业方向深入探索",
+      "courses": [
+        {
+          "name": "操作系统",
+          "emoji": "🖲️",
+          "categoryIds": [3, 1, 6, 4],
+          "searchTags": ["操作系统", "Linux", "进程管理", "内存管理"],
+          "description": "进程调度、内存管理、文件系统，理解计算机系统核心"
+        },
+        {
+          "name": "软件工程",
+          "emoji": "🏗️",
+          "categoryIds": [3, 6, 4, 1],
+          "searchTags": ["软件工程", "设计模式", "UML", "敏捷开发"],
+          "description": "软件开发生命周期全过程：需求→设计→开发→测试→维护"
+        },
+        {
+          "name": "软件质量保证与测试",
+          "emoji": "✅",
+          "categoryIds": [3, 6, 10, 5],
+          "searchTags": ["软件测试", "JUnit", "自动化测试", "CI/CD"],
+          "description": "单元测试、集成测试、系统测试，保障软件质量"
+        },
+        {
+          "name": "软件项目管理",
+          "emoji": "📋",
+          "categoryIds": [6, 3, 4],
+          "searchTags": ["项目管理", "Scrum", "敏捷", "团队协作"],
+          "description": "项目规划、进度控制、团队管理、质量与风险管理"
+        },
+        {
+          "name": "人工智能技术基础",
+          "emoji": "🤖",
+          "categoryIds": [4, 5, 3, 8],
+          "searchTags": ["AI", "机器学习", "深度学习", "神经网络"],
+          "description": "AI核心概念与基础算法，入门深度学习框架"
+        },
+        {
+          "name": "大数据技术",
+          "emoji": "📈",
+          "categoryIds": [4, 5, 3, 10],
+          "searchTags": ["大数据", "Hadoop", "Spark", "数据处理"],
+          "description": "分布式存储与计算框架，海量数据的处理与分析"
+        }
+      ]
+    },
+    "大四": {
+      "description": "企业项目实战 + 毕业设计，为升学就业做最后冲刺",
+      "courses": [
+        {
+          "name": "行业项目实践",
+          "emoji": "🚀",
+          "categoryIds": [3, 4, 10, 5],
+          "searchTags": ["企业项目", "实战", "华为", "腾讯"],
+          "description": "校企联合PBL项目，真实企业环境完整工程训练"
+        },
+        {
+          "name": "毕业设计",
+          "emoji": "🎓",
+          "categoryIds": [6, 5, 3, 4],
+          "searchTags": ["毕业设计", "论文", "答辩", "开题"],
+          "description": "校企双导师制，实际企业项目研发 + 毕业论文撰写"
+        },
+        {
+          "name": "高级算法与面试准备",
+          "emoji": "🏆",
+          "categoryIds": [5, 3, 10, 4],
+          "searchTags": ["算法", "面试", "LeetCode", "系统设计"],
+          "description": "刷题冲刺 + 系统设计 + 行为面试，拿下理想offer"
+        },
+        {
+          "name": "云计算与DevOps",
+          "emoji": "☁️",
+          "categoryIds": [4, 3, 9, 10],
+          "searchTags": ["Docker", "Kubernetes", "AWS", "CI/CD"],
+          "description": "容器化部署、微服务架构、持续集成与交付"
+        },
+        {
+          "name": "前沿技术讲座",
+          "emoji": "🔭",
+          "categoryIds": [4, 3, 10, 2],
+          "searchTags": ["前沿技术", "区块链", "量子计算", "GPT"],
+          "description": "追踪技术前沿动态，拓展技术视野与创新能力"
+        },
+        {
+          "name": "职业规划与简历指导",
+          "emoji": "📝",
+          "categoryIds": [6, 5, 3],
+          "searchTags": ["简历", "面试", "职业规划", "求职"],
+          "description": "简历撰写、面试技巧、职业方向选择与个人品牌建立"
+        }
+      ]
+    }
+  }
+}
