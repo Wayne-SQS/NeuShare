@@ -9,7 +9,7 @@
         trigger="click"
       >
         <el-carousel-item v-for="(item, index) in localImages" :key="index">
-          <div class="banner-slide" :style="{ backgroundImage: `url(${item.imageUrl})` }">
+          <div class="banner-slide" :style="{ backgroundImage: `url(${item.imageUrl})` }" @click="item.link && $router.push(item.link)">
             <div class="banner-overlay"></div>
           </div>
         </el-carousel-item>
@@ -189,12 +189,12 @@ const hotResources = ref([])
 const latestResources = ref([])
 
 const localImages = [
-  { imageUrl: '/images/banner/南湖主楼.png' },
-  { imageUrl: '/images/banner/秋天东大.jpg' },
-  { imageUrl: '/images/banner/红砖.jpg' },
-  { imageUrl: '/images/banner/火箭落日.jpg' },
-  { imageUrl: '/images/banner/冬天东大.jpg' },
-  { imageUrl: '/images/banner/秋天.jpg' }
+  { imageUrl: '/images/banner/南湖主楼.png', link: '/resource' },
+  { imageUrl: '/images/banner/秋天东大.jpg', link: '/resource' },
+  { imageUrl: '/images/banner/红砖.jpg', link: '/upload' },
+  { imageUrl: '/images/banner/火箭落日.jpg', link: '/resource' },
+  { imageUrl: '/images/banner/冬天东大.jpg', link: '/resource' },
+  { imageUrl: '/images/banner/秋天.jpg', link: '/resource' }
 ]
 
 const gradeSemesterOptions = [

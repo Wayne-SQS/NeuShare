@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.neushare.common.PageResult;
 import com.neushare.common.Result;
 import com.neushare.entity.Banner;
+import com.neushare.entity.FormCard;
 import com.neushare.entity.Resource;
 import com.neushare.entity.User;
 import com.neushare.service.*;
@@ -14,6 +15,7 @@ import com.neushare.vo.CommentVO;
 import com.neushare.vo.ResourceVO;
 import com.neushare.vo.UserVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -36,6 +38,12 @@ public class AdminController {
 
     @Autowired
     private BannerService bannerService;
+
+    @Autowired
+    private FormCardService formCardService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // ==================== 用户管理 ====================
 
@@ -67,7 +75,7 @@ public class AdminController {
 
     @DeleteMapping("/user/delete/{id}")
     public Result<Void> deleteUser(@PathVariable Long id) {
-        userService.removeById(id);
+        userService.deleteUserCascade(id);
         return Result.success("删除成功");
     }
 
@@ -83,14 +91,28 @@ public class AdminController {
     }
 
     @PutMapping("/resource/audit")
-    public Result<Void> auditResource(@RequestParam Long id, @RequestParam Integer status) {
-        resourceService.auditResource(id, status);
+    public Result<Void> auditResource(HttpServletRequest request, @RequestParam Long id, @RequestParam Integer status,
+                                       @RequestParam(required = false) String rejectReason) {
+        resourceService.auditResource(id, status, rejectReason);
+        // 发送审核结果通知给上传者
+        Resource resource = resourceService.getById(id);
+        if (resource != null) {
+            String title = status == 1 ? "资源审核通过" : "资源已被驳回";
+            String content = status == 1
+                    ? "您上传的资源「" + resource.getTitle() + "」已通过审核，现已公开发布。"
+                    : "您上传的资源「" + resource.getTitle() + "」已被驳回" +
+                      (rejectReason != null && !rejectReason.isEmpty() ? "，原因：" + rejectReason : "。");
+            notificationService.send(resource.getUploadUserId(), "audit", id,
+                    (Long) request.getAttribute("userId"), title, content);
+        }
         return Result.success("审核成功");
     }
 
     @DeleteMapping("/resource/delete/{id}")
-    public Result<Void> deleteResource(@PathVariable Long id) {
-        resourceService.removeById(id);
+    public Result<Void> deleteResource(HttpServletRequest request, @PathVariable Long id) {
+        Long userId = (Long) request.getAttribute("userId");
+        String role = (String) request.getAttribute("role");
+        resourceService.deleteResource(id, userId, role);
         return Result.success("删除成功");
     }
 
@@ -140,6 +162,39 @@ public class AdminController {
     @PutMapping("/banner/status")
     public Result<Void> updateBannerStatus(@RequestParam Long id, @RequestParam Integer status) {
         bannerService.updateStatus(id, status);
+        return Result.success("更新成功");
+    }
+
+    // ==================== 服务卡片管理 ====================
+
+    @GetMapping("/form-card/list")
+    public Result<List<FormCard>> getFormCardList() {
+        List<FormCard> cards = formCardService.list(
+                new LambdaQueryWrapper<FormCard>().orderByAsc(FormCard::getSortOrder));
+        return Result.success(cards);
+    }
+
+    @PostMapping("/form-card/add")
+    public Result<Void> addFormCard(@RequestBody FormCard card) {
+        formCardService.addCard(card);
+        return Result.success("添加成功");
+    }
+
+    @PutMapping("/form-card/update")
+    public Result<Void> updateFormCard(@RequestBody FormCard card) {
+        formCardService.updateCard(card);
+        return Result.success("更新成功");
+    }
+
+    @DeleteMapping("/form-card/delete/{id}")
+    public Result<Void> deleteFormCard(@PathVariable Long id) {
+        formCardService.deleteCard(id);
+        return Result.success("删除成功");
+    }
+
+    @PutMapping("/form-card/status")
+    public Result<Void> updateFormCardStatus(@RequestParam Long id, @RequestParam Integer status) {
+        formCardService.updateStatus(id, status);
         return Result.success("更新成功");
     }
 

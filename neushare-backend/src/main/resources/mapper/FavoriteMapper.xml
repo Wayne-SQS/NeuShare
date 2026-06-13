@@ -24,12 +24,17 @@
     </resultMap>
 
     <select id="selectUserFavorites" resultMap="ResourceVOMap">
-        SELECT r.*, u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar, c.name as category_name
+        SELECT r.id, r.title, r.category_id, r.type, r.content_url, r.description, r.cover_url,
+               r.upload_user_id, r.status, r.view_count, r.like_count, r.favorite_count,
+               r.create_time, r.update_time,
+               u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar,
+               c.name as category_name
         FROM favorite f
         LEFT JOIN resource r ON f.resource_id = r.id
         LEFT JOIN user u ON r.upload_user_id = u.id
         LEFT JOIN category c ON r.category_id = c.id
         WHERE f.user_id = #{userId}
+        AND r.id IS NOT NULL
         ORDER BY f.create_time DESC
     </select>
 

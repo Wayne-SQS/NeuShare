@@ -11,7 +11,7 @@
 | 层 | 技术 |
 |---|------|
 | 前端 | Vue 3 (Composition API `<script setup>`), Vite 5, Element Plus 2.6, Pinia, Vue Router 4, Axios, ECharts 5 |
-| 后端 | Spring Boot 2.7.18, MyBatis-Plus 3.5.5, MySQL 8, JWT (jjwt 0.9.1), BCrypt (spring-security-crypto) |
+| 后端 | Spring Boot 3.3.7, MyBatis-Plus 3.5.13, MySQL 8, JWT (jjwt 0.13.0), BCrypt (spring-security-crypto) |
 | 构建 | Maven (backend), npm/vite (frontend) |
 
 ---
@@ -50,13 +50,14 @@ web/
 │   └── src/main/java/com/neushare/
 │       ├── common/             # Result<T>, PageResult<T>
 │       ├── config/             # CORS, MyBatis-Plus 分页插件, WebMvcConfig（拦截器注册）
-│       ├── controller/         # 7 个控制器（见下方 API 清单）
+│       ├── controller/         # 8 个控制器（见下方 API 清单）
 │       ├── dto/                # LoginDTO, RegisterDTO, ResourceDTO, UpdateUserDTO
-│       ├── entity/             # User, Resource, Comment, Favorite, Banner, Category
+│       ├── entity/             # User, Resource, Comment, Favorite, Banner, Category, Follow, ResourceLike, Notification
 │       ├── interceptor/        # JwtInterceptor（JWT 校验 + 管理员权限）
 │       ├── mapper/             # MyBatis-Plus BaseMapper + 自定义 XML
-│       ├── service/            # 服务接口 + impl 实现
-│       ├── util/               # JwtUtil, Md5Util（实际是 BCrypt）, FileUploadUtil
+│       ├── service/            # 服务接口 + impl 实现（含 NotificationService）
+│       ├── task/               # CounterCalibrationTask（计数器定时校准）
+│       ├── util/               # JwtUtil, BCryptUtil, FileUploadUtil
 │       └── vo/                 # UserVO, ResourceVO, CommentVO
 └── sql/                        # 旧版 SQL 脚本（已废弃，新版在 backend/resources/db/）
 ```
@@ -136,6 +137,7 @@ mvn spring-boot:run   # 启动 → localhost:8080
 | GET | /api/comment/list/{resourceId} | 评论列表（树形） |
 | GET | /api/banner/list | 启用中的轮播图 |
 | GET | /api/category/list | 全部分类 |
+| GET | /api/form-card/current | 当前启用的推荐卡片（鸿蒙服务卡片用） |
 
 ### 需登录
 | 方法 | 路径 | 说明 |
@@ -174,6 +176,11 @@ mvn spring-boot:run   # 启动 → localhost:8080
 | PUT | /api/admin/banner/update | 更新轮播图（JSON body） |
 | DELETE | /api/admin/banner/delete/{id} | 删除轮播图 |
 | PUT | /api/admin/banner/status | 切换轮播图状态 `params: id, status` |
+| GET | /api/admin/form-card/list | 全部服务卡片 |
+| POST | /api/admin/form-card/add | 添加卡片（JSON body） |
+| PUT | /api/admin/form-card/update | 更新卡片（JSON body） |
+| DELETE | /api/admin/form-card/delete/{id} | 删除卡片 |
+| PUT | /api/admin/form-card/status | 切换卡片状态 `params: id, status` |
 
 ---
 
@@ -181,8 +188,35 @@ mvn spring-boot:run   # 启动 → localhost:8080
 
 - 库名: `neushare`
 - 初始化脚本: `neushare-backend/src/main/resources/db/init.sql`
-- 6 张表: user, resource, category, comment, favorite, banner
+- 9 张表: user, resource, category, comment, favorite, banner, form_card, resource_like, notification, follow
 - 预置 8 个用户（密码 BCrypt 加密，原始值见 init.sql）、12 个分类、14 个资源、17 条评论、12 条收藏、3 张轮播图
+
+### 新增 API（2026-06-12 安全加固）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/resource/like/check/{id} | 检查当前用户是否已点赞 |
+| GET | /api/notification/list | 通知列表分页 |
+| GET | /api/notification/unread | 未读通知数量 |
+| PUT | /api/notification/read/{id} | 标记单条已读 |
+| PUT | /api/notification/read-all | 标记全部已读 |
+
+### 重要修复（2026-06-12）
+
+- **资源删除/更新**：增加所有者校验，非上传者且非管理员不可操作
+- **点赞**：新增 `resource_like` 表记录用户点赞，防重复刷赞
+- **审核驳回**：`resource` 表增加 `reject_reason` 字段
+- **删除级联**：删除资源→清理评论/收藏/点赞；删除用户→清理全部关联
+- **搜索**：支持 `sortBy=hot|new` 排序参数
+- **通知**：审核结果、评论回复、关注、收藏、点赞均推送通知
+- **关注**：`follow` 表添加唯一约束防重复关注
+- **密码/JWT**：改用环境变量注入 `${DB_PASSWORD}`、`${JWT_SECRET}`
+- **CORS**：限制为 `localhost` 来源，不再使用通配符 `*`
+- **Md5Util**：重命名为 `BCryptUtil`（类名与实现一致）
+- **逻辑删除**：移除无效的 yml 配置（除 comment 外其他表无 `deleted` 字段）
+- **定时校准**：每日凌晨3点校准 `like_count`、`favorite_count`
+- **分类层级**：`category` 表增加 `parent_id` 支持父子分类
+- **Comment**：增加 `update_time` 字段
 
 ### JWT 拦截器公开路径
 
@@ -218,10 +252,9 @@ mvn spring-boot:run   # 启动 → localhost:8080
 
 ## 已知问题 / 注意事项
 
-- `Md5Util` 类名有误导性，实际使用 BCrypt（非 MD5）
 - `banner.js` 是公开 API 模块，但当前无组件使用它（Home.vue 也未使用轮播图）
 - Dashboard 的图表在无真实数据时使用硬编码演示数据
-- 点赞状态前端未持久化，刷新页面后 `isLiked` 重置为 false
-- 前端排序下拉框已移除（后端不支持排序参数）
+- 点赞状态需前端调用 `GET /api/resource/like/check/{id}` 获取（刷新后不再丢失）
 - 文件上传目录在 `uploads/`，通过 `file.upload.path` 配置
-- 数据库密码明文写在 `application.yml` 中
+- 鸿蒙端社区功能（CommunityService）是纯本地存储，未对接后端
+- 鸿蒙端离线缓存仍需改进（资源详情未缓存到本地 SQLite）

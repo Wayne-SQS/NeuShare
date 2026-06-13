@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
 import { ResourceService } from '../services/ResourceService';
 import { ResourceItem as ResourceItemModel } from '../models/ResourceModel';
 import { ResourceCard } from '../components/ResourceCard';
@@ -17,6 +17,9 @@ struct CategoryPage {
   @State showFilters: boolean = false;
   @State searchKeyword: string = '';
   @State sortMode: SortMode = 'default';
+  @State isLoading: boolean = false;
+  @State totalCount: number = 0;
+  @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   private categoryId: number = 1;
   private resourceService: ResourceService = ResourceService.getInstance();
 
@@ -26,17 +29,33 @@ struct CategoryPage {
       this.categoryId = params['categoryId'] as number;
       this.categoryTitle = params['categoryTitle'] as string;
     }
-    const cat = this.resourceService.getCategoryById(this.categoryId);
+    const cat = this.resourceService.getLocalCategoryById(this.categoryId);
     if (cat) {
       this.categoryDesc = cat.description;
     }
-    this.resources = this.resourceService.getResourcesByCategory(this.categoryId);
+    // 先加载本地数据
+    this.resources = this.resourceService.getLocalResourcesByCategory(this.categoryId);
     this.checkFilters();
+    // 再从后端加载
+    this.loadFromApi();
+  }
+
+  async loadFromApi(): Promise<void> {
+    this.isLoading = true;
+    try {
+      const result = await this.resourceService.fetchResourcesByCategory(this.categoryId, 1, 100);
+      this.resources = result.items;
+      this.totalCount = result.total;
+      this.checkFilters();
+    } catch (e) {
+      console.error('loadFromApi failed: ' + JSON.stringify(e));
+    }
+    this.isLoading = false;
   }
 
   checkFilters(): void {
     this.showFilters = this.resources.some(r =>
-      r.tags.some(t => t === '学科' || t === '考研' || t === '期末速成')
+      r.tags && r.tags.some(t => t === '学科' || t === '考研' || t === '期末速成')
     );
     if (this.showFilters && !this.filterTag) {
       this.filterTag = '学科';
@@ -47,14 +66,14 @@ struct CategoryPage {
     let result = this.resources;
     // Tag filter
     if (this.filterTag) {
-      result = result.filter(r => r.tags.includes(this.filterTag));
+      result = result.filter(r => r.tags && r.tags.includes(this.filterTag));
     }
     // Search
     if (this.searchKeyword.trim()) {
       const kw = this.searchKeyword.toLowerCase().trim();
       result = result.filter(r =>
         r.title.toLowerCase().includes(kw) ||
-        r.tags.some(t => t.toLowerCase().includes(kw)) ||
+        (r.tags && r.tags.some(t => t.toLowerCase().includes(kw))) ||
         r.description.toLowerCase().includes(kw) ||
         r.author.toLowerCase().includes(kw)
       );
@@ -165,9 +184,9 @@ struct CategoryPage {
         }
         .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       } else {
-        List() {
+        Grid() {
           ForEach(this.getFilteredResources(), (item: ResourceItemModel) => {
-            ListItem() {
+            GridItem() {
               ResourceCard({
                 resource: item,
                 onTap: () => {
@@ -177,7 +196,10 @@ struct CategoryPage {
             }
           })
         }
-        .layoutWeight(1).divider({ strokeWidth: 0 })
+        .columnsTemplate(new BpType<string>({ sm: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr')
+        .rowsGap(4)
+        .columnsGap(4)
+        .layoutWeight(1)
         .margin({ top: 4 })
       }
     }

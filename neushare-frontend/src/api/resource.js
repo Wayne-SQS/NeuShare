@@ -23,20 +23,21 @@ export function getHotResources(limit = 6) {
   })
 }
 
-export function searchResources(keyword) {
+export function searchResources(keyword, sortBy = 'new') {
   return request({
     url: '/resource/search',
     method: 'get',
-    params: { keyword }
+    params: { keyword, sortBy }
   })
 }
 
-export function createResource(data) {
+export function createResource(data, onProgress) {
   return request({
     url: '/resource/create',
     method: 'post',
     data,
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: onProgress
   })
 }
 
@@ -74,6 +75,13 @@ export function unlikeResource(id) {
   return request({
     url: `/resource/like/${id}`,
     method: 'delete'
+  })
+}
+
+export function checkLiked(id) {
+  return request({
+    url: `/resource/like/check/${id}`,
+    method: 'get'
   })
 }
 

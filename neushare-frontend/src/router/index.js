@@ -39,6 +39,12 @@ const routes = [
     meta: { title: '上传资料', requiresAuth: true }
   },
   {
+    path: '/upload/:id',
+    name: 'EditUpload',
+    component: () => import('@/views/Upload.vue'),
+    meta: { title: '编辑资料', requiresAuth: true }
+  },
+  {
     path: '/profile',
     component: () => import('@/views/profile/Layout.vue'),
     meta: { requiresAuth: true },
@@ -87,6 +93,12 @@ const routes = [
         name: 'BannerManage',
         component: () => import('@/views/admin/BannerManage.vue'),
         meta: { title: '轮播配置' }
+      },
+      {
+        path: 'cards',
+        name: 'FormCardManage',
+        component: () => import('@/views/admin/FormCardManage.vue'),
+        meta: { title: '卡片管理' }
       },
       {
         path: 'dashboard',

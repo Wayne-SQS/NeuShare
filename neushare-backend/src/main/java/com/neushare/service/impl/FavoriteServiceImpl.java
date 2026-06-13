@@ -6,10 +6,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.neushare.entity.Favorite;
 import com.neushare.entity.Resource;
+import com.neushare.entity.User;
 import com.neushare.exception.BusinessException;
 import com.neushare.mapper.FavoriteMapper;
 import com.neushare.service.FavoriteService;
+import com.neushare.service.NotificationService;
 import com.neushare.service.ResourceService;
+import com.neushare.service.UserService;
 import com.neushare.vo.ResourceVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,12 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
 
     @Autowired
     private ResourceService resourceService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     @Transactional
@@ -48,6 +57,13 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> i
         favorite.setResourceId(resourceId);
         favorite.setCreateTime(LocalDateTime.now());
         save(favorite);
+        // 通知资源上传者（如果收藏者不是上传者本人）
+        if (!resource.getUploadUserId().equals(userId)) {
+            User favUser = userService.getById(userId);
+            String favName = favUser != null ? favUser.getNickname() : "有人";
+            notificationService.send(resource.getUploadUserId(), "favorite", resourceId, userId,
+                    "有人收藏了你的资源", favName + " 收藏了你的资源「" + resource.getTitle() + "」。");
+        }
         // 原子更新收藏数
         resourceService.update(new LambdaUpdateWrapper<Resource>()
                 .eq(Resource::getId, resourceId)

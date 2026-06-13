@@ -2,7 +2,10 @@ package com.neushare.util;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-public class Md5Util {
+/**
+ * BCrypt 密码工具类（原 Md5Util，已重命名）
+ */
+public class BCryptUtil {
 
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 

@@ -28,7 +28,7 @@ export struct CategoryCard {
         .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
         .margin({ top: 4 }).textAlign(TextAlign.Center).lineHeight(15)
     }
-    .width('46%')
+    .width('100%')
     .padding({ top: 18, bottom: 16, left: 10, right: 10 })
     .backgroundColor('#FCFCFC')
     .borderRadius(18)

@@ -10,3 +10,14 @@
 /.clang-tidy
 **/.test
 /.appanalyzer
+
+# Maven build output
+neushare-backend/target/
+
+# Claude internal
+.agents/
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db

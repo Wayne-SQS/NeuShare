@@ -8,6 +8,7 @@ import com.neushare.entity.User;
 import com.neushare.exception.BusinessException;
 import com.neushare.mapper.FollowMapper;
 import com.neushare.service.FollowService;
+import com.neushare.service.NotificationService;
 import com.neushare.service.UserService;
 import com.neushare.vo.UserVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     @Transactional
@@ -44,6 +48,11 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         follow.setFollowedId(followedId);
         follow.setCreateTime(LocalDateTime.now());
         save(follow);
+        // 通知被关注者
+        User followerUser = userService.getById(followerId);
+        String followerName = followerUser != null ? followerUser.getNickname() : "有人";
+        notificationService.send(followedId, "follow", null, followerId,
+                "有人关注了你", followerName + " 关注了你。");
     }
 
     @Override

@@ -17,8 +17,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/neushare?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: SQS626070
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:SQS626070}
   servlet:
     multipart:
       max-file-size: 100MB
@@ -34,13 +34,10 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
   mapper-locations: classpath:mapper/*.xml
 
 jwt:
-  secret: neushare2024secretkeyforjwttoken123456789
+  secret: ${JWT_SECRET:neushare2024secretkeyforjwttoken123456789}
   expiration: 86400000
 
 file:

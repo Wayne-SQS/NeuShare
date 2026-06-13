@@ -21,6 +21,10 @@ public class Category implements Serializable {
     @TableField("name")
     private String name;
 
+    /** 父分类ID，0或null表示一级分类 */
+    @TableField("parent_id")
+    private Long parentId;
+
     @TableField("sort")
     private Integer sort;
 

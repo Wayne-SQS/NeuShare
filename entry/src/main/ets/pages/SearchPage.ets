@@ -1,7 +1,8 @@
 import router from '@ohos.router';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
 import { ResourceService, TagCount } from '../services/ResourceService';
 import { ResourceItem as ResourceItemModel } from '../models/ResourceModel';
+import { ArrayDataSource } from '../models/ArrayDataSource';
 import { ResourceCard } from '../components/ResourceCard';
 
 type SortMode = 'default' | 'name' | 'rating' | 'date';
@@ -11,34 +12,48 @@ type SortMode = 'default' | 'name' | 'rating' | 'date';
 struct SearchPage {
   @State keyword: string = '';
   @State results: ResourceItemModel[] = [];
+  private resultsDataSource: ArrayDataSource<ResourceItemModel> = new ArrayDataSource();
   @State popularTags: TagCount[] = [];
   @State sortMode: SortMode = 'default';
+  @State isSearching: boolean = false;
+  @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   private resourceService: ResourceService = ResourceService.getInstance();
 
   aboutToAppear(): void {
-    this.popularTags = this.resourceService.getAllTags();
+    this.popularTags = this.resourceService.getLocalAllTags();
+    // 优先从 router 参数读取（页面内跳转），fallback 从 AppStorage 读取（意图框架/小艺）
     const params = router.getParams() as Record<string, Object>;
-    if (params && params['keyword']) {
-      const kw = params['keyword'] as string;
+    const kw = (params && params['keyword']) ? params['keyword'] as string :
+      AppStorage.get<string>('searchKeyword') || '';
+    // 清除 AppStorage 中的关键词，避免重复消费
+    AppStorage.setOrCreate('searchKeyword', '');
+    if (kw) {
       this.keyword = kw;
-      this.results = this.resourceService.searchResources(kw);
+      this.doSearch(kw);
     }
   }
 
-  searchByTag(tag: string): void {
+  async searchByTag(tag: string): Promise<void> {
     this.keyword = tag;
-    this.results = this.resourceService.searchResources(tag);
     this.sortMode = 'default';
+    await this.doSearch(tag);
   }
 
-  onSearch(value: string): void {
+  async onSearch(value: string): Promise<void> {
     this.keyword = value;
     if (!value.trim()) {
       this.results = [];
       this.sortMode = 'default';
     } else {
-      this.results = this.resourceService.searchResources(value);
+      await this.doSearch(value);
     }
+  }
+
+  async doSearch(kw: string): Promise<void> {
+    this.isSearching = true;
+    this.results = await this.resourceService.searchResources(kw);
+    this.resultsDataSource.replaceAll(this.getSortedResults());
+    this.isSearching = false;
   }
 
   getSortedResults(): ResourceItemModel[] {
@@ -50,6 +65,10 @@ struct SearchPage {
       return [...this.results].sort((a, b) => b.publishDate.localeCompare(a.publishDate));
     }
     return this.results;
+  }
+
+  applySort(): void {
+    this.resultsDataSource.replaceAll(this.getSortedResults());
   }
 
   build() {
@@ -137,19 +156,19 @@ struct SearchPage {
             // Sort chips
             Row() {
               SortChip({ label: '默认', active: this.sortMode === 'default',
-                onSort: () => { this.sortMode = 'default'; } })
+                onSort: () => { this.sortMode = 'default'; this.applySort(); } })
               SortChip({ label: '按名称', active: this.sortMode === 'name',
-                onSort: () => { this.sortMode = 'name'; } })
+                onSort: () => { this.sortMode = 'name'; this.applySort(); } })
               SortChip({ label: '按评分', active: this.sortMode === 'rating',
-                onSort: () => { this.sortMode = 'rating'; } })
+                onSort: () => { this.sortMode = 'rating'; this.applySort(); } })
               SortChip({ label: '按时间', active: this.sortMode === 'date',
-                onSort: () => { this.sortMode = 'date'; } })
+                onSort: () => { this.sortMode = 'date'; this.applySort(); } })
             }
             .width('100%').padding({ left: 16, right: 16, bottom: 8 })
 
-            List() {
-              ForEach(this.getSortedResults(), (item: ResourceItemModel) => {
-                ListItem() {
+            Grid() {
+              LazyForEach(this.resultsDataSource, (item: ResourceItemModel) => {
+                GridItem() {
                   ResourceCard({
                     resource: item,
                     onTap: () => {
@@ -159,8 +178,10 @@ struct SearchPage {
                 }
               }, (item: ResourceItemModel) => item.id.toString())
             }
+            .columnsTemplate(new BpType<string>({ sm: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr')
+            .rowsGap(4)
+            .columnsGap(4)
             .layoutWeight(1)
-            .divider({ strokeWidth: 0.5, color: ColorTokens.DIVIDER, startMargin: 76, endMargin: 16 })
           }
 
           Column().height(40)

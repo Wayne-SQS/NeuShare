@@ -109,12 +109,7 @@ export struct ModelCompare {
                       .width(100).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                     Row()
                       .width((m.overall / 100) * 120).height(10).borderRadius(5)
-                      .linearGradient({
-                        direction: GradientDirection.Right,
-                        colors: i < 3
-                          ? [[ColorTokens.ACCENT, 0], [ColorTokens.ACCENT + '80', 1]]
-                          : [[ColorTokens.PRIMARY + '60', 0], [ColorTokens.PRIMARY + '30', 1]]
-                      })
+                      .backgroundColor(i < 3 ? ColorTokens.PRIMARY : ColorTokens.BG_INPUT)
                       .margin({ left: 8 })
                     Text(m.overall.toString()).fontSize(11).fontWeight(FontWeight.Bold)
                       .fontColor(i < 3 ? ColorTokens.ACCENT : ColorTokens.TEXT_SECONDARY)
@@ -167,7 +162,7 @@ export struct ModelCompare {
 
               // Dimension bars
               Row() {
-                this.dimBar('综合', model.overall, '#2C3E6B', 0.45)
+                this.dimBar('综合', model.overall, ColorTokens.PRIMARY, 0.45)
                 this.dimBar('编程', model.coding, '#3A8C6E', 0.45)
               }.width('100%').margin({ top: 8 })
               Row() {

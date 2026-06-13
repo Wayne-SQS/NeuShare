@@ -49,8 +49,20 @@ public class Comment implements Serializable {
     private Long parentId;
 
     /**
+     * 是否已删除 0-正常 1-已删除
+     */
+    @TableField("deleted")
+    private Integer deleted;
+
+    /**
      * 创建时间
      */
     @TableField("create_time")
     private LocalDateTime createTime;
+
+    /**
+     * 更新时间
+     */
+    @TableField("update_time")
+    private LocalDateTime updateTime;
 }

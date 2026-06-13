@@ -31,12 +31,12 @@ public interface ResourceService extends IService<Resource> {
     /**
      * 更新资源
      */
-    void updateResource(ResourceDTO resourceDTO);
+    void updateResource(ResourceDTO resourceDTO, Long userId, String role);
 
     /**
      * 删除资源
      */
-    void deleteResource(Long id);
+    void deleteResource(Long id, Long userId, String role);
 
     /**
      * 获取热门资源
@@ -51,7 +51,7 @@ public interface ResourceService extends IService<Resource> {
     /**
      * 审核资源
      */
-    void auditResource(Long id, Integer status);
+    void auditResource(Long id, Integer status, String rejectReason);
 
     /**
      * 获取用户上传的资源
@@ -72,4 +72,24 @@ public interface ResourceService extends IService<Resource> {
      * 减少点赞数
      */
     void decrementLikeCount(Long id);
+
+    /**
+     * 点赞（记录用户+防刷）
+     */
+    void likeResource(Long resourceId, Long userId);
+
+    /**
+     * 取消点赞
+     */
+    void unlikeResource(Long resourceId, Long userId);
+
+    /**
+     * 检查用户是否已点赞
+     */
+    boolean isLiked(Long resourceId, Long userId);
+
+    /**
+     * 搜索资源（支持排序）
+     */
+    IPage<ResourceVO> searchResources(Integer pageNum, Integer pageSize, String keyword, String sortBy);
 }

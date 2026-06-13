@@ -8,13 +8,13 @@ import com.neushare.dto.UpdateUserDTO;
 import com.neushare.entity.User;
 import com.neushare.service.UserService;
 import com.neushare.util.JwtUtil;
-import com.neushare.util.Md5Util;
+import com.neushare.util.BCryptUtil;
 import com.neushare.vo.UserVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -102,11 +102,11 @@ public class AuthController {
             return Result.error("用户不存在");
         }
         // 验证旧密码
-        if (!Md5Util.verify(oldPassword, user.getPassword())) {
+        if (!BCryptUtil.verify(oldPassword, user.getPassword())) {
             return Result.error("旧密码错误");
         }
         // 更新密码
-        user.setPassword(Md5Util.encrypt(newPassword));
+        user.setPassword(BCryptUtil.encrypt(newPassword));
         userService.updateById(user);
         return Result.success("密码修改成功");
     }

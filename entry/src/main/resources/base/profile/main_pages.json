@@ -1,6 +1,8 @@
 {
   "src": [
     "pages/SplashPage",
+    "pages/LoginPage",
+    "pages/RegisterPage",
     "pages/IdentityCardPage",
     "pages/PostgradGuidePage",
     "pages/CommunityPage",
@@ -10,6 +12,11 @@
     "pages/DetailPage",
     "pages/SearchPage",
     "pages/ProfilePage",
-    "pages/ModelComparePage"
+    "pages/EditProfilePage",
+    "pages/UserProfilePage",
+    "pages/ModelComparePage",
+    "pages/UploadPage",
+    "pages/MyResourcesPage",
+    "pages/WebViewPage"
   ]
 }

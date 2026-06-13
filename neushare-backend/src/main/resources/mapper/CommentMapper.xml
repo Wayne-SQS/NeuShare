@@ -8,6 +8,7 @@
         <result column="user_id" property="userId"/>
         <result column="content" property="content"/>
         <result column="parent_id" property="parentId"/>
+        <result column="deleted" property="deleted"/>
         <result column="create_time" property="createTime"/>
         <result column="username" property="username"/>
         <result column="nickname" property="nickname"/>

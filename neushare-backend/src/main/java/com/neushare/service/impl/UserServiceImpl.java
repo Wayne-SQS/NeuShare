@@ -6,17 +6,21 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.neushare.dto.LoginDTO;
 import com.neushare.dto.RegisterDTO;
-import com.neushare.entity.User;
+import com.neushare.entity.*;
 import com.neushare.exception.BusinessException;
-import com.neushare.mapper.UserMapper;
+import com.neushare.mapper.*;
+import com.neushare.service.ResourceService;
 import com.neushare.service.UserService;
 import com.neushare.util.JwtUtil;
-import com.neushare.util.Md5Util;
+import com.neushare.util.BCryptUtil;
+import com.neushare.vo.ResourceVO;
 import com.neushare.vo.UserVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 用户服务实现类
@@ -27,10 +31,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private ResourceService resourceService;
+
+    @Autowired
+    private CommentMapper commentMapper;
+
+    @Autowired
+    private FavoriteMapper favoriteMapper;
+
+    @Autowired
+    private FollowMapper followMapper;
+
+    @Autowired
+    private ResourceLikeMapper resourceLikeMapper;
+
+    @Autowired
+    private ResourceMapper resourceMapper;
+
     @Override
     public User login(LoginDTO loginDTO) {
         User user = getByUsername(loginDTO.getUsername());
-        if (user == null || !Md5Util.verify(loginDTO.getPassword(), user.getPassword())) {
+        if (user == null || !BCryptUtil.verify(loginDTO.getPassword(), user.getPassword())) {
             throw new BusinessException("用户名或密码错误");
         }
         if (user.getStatus() == 0) {
@@ -49,7 +71,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 创建用户
         User user = new User();
         user.setUsername(registerDTO.getUsername());
-        user.setPassword(Md5Util.encrypt(registerDTO.getPassword()));
+        user.setPassword(BCryptUtil.encrypt(registerDTO.getPassword()));
         user.setNickname(registerDTO.getNickname() != null ? registerDTO.getNickname() : registerDTO.getUsername());
         user.setAvatarUrl(registerDTO.getAvatarUrl());
         user.setCollege(registerDTO.getCollege());
@@ -87,5 +109,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .eq(User::getId, id)
                 .set(User::getStatus, status)
                 .set(User::getUpdateTime, LocalDateTime.now()));
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserCascade(Long id) {
+        User user = getById(id);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        // 1. 删除用户的所有资源（每个资源级联删除其评论、收藏、点赞）
+        List<Resource> resources = resourceMapper.selectList(
+                new LambdaQueryWrapper<Resource>().eq(Resource::getUploadUserId, id));
+        for (Resource resource : resources) {
+            // 级联删除评论、收藏、点赞
+            commentMapper.delete(new LambdaQueryWrapper<Comment>().eq(Comment::getResourceId, resource.getId()));
+            favoriteMapper.delete(new LambdaQueryWrapper<Favorite>().eq(Favorite::getResourceId, resource.getId()));
+            resourceLikeMapper.delete(new LambdaQueryWrapper<ResourceLike>().eq(ResourceLike::getResourceId, resource.getId()));
+            resourceMapper.deleteById(resource.getId());
+        }
+        // 2. 删除用户的所有评论
+        commentMapper.delete(new LambdaQueryWrapper<Comment>().eq(Comment::getUserId, id));
+        // 3. 删除用户的所有收藏
+        favoriteMapper.delete(new LambdaQueryWrapper<Favorite>().eq(Favorite::getUserId, id));
+        // 4. 删除用户的所有关注关系
+        followMapper.delete(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowerId, id)
+                .or().eq(Follow::getFollowedId, id));
+        // 5. 删除用户的所有点赞
+        resourceLikeMapper.delete(new LambdaQueryWrapper<ResourceLike>().eq(ResourceLike::getUserId, id));
+        // 6. 删除用户
+        removeById(id);
     }
 }

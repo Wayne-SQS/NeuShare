@@ -71,6 +71,11 @@
             </el-upload>
           </el-form-item>
 
+          <!-- 上传进度 -->
+          <el-form-item v-if="uploadProgress > 0 && uploadProgress < 100" label="上传进度">
+            <el-progress :percentage="uploadProgress" :stroke-width="16" :text-inside="true" />
+          </el-form-item>
+
           <el-form-item>
             <el-button type="primary" :loading="submitting" @click="handleSubmit">
               {{ isEdit ? '保存修改' : '提交上传' }}
@@ -97,6 +102,7 @@ const uploadRef = ref(null)
 const submitting = ref(false)
 const categories = ref([])
 const fileList = ref([])
+const uploadProgress = ref(0)
 
 const isEdit = computed(() => !!route.params.id)
 
@@ -183,7 +189,11 @@ const handleSubmit = async () => {
       if (uploadForm.file) {
         formData.append('file', uploadForm.file)
       }
-      await createResource(formData)
+      uploadProgress.value = 0
+      await createResource(formData, (progressEvent) => {
+        uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+      })
+      uploadProgress.value = 100
       ElMessage.success('上传成功，等待审核')
     }
     router.push('/profile/resources')

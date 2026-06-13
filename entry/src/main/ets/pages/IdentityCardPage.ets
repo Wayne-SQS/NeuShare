@@ -54,26 +54,23 @@ struct IdentityCardPage {
       console.error('IdentityCardPage save failed: ' + JSON.stringify(e));
     }
 
-    router.replaceUrl({ url: 'pages/Index' });
+    try {
+      router.replaceUrl({ url: 'pages/Index' });
+    } catch (e) {}
   }
 
   skipRegistration(): void {
-    router.replaceUrl({ url: 'pages/Index' });
+    try {
+      router.replaceUrl({ url: 'pages/Index' });
+    } catch (e) {}
   }
 
   build() {
     Column() {
-      // Top gradient band
+      // Top band
       Column()
-        .width('100%').height(160)
-        .linearGradient({
-          direction: GradientDirection.Bottom,
-          colors: [
-            [ColorTokens.PRIMARY, 0],
-            [ColorTokens.PRIMARY + 'D0', 0.5],
-            [ColorTokens.BG_PAGE, 1]
-          ]
-        })
+        .width('100%').height(120)
+        .backgroundColor(ColorTokens.PRIMARY)
 
       Scroll() {
         Column() {

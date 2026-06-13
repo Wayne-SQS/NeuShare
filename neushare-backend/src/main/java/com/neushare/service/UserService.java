@@ -35,4 +35,9 @@ public interface UserService extends IService<User> {
      * 更新用户状态
      */
     void updateStatus(Long id, Integer status);
+
+    /**
+     * 级联删除用户（资源、评论、收藏、关注、点赞）
+     */
+    void deleteUserCascade(Long id);
 }

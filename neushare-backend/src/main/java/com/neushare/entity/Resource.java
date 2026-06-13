@@ -73,6 +73,12 @@ public class Resource implements Serializable {
     private Integer status;
 
     /**
+     * 审核驳回原因
+     */
+    @TableField("reject_reason")
+    private String rejectReason;
+
+    /**
      * 浏览次数
      */
     @TableField("view_count")

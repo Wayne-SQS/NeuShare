@@ -6,61 +6,45 @@ export struct CourseRecommendCard {
   @Prop courseName: string = '';
   @Prop courseEmoji: string = '📖';
   @Prop courseDesc: string = '';
-  @Prop categoryId: number = 1;
-  @Prop categoryTitle: string = '';
+  @Prop searchKeyword: string = '';
   @State pressed: boolean = false;
 
   build() {
     Row() {
-      // Emoji badge
       Stack({ alignContent: Alignment.Center }) {
         Column()
           .width(44).height(44).borderRadius(14)
-          .backgroundColor(ColorTokens.PRIMARY_LIGHT)
-        Text(this.courseEmoji)
-          .fontSize(22)
+          .backgroundColor('#FF5A5F18')
+        Text(this.courseEmoji).fontSize(22)
       }
 
-      // Text
       Column() {
         Text(this.courseName)
-          .fontSize(15).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.TEXT_PRIMARY)
+          .fontSize(15).fontWeight(FontWeight.Bolder).fontColor('#000000')
           .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(this.courseDesc)
-          .fontSize(11).fontColor(ColorTokens.TEXT_HINT)
+          .fontSize(11).fontColor('#888888')
           .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
           .margin({ top: 2 })
       }
       .layoutWeight(1).margin({ left: 12 })
 
-      Text('查看 ›')
-        .fontSize(12).fontColor(ColorTokens.ACCENT)
-        .fontWeight(FontWeight.Medium)
+      Text('查看 ›').fontSize(12).fontColor('#FF5A5F').fontWeight(FontWeight.Bold)
     }
-    .width('100%').padding(14)
-    .backgroundColor('#FCFCFC')
-    .borderRadius(14)
-    .shadow({ radius: 6, color: '#0A000000', offsetX: 0, offsetY: 2 })
-    .border({ width: 1, color: '#06000000', radius: 14 })
-    .margin({ left: 16, right: 16, top: 4, bottom: 4 })
+    .width('100%').padding(14).backgroundColor('#FFFFFF')
+    .borderRadius(14).margin({ left: 16, right: 16, top: 4, bottom: 4 })
+    .border({ width: 1, color: '#F0F0F0', radius: 14 })
     .scale({ x: this.pressed ? 0.97 : 1, y: this.pressed ? 0.97 : 1 })
     .animation({ curve: Curve.FastOutSlowIn, duration: 120 })
     .onClick(() => {
       router.pushUrl({
-        url: 'pages/CategoryPage',
-        params: {
-          categoryId: this.categoryId,
-          categoryTitle: this.categoryTitle || this.courseName
-        }
+        url: 'pages/SearchPage',
+        params: { keyword: this.searchKeyword || this.courseName }
       });
     })
     .onTouch((event: TouchEvent) => {
-      if (event.type === TouchType.Down) {
-        this.pressed = true;
-      } else {
-        this.pressed = false;
-      }
+      if (event.type === TouchType.Down) { this.pressed = true; }
+      else { this.pressed = false; }
     })
   }
 }

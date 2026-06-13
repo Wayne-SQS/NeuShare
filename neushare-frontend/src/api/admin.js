@@ -105,3 +105,43 @@ export function updateBannerStatus(id, status) {
     params: { id, status }
   })
 }
+
+// ==================== 服务卡片管理 ====================
+
+export function getFormCardList() {
+  return request({
+    url: '/admin/form-card/list',
+    method: 'get'
+  })
+}
+
+export function addFormCard(data) {
+  return request({
+    url: '/admin/form-card/add',
+    method: 'post',
+    data
+  })
+}
+
+export function updateFormCard(data) {
+  return request({
+    url: '/admin/form-card/update',
+    method: 'put',
+    data
+  })
+}
+
+export function deleteFormCard(id) {
+  return request({
+    url: `/admin/form-card/delete/${id}`,
+    method: 'delete'
+  })
+}
+
+export function updateFormCardStatus(id, status) {
+  return request({
+    url: '/admin/form-card/status',
+    method: 'put',
+    params: { id, status }
+  })
+}

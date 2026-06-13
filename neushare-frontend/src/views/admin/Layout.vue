@@ -26,6 +26,10 @@
             <el-icon><Picture /></el-icon>
             <span>轮播配置</span>
           </el-menu-item>
+          <el-menu-item index="/admin/cards">
+            <el-icon><Postcard /></el-icon>
+            <span>卡片管理</span>
+          </el-menu-item>
         </el-menu>
       </aside>
       <main class="admin-content">

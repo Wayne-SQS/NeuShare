@@ -88,13 +88,7 @@ struct PostgradGuidePage {
           Stack({ alignContent: Alignment.Start }) {
             Column()
               .width('100%').height(100)
-              .linearGradient({
-                direction: GradientDirection.Right,
-                colors: [
-                  ['#2C3E6B', 0],
-                  ['#4A6594', 1]
-                ]
-              })
+              .backgroundColor('#1A1A1A')
               .borderRadius(16)
             Row() {
               Text('🎓').fontSize(36)

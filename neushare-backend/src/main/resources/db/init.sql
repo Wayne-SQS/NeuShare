@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS `resource` (
     `cover_url` VARCHAR(255) COMMENT '封面URL',
     `upload_user_id` BIGINT NOT NULL COMMENT '上传者ID',
     `status` INT DEFAULT 0 COMMENT '0-待审核 1-已发布 2-已拒绝',
+    `reject_reason` VARCHAR(500) COMMENT '审核驳回原因',
     `view_count` INT DEFAULT 0 COMMENT '浏览数',
     `like_count` INT DEFAULT 0 COMMENT '点赞数',
     `favorite_count` INT DEFAULT 0 COMMENT '收藏数',
@@ -52,7 +53,9 @@ CREATE TABLE IF NOT EXISTS `comment` (
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
     `content` TEXT NOT NULL COMMENT '内容',
     `parent_id` BIGINT DEFAULT 0 COMMENT '父评论ID(0=一级)',
+    `deleted` TINYINT DEFAULT 0 COMMENT '0-正常 1-已删除',
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_resource_id` (`resource_id`),
     KEY `idx_user_id` (`user_id`)
@@ -81,10 +84,61 @@ CREATE TABLE IF NOT EXISTS `banner` (
 CREATE TABLE IF NOT EXISTS `category` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NOT NULL,
+    `parent_id` BIGINT DEFAULT 0 COMMENT '父分类ID(0=一级分类)',
     `sort` INT DEFAULT 0,
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    KEY `idx_parent_id` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分类表';
+
+CREATE TABLE IF NOT EXISTS `form_card` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '卡片ID',
+    `title` VARCHAR(200) NOT NULL COMMENT '卡片展示标题',
+    `resource_type` VARCHAR(20) DEFAULT 'book' COMMENT '资源类型 video/book/software/tutorial',
+    `resource_id` BIGINT DEFAULT NULL COMMENT '关联资源ID',
+    `content_url` VARCHAR(500) DEFAULT NULL COMMENT '资源内容URL',
+    `sort_order` INT DEFAULT 0 COMMENT '排序(越小越靠前)',
+    `status` INT DEFAULT 1 COMMENT '0-禁用 1-启用',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务卡片推荐表';
+
+CREATE TABLE IF NOT EXISTS `resource_like` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '点赞记录ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `resource_id` BIGINT NOT NULL COMMENT '资源ID',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_resource` (`user_id`, `resource_id`),
+    KEY `idx_resource_id` (`resource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='点赞记录表';
+
+CREATE TABLE IF NOT EXISTS `notification` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '通知ID',
+    `user_id` BIGINT NOT NULL COMMENT '接收用户ID',
+    `type` VARCHAR(20) NOT NULL COMMENT 'audit/comment/follow/like/favorite',
+    `resource_id` BIGINT COMMENT '关联资源ID',
+    `from_user_id` BIGINT COMMENT '触发用户ID',
+    `title` VARCHAR(200) COMMENT '通知标题',
+    `content` VARCHAR(500) COMMENT '通知内容',
+    `is_read` INT DEFAULT 0 COMMENT '0-未读 1-已读',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_is_read` (`user_id`, `is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知表';
+
+CREATE TABLE IF NOT EXISTS `follow` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '关注ID',
+    `follower_id` BIGINT NOT NULL COMMENT '关注者ID',
+    `followed_id` BIGINT NOT NULL COMMENT '被关注者ID',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_follow` (`follower_id`, `followed_id`),
+    KEY `idx_follower_id` (`follower_id`),
+    KEY `idx_followed_id` (`followed_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='关注表';
 
 -- ==================== 用户数据（密码均为 123456） ====================
 INSERT INTO `user` (`id`, `username`, `password`, `role`, `nickname`, `college`, `grade`, `status`) VALUES
@@ -179,3 +233,9 @@ INSERT INTO `banner` (`id`, `title`, `image_url`, `link_url`, `sort`, `status`) 
 (1, '欢迎使用NeuShare学习资料共享平台',   'https://picsum.photos/1200/400?random=1', '/resource',     1, 1),
 (2, '期末复习资料专区-助你轻松备考',      'https://picsum.photos/1200/400?random=2', '/resource',     2, 1),
 (3, '上传优质资源-赢取社区积分',           'https://picsum.photos/1200/400?random=3', '/upload',       3, 1);
+
+-- ==================== 服务卡片数据 ====================
+INSERT INTO `form_card` (`id`, `title`, `resource_type`, `resource_id`, `content_url`, `sort_order`, `status`) VALUES
+(1, '数据结构与算法课件合集', 'book',    2,  'https://example.com/files/dsa-slides.zip',         1, 1),
+(2, 'Python数据分析入门教程', 'video',   9,  'https://example.com/files/python-data.mp4',         2, 1),
+(3, 'C语言-学生管理系统源码', 'software', 8, 'https://example.com/files/student-mgmt-c.zip',      3, 0);

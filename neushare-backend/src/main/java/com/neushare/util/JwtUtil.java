@@ -2,14 +2,16 @@ package com.neushare.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
- * JWT工具类
+ * JWT工具类 (jjwt 0.13.0)
  */
 @Component
 public class JwtUtil {
@@ -20,6 +22,10 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private Long expiration;
 
+    private SecretKey getKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
     /**
      * 生成JWT Token
      */
@@ -28,46 +34,45 @@ public class JwtUtil {
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))
+                .subject(String.valueOf(userId))
                 .claim("username", username)
                 .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getKey())
                 .compact();
+    }
+
+    /**
+     * 解析Token Claims
+     */
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**
      * 从Token中获取用户ID
      */
     public Long getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secret)
-                .parseClaimsJws(token)
-                .getBody();
-        return Long.parseLong(claims.getSubject());
+        return Long.parseLong(getClaims(token).getSubject());
     }
 
     /**
      * 从Token中获取用户名
      */
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secret)
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.get("username", String.class);
+        return getClaims(token).get("username", String.class);
     }
 
     /**
      * 从Token中获取角色
      */
     public String getRoleFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secret)
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.get("role", String.class);
+        return getClaims(token).get("role", String.class);
     }
 
     /**
@@ -75,7 +80,7 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
+            getClaims(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -87,11 +92,7 @@ public class JwtUtil {
      */
     public boolean isTokenExpired(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(secret)
-                    .parseClaimsJws(token)
-                    .getBody();
-            return claims.getExpiration().before(new Date());
+            return getClaims(token).getExpiration().before(new Date());
         } catch (Exception e) {
             return true;
         }

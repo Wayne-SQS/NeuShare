@@ -80,30 +80,40 @@
 
         <div class="comment-list">
           <div v-for="comment in comments" :key="comment.id" class="comment-item">
-            <div class="comment-avatar">
+            <div class="comment-avatar" v-if="!comment.deleted">
               <el-avatar :size="40" :src="comment.avatarUrl">
                 {{ getInitial(comment.nickname) }}
               </el-avatar>
             </div>
             <div class="comment-content">
-              <div class="comment-header">
-                <span class="username">{{ comment.nickname }}</span>
-                <span class="time">{{ formatTime(comment.createTime) }}</span>
-              </div>
-              <div class="comment-text">{{ comment.content }}</div>
+              <template v-if="comment.deleted">
+                <div class="comment-deleted">该评论已被删除</div>
+              </template>
+              <template v-else>
+                <div class="comment-header">
+                  <span class="username">{{ comment.nickname }}</span>
+                  <span class="time">{{ formatTime(comment.createTime) }}</span>
+                </div>
+                <div class="comment-text">{{ comment.content }}</div>
+              </template>
               <div class="comment-replies" v-if="comment.children && comment.children.length > 0">
                 <div v-for="reply in comment.children" :key="reply.id" class="reply-item">
-                  <el-avatar :size="28" :src="reply.avatarUrl">
+                  <el-avatar :size="28" :src="reply.avatarUrl" v-if="!reply.deleted">
                     {{ getInitial(reply.nickname) }}
                   </el-avatar>
                   <div class="reply-content">
-                    <span class="reply-nickname">{{ reply.nickname }}</span>
-                    <span class="reply-text">{{ reply.content }}</span>
-                    <span class="reply-time">{{ formatTime(reply.createTime) }}</span>
+                    <template v-if="reply.deleted">
+                      <span class="reply-deleted">该评论已被删除</span>
+                    </template>
+                    <template v-else>
+                      <span class="reply-nickname">{{ reply.nickname }}</span>
+                      <span class="reply-text">{{ reply.content }}</span>
+                      <span class="reply-time">{{ formatTime(reply.createTime) }}</span>
+                    </template>
                   </div>
                 </div>
               </div>
-              <div class="comment-actions" v-if="userStore.isLoggedIn">
+              <div class="comment-actions" v-if="userStore.isLoggedIn && !comment.deleted">
                 <el-button type="primary" link size="small" @click="handleReply(comment)">回复</el-button>
               </div>
             </div>
@@ -455,6 +465,18 @@ onMounted(async () => {
   color: var(--text-secondary);
   line-height: 1.6;
   font-size: 14px;
+}
+
+.comment-deleted {
+  color: #C0C4CC;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.reply-deleted {
+  color: #C0C4CC;
+  font-style: italic;
+  font-size: 13px;
 }
 
 .comment-replies {

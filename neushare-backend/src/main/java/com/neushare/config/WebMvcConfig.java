@@ -32,6 +32,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/banner/list",
                         "/api/comment/list/**",
                         "/api/category/list",
+                        "/api/form-card/current",
                         "/api/user/**",
                         "/error"
                 );

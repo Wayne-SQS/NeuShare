@@ -8,7 +8,7 @@ export struct SearchTab {
     Column() {
       SearchBar({
         placeholder: '搜索资源、标签、作者...',
-        onSearch: () => { router.pushUrl({ url: 'pages/SearchPage' }); }
+        onSearch: (keyword: string) => { router.pushUrl({ url: 'pages/SearchPage', params: { keyword: keyword } }); }
       }).margin({ top: 8, left: 16, right: 16 })
 
       Column() {

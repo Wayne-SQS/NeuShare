@@ -40,4 +40,9 @@ public interface ResourceMapper extends BaseMapper<Resource> {
      * 按状态查询用户上传的资源列表
      */
     IPage<ResourceVO> selectUserResourcesByStatus(Page<ResourceVO> page, @Param("userId") Long userId, @Param("status") Integer status);
+
+    /**
+     * 搜索资源（支持排序：hot/new）
+     */
+    IPage<ResourceVO> searchResources(Page<ResourceVO> page, @Param("keyword") String keyword, @Param("sortBy") String sortBy);
 }
