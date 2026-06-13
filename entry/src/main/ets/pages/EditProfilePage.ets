@@ -7,6 +7,7 @@ import { Context } from '@ohos.abilityAccessCtrl';
 @Entry
 @Component
 struct EditProfilePage {
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State nickname: string = '';
   @State avatarUrl: string = '';
   @State college: string = '软件学院';
@@ -54,19 +55,19 @@ struct EditProfilePage {
   build() {
     Column() {
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.TEXT_PRIMARY)
+        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Text('编辑资料').fontSize(18).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.TEXT_PRIMARY).margin({ left: 12 })
+          .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
         Blank()
         Text('保存').fontSize(15).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.PRIMARY)
+          .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-          .backgroundColor(ColorTokens.PRIMARY_LIGHT).borderRadius(16)
+          .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(16)
           .onClick(() => { this.saveProfile(); })
       }
       .width('100%').height(52).padding({ left: 12, right: 12 })
-      .backgroundColor(ColorTokens.BG_CARD)
+      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
 
       Scroll() {
         Column() {
@@ -81,39 +82,39 @@ struct EditProfilePage {
               }
             }
             Column() {
-              Text('头像').fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.TEXT_PRIMARY)
-              Text('输入图片URL地址').fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ top: 4 })
+              Text('头像').fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('输入图片URL地址').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
             }.margin({ left: 16 })
           }
           .width('100%').padding(20)
-          .backgroundColor(ColorTokens.BG_CARD)
-          .margin({ left: 16, right: 16, top: 12 })
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+          .margin({ left: 24, right: 24, top: 12 })
           .borderRadius(14)
 
           // Form
           Column() {
-            Text('头像URL').fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ bottom: 6 })
+            Text('头像URL').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ bottom: 6 })
             TextInput({ text: this.avatarUrl, placeholder: 'https://...' })
               .fontSize(14).width('100%').height(44)
-              .backgroundColor(ColorTokens.BG_INPUT).borderRadius(10)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
               .padding({ left: 12 })
               .onChange((value: string) => { this.avatarUrl = value; })
 
-            Text('昵称').fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ top: 16, bottom: 6 })
+            Text('昵称').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 6 })
             TextInput({ text: this.nickname, placeholder: '你的昵称' })
               .fontSize(14).width('100%').height(44)
-              .backgroundColor(ColorTokens.BG_INPUT).borderRadius(10)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
               .padding({ left: 12 })
               .onChange((value: string) => { this.nickname = value; })
 
-            Text('学院').fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ top: 16, bottom: 6 })
+            Text('学院').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 6 })
             TextInput({ text: this.college, placeholder: '软件学院' })
               .fontSize(14).width('100%').height(44)
-              .backgroundColor(ColorTokens.BG_INPUT).borderRadius(10)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
               .padding({ left: 12 })
               .onChange((value: string) => { this.college = value; })
 
-            Text('年级').fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ top: 16, bottom: 8 })
+            Text('年级').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 8 })
             Row() {
               ForEach(this.grades, (label: string, idx: number) => {
                 GradePill({
@@ -125,8 +126,8 @@ struct EditProfilePage {
             }.width('100%')
           }
           .width('100%').padding(20)
-          .backgroundColor(ColorTokens.BG_CARD)
-          .margin({ left: 16, right: 16, top: 12 })
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+          .margin({ left: 24, right: 24, top: 12 })
           .borderRadius(14)
 
           if (this.message) {
@@ -141,6 +142,6 @@ struct EditProfilePage {
       }
       .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.BG_PAGE)
+    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 }

@@ -20,6 +20,7 @@ struct CategoryPage {
   @State isLoading: boolean = false;
   @State totalCount: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private categoryId: number = 1;
   private resourceService: ResourceService = ResourceService.getInstance();
 
@@ -94,22 +95,22 @@ struct CategoryPage {
       // Header
       Row() {
         Text('←')
-          .fontSize(24).fontColor(ColorTokens.TEXT_PRIMARY)
+          .fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Column() {
           Text(this.categoryTitle)
-            .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.TEXT_PRIMARY)
+            .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           if (this.categoryDesc) {
             Text(this.categoryDesc)
-              .fontSize(11).fontColor(ColorTokens.TEXT_HINT).maxLines(1)
+              .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
         }.layoutWeight(1).margin({ left: 12, right: 8 }).alignItems(HorizontalAlign.Start)
         Text(this.getFilteredResources().length.toString() + '个')
-          .fontSize(13).fontColor(ColorTokens.TEXT_HINT)
+          .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode))
       }
-      .width('100%').height(52).padding({ left: 16, right: 16 })
-      .backgroundColor(ColorTokens.BG_CARD)
+      .width('100%').height(52).padding({ left: 24, right: 24 })
+      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
 
       // Search bar
       Row() {
@@ -120,14 +121,14 @@ struct CategoryPage {
           .padding({ left: 8 })
           .onChange((value: string) => { this.searchKeyword = value; })
         if (this.searchKeyword) {
-          Text('✕').fontSize(14).fontColor(ColorTokens.TEXT_HINT)
+          Text('✕').fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode))
             .onClick(() => { this.searchKeyword = ''; })
         }
       }
-      .width('100%').height(44).padding({ left: 16, right: 16 })
-      .backgroundColor(ColorTokens.BG_INPUT)
+      .width('100%').height(44).padding({ left: 24, right: 24 })
+      .backgroundColor(ColorTokens.bgInput(this.isDarkMode))
       .borderRadius(22)
-      .margin({ left: 16, right: 16, top: 10 })
+      .margin({ left: 24, right: 24, top: 10 })
 
       // Sort + filter row
       Row() {
@@ -151,25 +152,25 @@ struct CategoryPage {
             ForEach(this.filterTags, (tag: string) => {
               Text(tag === '学科' ? '学科' : tag === '考研' ? '考研' : '期末速成')
                 .fontSize(11).fontWeight(this.filterTag === tag ? FontWeight.Bold : FontWeight.Regular)
-                .fontColor(this.filterTag === tag ? ColorTokens.TEXT_WHITE : ColorTokens.TEXT_PRIMARY)
+                .fontColor(this.filterTag === tag ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textPrimary(this.isDarkMode))
                 .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-                .backgroundColor(this.filterTag === tag ? ColorTokens.PRIMARY : ColorTokens.BG_INPUT)
+                .backgroundColor(this.filterTag === tag ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                 .borderRadius(16)
                 .margin({ left: 6 })
                 .onClick(() => { this.filterTag = tag; })
             })
             if (this.filterTag) {
               Text('全部')
-                .fontSize(11).fontColor(ColorTokens.TEXT_HINT)
+                .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
                 .padding({ left: 8, right: 8, top: 5, bottom: 5 })
-                .border({ width: 1, color: ColorTokens.DIVIDER, radius: 14 })
+                .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
                 .margin({ left: 6 })
                 .onClick(() => { this.filterTag = ''; })
             }
           }
         }
       }
-      .width('100%').padding({ left: 16, right: 16, top: 10, bottom: 6 })
+      .width('100%').padding({ left: 24, right: 24, top: 10, bottom: 6 })
 
       // Content
       if (this.getFilteredResources().length === 0) {
@@ -177,7 +178,7 @@ struct CategoryPage {
           Text(this.searchKeyword ? '🔍' : '📭').fontSize(48).margin({ top: 80 })
           Text(this.searchKeyword ? '未找到「' + this.searchKeyword + '」相关资源' :
             (this.filterTag ? '该分类下暂无匹配资源' : '暂无资源'))
-            .fontSize(16).fontColor(ColorTokens.TEXT_HINT).margin({ top: 12 })
+            .fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
           Text(this.searchKeyword ? '试试其他关键词' :
             (this.filterTag ? '试试切换其他筛选条件' : '该分类下暂无资源，敬请期待'))
             .fontSize(13).fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
@@ -197,13 +198,13 @@ struct CategoryPage {
           })
         }
         .columnsTemplate(new BpType<string>({ sm: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr')
-        .rowsGap(4)
-        .columnsGap(4)
+        .rowsGap(12)
+        .columnsGap(12)
         .layoutWeight(1)
         .margin({ top: 4 })
       }
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.BG_PAGE)
+    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 }
 
@@ -211,15 +212,16 @@ struct CategoryPage {
 struct SortChip {
   @Prop label: string = '';
   @Prop active: boolean = false;
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   onSort: () => void = () => {};
 
   build() {
     Text(this.label)
       .fontSize(12)
       .fontWeight(this.active ? FontWeight.Bold : FontWeight.Regular)
-      .fontColor(this.active ? ColorTokens.TEXT_WHITE : ColorTokens.TEXT_HINT)
+      .fontColor(this.active ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textHint(this.isDarkMode))
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor(this.active ? ColorTokens.PRIMARY : ColorTokens.BG_INPUT)
+      .backgroundColor(this.active ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
       .borderRadius(16)
       .margin({ right: 8 })
       .onClick(() => { this.onSort(); })

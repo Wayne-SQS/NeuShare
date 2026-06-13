@@ -6,6 +6,7 @@ import { Context } from '@ohos.abilityAccessCtrl';
 @Entry
 @Component
 struct UserProfilePage {
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State userId: number = 0;
   @State username: string = '';
   @State nickname: string = '';
@@ -58,13 +59,13 @@ struct UserProfilePage {
   build() {
     Column() {
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.TEXT_PRIMARY)
+        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Text('用户主页').fontSize(18).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.TEXT_PRIMARY).margin({ left: 12 })
+          .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
       }
-      .width('100%').height(52).padding({ left: 16 })
-      .backgroundColor(ColorTokens.BG_CARD)
+      .width('100%').height(52).padding({ left: 24 })
+      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
 
       Column() {
         // Avatar + name
@@ -78,18 +79,18 @@ struct UserProfilePage {
         }.margin({ top: 30 })
 
         Text(this.nickname)
-          .fontSize(22).fontWeight(FontWeight.Bold).fontColor(ColorTokens.TEXT_PRIMARY)
+          .fontSize(22).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .margin({ top: 16 })
         Text('@' + this.username)
-          .fontSize(13).fontColor(ColorTokens.TEXT_HINT).margin({ top: 4 })
+          .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
         if (this.college) {
-          Text(this.college).fontSize(13).fontColor(ColorTokens.TEXT_HINT).margin({ top: 2 })
+          Text(this.college).fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
         }
 
         Button(this.isFollowing ? '已关注' : '+ 关注')
           .fontSize(14).fontWeight(FontWeight.Bold)
-          .fontColor(this.isFollowing ? ColorTokens.TEXT_PRIMARY : '#FFFFFF')
-          .backgroundColor(this.isFollowing ? ColorTokens.BG_INPUT : ColorTokens.PRIMARY)
+          .fontColor(this.isFollowing ? ColorTokens.textPrimary(this.isDarkMode) : ColorTokens.TEXT_WHITE)
+          .backgroundColor(this.isFollowing ? ColorTokens.bgInput(this.isDarkMode) : ColorTokens.primary(this.isDarkMode))
           .borderRadius(20).height(40).padding({ left: 28, right: 28 })
           .margin({ top: 20 })
           .enabled(!this.isLoading)
@@ -98,6 +99,6 @@ struct UserProfilePage {
       .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.BG_PAGE)
+    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 }

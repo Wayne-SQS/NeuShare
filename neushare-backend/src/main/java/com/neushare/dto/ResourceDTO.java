@@ -47,4 +47,9 @@ public class ResourceDTO {
      * 封面图URL
      */
     private String coverUrl;
+
+    /**
+     * 来源网站
+     */
+    private String source;
 }

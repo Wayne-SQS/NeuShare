@@ -93,4 +93,5 @@ export interface ResourceCreateData {
   description: string;
   contentUrl: string;
   coverUrl: string;
+  source: string;
 }

@@ -51,6 +51,11 @@ public class ResourceVO {
     private String coverUrl;
 
     /**
+     * 来源网站
+     */
+    private String source;
+
+    /**
      * 上传用户ID
      */
     private Long uploadUserId;

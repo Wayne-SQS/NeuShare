@@ -3,35 +3,35 @@
     "id": 1,
     "title": "网课",
     "icon": "🎬",
-    "color": "#E74C3C",
+    "color": "#FF8FB1",
     "description": "学科课程 · 考研精讲 · 期末速成"
   },
   {
     "id": 2,
     "title": "书籍",
     "icon": "📖",
-    "color": "#F39C12",
+    "color": "#4A6BFF",
     "description": "专业教材 · 经典黑皮书 · 教辅资料"
   },
   {
     "id": 3,
     "title": "开源资源",
     "icon": "📦",
-    "color": "#3498DB",
+    "color": "#00C2CB",
     "description": "GitHub仓库 · API文档 · 开发工具 · 算法平台"
   },
   {
     "id": 4,
     "title": "教学软件",
     "icon": "🖥️",
-    "color": "#9B59B6",
+    "color": "#C4B5FD",
     "description": "录课工具 · 白板 · 学习平台 · 机房管理"
   },
   {
     "id": 5,
     "title": "考研",
     "icon": "🎓",
-    "color": "#2E86C1",
+    "color": "#89CFEF",
     "description": "院校信息 → 数学 → 英语 → 政治 → 408"
   }
 ]

@@ -61,6 +61,12 @@ public class Resource implements Serializable {
     private String coverUrl;
 
     /**
+     * 来源网站（B站/GitHub/慕课网等）
+     */
+    @TableField("source")
+    private String source;
+
+    /**
      * 上传用户ID
      */
     @TableField("upload_user_id")

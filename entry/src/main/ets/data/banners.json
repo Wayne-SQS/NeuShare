@@ -4,8 +4,8 @@
     "title": "大模型编程教程全面上线",
     "subtitle": "DeepSeek · Claude · GPT API 从入门到实战",
     "emoji": "🤖",
-    "gradientStart": "#2C3E6B",
-    "gradientEnd": "#4A6594",
+    "gradientStart": "#4A6BFF",
+    "gradientEnd": "#00C2CB",
     "imageUrl": "",
     "linkType": "category",
     "linkValue": "3"
@@ -15,8 +15,8 @@
     "title": "吴恩达AI课 + Hello算法",
     "subtitle": "Andrew Ng机器学习 · 开源动画算法书",
     "emoji": "🧠",
-    "gradientStart": "#C0392B",
-    "gradientEnd": "#E74C3C",
+    "gradientStart": "#FF8FB1",
+    "gradientEnd": "#C4B5FD",
     "imageUrl": "",
     "linkType": "category",
     "linkValue": "1"
@@ -26,8 +26,8 @@
     "title": "软件学院推荐书单发布",
     "subtitle": "CSAPP · 设计模式 · Hello算法 · 大模型实战",
     "emoji": "📚",
-    "gradientStart": "#D4914A",
-    "gradientEnd": "#E8B86D",
+    "gradientStart": "#4A6BFF",
+    "gradientEnd": "#FF8FB1",
     "imageUrl": "",
     "linkType": "category",
     "linkValue": "2"
@@ -37,8 +37,8 @@
     "title": "GitHub加速 · Watt Toolkit",
     "subtitle": "微软商城免费下载 · 开源网络加速工具",
     "emoji": "⚡",
-    "gradientStart": "#3A8C6E",
-    "gradientEnd": "#5CB89A",
+    "gradientStart": "#89CFEF",
+    "gradientEnd": "#00C2CB",
     "imageUrl": "",
     "linkType": "category",
     "linkValue": "3"

@@ -72,9 +72,31 @@ export default class EntryAbility extends UIAbility {
     // Initialize theme from system config
     AppTheme.getInstance().initFromContext(this.context);
 
-    // ─── 断点检测：先用 window 尺寸拿到准确初始值，再注册 mediaQuery 监听变化 ───
-    BreakpointSystem.getInstance().register();
+    // ─── 断点检测：先准确初始检测，再注册监听变化 ───
+    // 顺序关键: detectFromWindow 必须在前 → 用 vp 准确值初始化
+    //           register 在后 → mediaQuery 仅监听后续变化
     await BreakpointSystem.getInstance().detectFromWindow(windowStage);
+    BreakpointSystem.getInstance().register();
+
+    // 注册 window 尺寸变化监听（教程 §2.6 方式二：主通道）
+    // size.width 自动为 vp 单位，无需 px→vp 转换
+    try {
+      const mainWindow = await windowStage.getMainWindow();
+
+      // 沉浸式状态栏（教程 §9 + §14.4）
+      mainWindow.setWindowSystemBarProperties({
+        statusBarColor: '#00FFFFFF',
+        navigationBarColor: '#00FFFFFF',
+        isStatusBarLightIcon: false,
+        isNavigationBarLightIcon: false
+      });
+
+      mainWindow.on('windowSizeChange', (size: window.Size) => {
+        BreakpointSystem.getInstance().updateFromVpWidth(size.width);
+      });
+    } catch (e) {
+      console.warn('[EntryAbility] windowSizeChange registration failed: ' + JSON.stringify(e));
+    }
 
     // 将搜索关键词写入 AppStorage，供 SearchPage 读取
     if (this.searchKeyword) {
@@ -94,6 +116,7 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageDestroy(): void {
     console.info('EntryAbility onWindowStageDestroy');
+    BreakpointSystem.getInstance().unregister();
   }
 
   onForeground(): void {

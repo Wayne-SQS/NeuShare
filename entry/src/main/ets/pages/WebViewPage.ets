@@ -12,6 +12,7 @@ interface WebError { error: ErrorInfo; }
 @Entry
 @Component
 struct WebViewPage {
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State pageTitle: string = '加载中...';
   @State loadProgress: number = 0;
   @State canGoBack: boolean = false;
@@ -49,7 +50,7 @@ struct WebViewPage {
     Column() {
       // ── 顶部导航栏 ──
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.TEXT_PRIMARY)
+        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => {
             if (this.canGoBack && this.webController.accessBackward()) {
               this.webController.backward();
@@ -61,13 +62,13 @@ struct WebViewPage {
         Column() {
           Text(this.pageTitle)
             .fontSize(15).fontWeight(FontWeight.Medium)
-            .fontColor(ColorTokens.TEXT_PRIMARY).maxLines(1)
+            .fontColor(ColorTokens.textPrimary(this.isDarkMode)).maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }.layoutWeight(1).margin({ left: 12, right: 12 })
 
         // 前进按钮
         if (this.canGoForward) {
-          Text('→').fontSize(20).fontColor(ColorTokens.TEXT_SECONDARY)
+          Text('→').fontSize(20).fontColor(ColorTokens.textSecondary(this.isDarkMode))
             .margin({ right: 12 })
             .onClick(() => {
               if (this.webController.accessForward()) {
@@ -77,17 +78,17 @@ struct WebViewPage {
         }
 
         // 在浏览器中打开
-        Text('⋮').fontSize(22).fontColor(ColorTokens.TEXT_SECONDARY)
+        Text('⋮').fontSize(22).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { this.openInBrowser(this.url); })
       }
-      .width('100%').height(48).padding({ left: 16, right: 16 })
-      .backgroundColor(ColorTokens.BG_CARD)
+      .width('100%').height(48).padding({ left: 24, right: 24 })
+      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
       .alignItems(VerticalAlign.Center)
 
       // ── 加载进度条 ──
       if (this.loadProgress > 0 && this.loadProgress < 100) {
         Progress({ value: this.loadProgress, total: 100, type: ProgressType.Linear })
-          .width('100%').color(ColorTokens.PRIMARY).height(2)
+          .width('100%').color(ColorTokens.primary(this.isDarkMode)).height(2)
       }
 
       // ── WebView 内容区 ──
@@ -95,20 +96,20 @@ struct WebViewPage {
         // 错误页面
         Column() {
           Text('⚠️').fontSize(48).margin({ top: 80 })
-          Text('页面加载失败').fontSize(18).fontColor(ColorTokens.TEXT_PRIMARY).margin({ top: 16 })
-          Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.TEXT_HINT).margin({ top: 8 })
+          Text('页面加载失败').fontSize(18).fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 16 })
+          Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 8 })
           Row() {
             Button('重试')
-              .fontSize(14).fontColor('#FFFFFF')
-              .backgroundColor(ColorTokens.PRIMARY).borderRadius(20)
+              .fontSize(14).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+              .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(20)
               .height(36).padding({ left: 24, right: 24 })
               .onClick(() => {
                 this.isError = false;
                 this.webController.loadUrl(this.url);
               })
             Button('在浏览器中打开')
-              .fontSize(14).fontColor(ColorTokens.PRIMARY)
-              .backgroundColor(ColorTokens.BG_INPUT).borderRadius(20)
+              .fontSize(14).fontColor(ColorTokens.primary(this.isDarkMode))
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(20)
               .height(36).padding({ left: 24, right: 24 })
               .margin({ left: 12 })
               .onClick(() => { this.openInBrowser(this.url); })
@@ -159,6 +160,6 @@ struct WebViewPage {
       }
     }
     .width('100%').height('100%')
-    .backgroundColor(ColorTokens.BG_PAGE)
+    .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 }

@@ -7,12 +7,13 @@ import promptAction from '@ohos.promptAction';
 @Entry
 @Component
 struct MyResourcesPage {
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State resources: ResourceItem[] = [];
   @State isLoading: boolean = false;
   private resourceApi: ResourceApi = new ResourceApi();
 
   private statusLabels: string[] = ['待审核', '已发布', '已驳回'];
-  private statusColors: string[] = ['#FF9800', '#4CAF50', '#F44336'];
+  private statusColors: string[] = [ColorTokens.WARNING_LIGHT, ColorTokens.SUCCESS_LIGHT, ColorTokens.ERROR_LIGHT];
 
   async aboutToAppear(): Promise<void> {
     await this.loadResources();
@@ -51,24 +52,24 @@ struct MyResourcesPage {
     Column() {
       // Header
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.TEXT_PRIMARY)
+        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Text('我的资源').fontSize(18).fontWeight(FontWeight.Bolder)
-          .fontColor(ColorTokens.TEXT_PRIMARY).margin({ left: 12 })
+          .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
         Blank()
         Text('+ 上传').fontSize(14).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.PRIMARY)
+          .fontColor(ColorTokens.primary(this.isDarkMode))
           .onClick(() => { router.pushUrl({ url: 'pages/UploadPage' }); })
       }
-      .width('100%').height(52).padding({ left: 16, right: 16 }).backgroundColor(ColorTokens.BG_CARD)
+      .width('100%').height(52).padding({ left: 24, right: 24 }).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
 
       if (this.isLoading) {
-        Column() { Text('加载中...').fontSize(16).fontColor(ColorTokens.TEXT_HINT) }
+        Column() { Text('加载中...').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)) }
           .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       } else if (this.resources.length === 0) {
         Column() {
           Text('📦').fontSize(48).margin({ bottom: 16 })
-          Text('还没有上传过资源').fontSize(16).fontColor(ColorTokens.TEXT_HINT)
+          Text('还没有上传过资源').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode))
           Text('点击右上角上传你的第一个资源').fontSize(13).fontColor(ColorTokens.TEXT_DISABLED)
             .margin({ top: 8 })
         }
@@ -80,10 +81,10 @@ struct MyResourcesPage {
               Row() {
                 Column() {
                   Text(item.title).fontSize(15).fontWeight(FontWeight.Bold)
-                    .fontColor(ColorTokens.TEXT_PRIMARY).maxLines(1)
+                    .fontColor(ColorTokens.textPrimary(this.isDarkMode)).maxLines(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%')
                   Text(item.description || '暂无描述').fontSize(12)
-                    .fontColor(ColorTokens.TEXT_SECONDARY).maxLines(2)
+                    .fontColor(ColorTokens.textSecondary(this.isDarkMode)).maxLines(2)
                     .textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%')
                     .margin({ top: 6 })
                   Row() {
@@ -96,14 +97,14 @@ struct MyResourcesPage {
                   }.margin({ top: 6 })
                 }.layoutWeight(1)
 
-                Text('删除').fontSize(13).fontColor('#FF5A5F')
+                Text('删除').fontSize(13).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
                   .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                  .backgroundColor('#FFF0F0').borderRadius(8)
+                  .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(8)
                   .onClick(() => { this.deleteResource(item.id); })
               }
               .width('100%').padding(16)
-              .backgroundColor(ColorTokens.BG_CARD).borderRadius(12)
-              .margin({ left: 16, right: 16, top: 8 })
+              .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
+              .margin({ left: 24, right: 24, top: 8 })
             }
           }, (item: ResourceItem) => item.id.toString())
         }
@@ -111,6 +112,6 @@ struct MyResourcesPage {
         .divider({ strokeWidth: 0 })
       }
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.BG_PAGE)
+    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 }

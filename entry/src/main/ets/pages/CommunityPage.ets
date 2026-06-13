@@ -12,6 +12,7 @@ struct CommunityPage {
   @State highlightPostId: string = '';
   @State filterTag: string = '';
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private communityService: CommunityService = CommunityService.getInstance();
 
   async aboutToAppear(): Promise<void> {
@@ -83,18 +84,18 @@ struct CommunityPage {
     Column() {
       // Header
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.TEXT_PRIMARY)
+        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Text('学习社区').fontSize(18).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.TEXT_PRIMARY).layoutWeight(1).textAlign(TextAlign.Center)
+          .fontColor(ColorTokens.textPrimary(this.isDarkMode)).layoutWeight(1).textAlign(TextAlign.Center)
         Text('✚ 发帖')
-          .fontSize(14).fontWeight(FontWeight.Bold).fontColor(ColorTokens.PRIMARY)
+          .fontSize(14).fontWeight(FontWeight.Bold).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
           .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-          .backgroundColor(ColorTokens.PRIMARY_LIGHT).borderRadius(14)
+          .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(14)
           .onClick(() => { router.pushUrl({ url: 'pages/CreatePostPage' }); })
       }
       .width('100%').height(52).padding({ left: 14, right: 10 })
-      .backgroundColor(ColorTokens.BG_CARD)
+      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
 
       // Tag filter pills
       if (this.getAllTags().length > 0) {
@@ -106,9 +107,9 @@ struct CommunityPage {
                 Text(tag)
                   .fontSize(11)
                   .fontWeight(this.filterTag === tag ? FontWeight.Bold : FontWeight.Regular)
-                  .fontColor(this.filterTag === tag ? '#FFFFFF' : ColorTokens.TEXT_PRIMARY)
+                  .fontColor(this.filterTag === tag ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textPrimary(this.isDarkMode))
                   .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-                  .backgroundColor(this.filterTag === tag ? ColorTokens.PRIMARY : ColorTokens.BG_INPUT)
+                  .backgroundColor(this.filterTag === tag ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                   .borderRadius(12)
                   .margin({ right: 6 })
                   .onClick(() => { this.filterByTag(tag); })
@@ -116,20 +117,20 @@ struct CommunityPage {
               if (this.filterTag) {
                 Text('✕ 清除').fontSize(11).fontColor(ColorTokens.RED)
                   .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-                  .border({ width: 1, color: ColorTokens.DIVIDER, radius: 12 })
+                  .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 12 })
                   .onClick(() => { this.filterTag = ''; this.loadPosts(); })
               }
             }
           }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).layoutWeight(1)
         }
         .width('100%').padding({ left: 14, right: 10, top: 6, bottom: 6 })
-        .backgroundColor(ColorTokens.BG_PAGE)
+        .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
       }
 
       if (this.posts.length === 0) {
         Column() {
           Text('💬').fontSize(48).margin({ top: 120 })
-          Text('还没有帖子').fontSize(16).fontColor(ColorTokens.TEXT_HINT).margin({ top: 12 })
+          Text('还没有帖子').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
           Text('点击右上角「✚ 发帖」发布第一条帖子').fontSize(13)
             .fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
         }.width('100%').layoutWeight(1)
@@ -143,7 +144,7 @@ struct CommunityPage {
           }, (post: Post) => post.id)
         }
         .columnsTemplate(new BpType<string>({ lg: '1fr 1fr', xl: '1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr 1fr').rowsGap(6).columnsGap(6)
-        .layoutWeight(1).padding({ left: 16, right: 16, top: 6 })
+        .layoutWeight(1).padding({ left: 24, right: 24, top: 6 })
       } else {
         List() {
           ForEach(this.posts, (post: Post) => {
@@ -156,7 +157,7 @@ struct CommunityPage {
         .divider({ strokeWidth: 0 })
       }
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.BG_PAGE)
+    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 
   @Builder
@@ -165,14 +166,14 @@ struct CommunityPage {
       // Author row
       Row() {
         Text('👤').fontSize(14)
-        Text(post.author).fontSize(13).fontColor(ColorTokens.TEXT_SECONDARY).margin({ left: 4 })
+        Text(post.author).fontSize(13).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
         Text('·').fontSize(13).fontColor(ColorTokens.TEXT_DISABLED).margin({ left: 6, right: 6 })
         Text(post.createdAt).fontSize(12).fontColor(ColorTokens.TEXT_DISABLED)
 
         if (hotness(post) > 0) {
           Text('🔥' + hotness(post).toString())
             .fontSize(10).fontWeight(FontWeight.Bold)
-            .fontColor('#E74C3C').margin({ left: 8 })
+            .fontColor(ColorTokens.WARNING_LIGHT).margin({ left: 8 })
         }
 
         Blank()
@@ -180,26 +181,26 @@ struct CommunityPage {
         if (post.recommended) {
           Text('⚡ 已推荐')
             .fontSize(11).fontWeight(FontWeight.Bold)
-            .fontColor(ColorTokens.ACCENT)
+            .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
             .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-            .backgroundColor(ColorTokens.ACCENT_LIGHT).borderRadius(8)
+            .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(8)
         } else {
           Text('推荐')
-            .fontSize(11).fontColor(ColorTokens.TEXT_HINT)
+            .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
             .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-            .border({ width: 1, color: ColorTokens.DIVIDER, radius: 8 })
+            .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 8 })
             .onClick(() => { this.recommendPost(post.id); })
         }
       }.width('100%').margin({ bottom: 8 })
 
       Text(post.title)
         .fontSize(16).fontWeight(FontWeight.Bold)
-        .fontColor(ColorTokens.TEXT_PRIMARY)
+        .fontColor(ColorTokens.textPrimary(this.isDarkMode))
         .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
         .width('100%')
 
       Text(post.content)
-        .fontSize(13).fontColor(ColorTokens.TEXT_SECONDARY)
+        .fontSize(13).fontColor(ColorTokens.textSecondary(this.isDarkMode))
         .maxLines(3).textOverflow({ overflow: TextOverflow.Ellipsis })
         .lineHeight(20).width('100%').margin({ top: 6 })
 
@@ -218,19 +219,19 @@ struct CommunityPage {
           ForEach(post.files.slice(0, 5), (file: PostFile, idx: number) => {
             Row() {
               Text(fileIcon(file.type)).fontSize(13)
-              Text(file.name).fontSize(11).fontColor(ColorTokens.TEXT_PRIMARY)
+              Text(file.name).fontSize(11).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                 .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                 .constraintSize({ maxWidth: 100 })
             }
             .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-            .backgroundColor(ColorTokens.BG_INPUT).borderRadius(8)
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(8)
             .margin({ right: 6, top: 4 })
           }, (file: PostFile, idx: number) => 'postfile' + idx.toString())
           if (post.files.length > 5) {
             Text('+' + (post.files.length - 5).toString())
-              .fontSize(11).fontColor(ColorTokens.TEXT_HINT)
+              .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
               .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-              .backgroundColor(ColorTokens.BG_INPUT).borderRadius(8)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(8)
               .margin({ top: 4 })
           }
         }.width('100%').margin({ top: 6 })
@@ -240,9 +241,9 @@ struct CommunityPage {
         Row() {
           ForEach(post.tags, (tag: string) => {
             Text(tag)
-              .fontSize(11).fontColor(ColorTokens.PRIMARY)
+              .fontSize(11).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
               .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-              .backgroundColor(ColorTokens.PRIMARY_LIGHT)
+              .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
               .borderRadius(6).margin({ right: 6, top: 4 })
           })
         }.width('100%').margin({ top: 8 })
@@ -252,33 +253,33 @@ struct CommunityPage {
       Row() {
         Row() {
           Text('👍').fontSize(14)
-          Text(post.likes.toString()).fontSize(13).fontColor(ColorTokens.TEXT_SECONDARY).margin({ left: 4 })
+          Text(post.likes.toString()).fontSize(13).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
         }
         .padding({ left: 8, right: 10, top: 6, bottom: 6 })
-        .backgroundColor(ColorTokens.BG_INPUT).borderRadius(14)
+        .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(14)
         .onClick(() => { this.likePost(post.id); })
 
         Row() {
           Text('⭐').fontSize(14)
-          Text(post.favorites.toString()).fontSize(13).fontColor(ColorTokens.TEXT_SECONDARY).margin({ left: 4 })
+          Text(post.favorites.toString()).fontSize(13).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
         }
         .padding({ left: 8, right: 10, top: 6, bottom: 6 })
-        .backgroundColor(ColorTokens.BG_INPUT).borderRadius(14)
+        .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(14)
         .margin({ left: 8 })
         .onClick(() => { this.favoritePost(post.id); })
 
         Row() {
           Text('💬').fontSize(14)
-          Text(post.commentsCount.toString()).fontSize(13).fontColor(ColorTokens.TEXT_SECONDARY).margin({ left: 4 })
+          Text(post.commentsCount.toString()).fontSize(13).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
         }
         .padding({ left: 8, right: 10, top: 6, bottom: 6 })
         .margin({ left: 8 })
       }.width('100%').margin({ top: 10 })
     }
     .width('100%').padding(16)
-    .backgroundColor(this.highlightPostId === post.id ? ColorTokens.ACCENT_LIGHT : ColorTokens.BG_CARD)
+    .backgroundColor(this.highlightPostId === post.id ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgCard(this.isDarkMode))
     .borderRadius(14)
-    .margin({ left: (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) ? 0 : 16, right: (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) ? 0 : 16, top: 6, bottom: 6 })
+    .margin({ left: (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) ? 0 : 24, right: (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) ? 0 : 24, top: 6, bottom: 6 })
     .shadow({ radius: 4, color: '#08000000', offsetX: 0, offsetY: 1 })
   }
 }

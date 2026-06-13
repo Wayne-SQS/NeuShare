@@ -2,11 +2,11 @@
 
 // Theme
 export { ColorTokens } from './src/main/ets/theme/ColorTokens';
-export { AppTheme } from './src/main/ets/theme/AppTheme';
+export { AppTheme, ThemeMode } from './src/main/ets/theme/AppTheme';
 
 // Utils
 export { ResourceTypeUtils } from './src/main/ets/utils/ResourceTypeUtils';
-export { BreakpointSystem, BreakpointType, BreakpointTypeEnum, BreakpointTypeOld, BreakpointTypeValue } from './src/main/ets/utils/BreakpointSystem';
+export { BreakpointSystem, BreakpointType, BreakpointTypeEnum, BreakpointTypeValue } from './src/main/ets/utils/BreakpointSystem';
 
 // Services
 export { PreferencesStore } from './src/main/ets/services/PreferencesStore';

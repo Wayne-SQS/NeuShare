@@ -50,6 +50,7 @@ export interface ResourceVO {
   contentUrl: string
   coverUrl: string
   description: string
+  source: string
   tags: string
   uploadNickname: string
   uploadUsername: string
@@ -99,7 +100,7 @@ export function adaptResource(vo: ResourceVO): ResourceItem {
     title: vo.title,
     categoryId: vo.categoryId,
     cover: vo.coverUrl || '',
-    source: '',
+    source: vo.source || '',
     tags: tags,
     description: vo.description || '',
     url: vo.contentUrl || '',

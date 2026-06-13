@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, AuthStore, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, AuthStore, BreakpointType as BpType, BreakpointTypeEnum, AppTheme, ThemeMode } from '@neushare/common';
 import { ResourceService } from '../services/ResourceService';
 import { FavoriteService } from '../services/FavoriteService';
 import { CommunityService } from '../services/CommunityService';
@@ -25,6 +25,8 @@ struct Index {
   @State courseRecommendations: CurriculumCourse[] = [];
   @State recommendedPost: Post | null = null;
   @State allBanners: BannerItem[] = [];
+  @State sidebarCollapsed: boolean = false;
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   private resourceService: ResourceService = ResourceService.getInstance();
   private curriculumService: CurriculumService = CurriculumService.getInstance();
@@ -106,7 +108,7 @@ struct Index {
       const banner: BannerItem = {
         id: 9000 + i, title: p.title,
         subtitle: p.author + ' · 👍' + p.likes + ' ⭐' + p.favorites + ' 💬' + p.commentsCount,
-        emoji: '🔥', gradientStart: '#E74C3C', gradientEnd: '#C0392B',
+        emoji: '🔥', gradientStart: ColorTokens.primary(this.isDarkMode), gradientEnd: ColorTokens.ACCENT_PINK_LIGHT,
         imageUrl: '', linkType: 'post', linkValue: p.id
       };
       postBanners.push(banner);
@@ -115,7 +117,17 @@ struct Index {
   }
 
   private sidebarWidth(): number {
+    if (this.sidebarCollapsed) {
+      return 64;
+    }
     return new BpType<number>({ sm: 0, md: 64, lg: 200, xl: 240 }).getValue(this.currentBreakpoint) ?? 0;
+  }
+
+  private sidebarShowLabels(): boolean {
+    if (this.sidebarCollapsed) {
+      return false;
+    }
+    return this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL;
   }
 
   private isLargeScreen(): boolean {
@@ -147,17 +159,17 @@ struct Index {
         .barHeight(56).barMode(BarMode.Fixed).barPosition(BarPosition.End)
         .onChange((index: number) => { this.currentTab = index; })
         .width('100%').height('100%')
-        .backgroundColor(ColorTokens.BG_PAGE)
+        .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
         .animation({ curve: Curve.EaseOut, duration: 200 })
 
         // Floating upload button
         Column() {
-          Text('+').fontSize(28).fontColor('#FFFFFF').fontWeight(FontWeight.Bold)
+          Text('+').fontSize(28).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE).fontWeight(FontWeight.Bold)
         }
         .width(52).height(52).borderRadius(26)
-        .backgroundColor(ColorTokens.PRIMARY)
+        .backgroundColor(ColorTokens.primary(this.isDarkMode))
         .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center)
-        .shadow({ radius: 8, color: '#33000000', offsetY: 4 })
+        .shadow({ radius: 8, color: ColorTokens.SHADOW_MEDIUM, offsetY: 4 })
         .position({ x: '80%', y: '85%' })
         .onClick(() => { router.pushUrl({ url: 'pages/UploadPage' }); })
       }
@@ -167,17 +179,23 @@ struct Index {
       Row() {
         // 左侧导航栏
         Column() {
-          // Logo / Title
-          Column() {
+          // Logo / Title + 收起按钮
+          Row() {
             Text('📚').fontSize(new BpType<number>({ md: 22, lg: 28, xl: 32 }).getValue(this.currentBreakpoint) ?? 22)
-            if (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) {
+            if (this.sidebarShowLabels()) {
               Text('NeU Share').fontSize(16).fontWeight(FontWeight.Bold)
-                .fontColor(ColorTokens.TEXT_PRIMARY).margin({ top: 4 })
-              Text('学习资源共享').fontSize(10).fontColor(ColorTokens.TEXT_HINT)
+                .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
+              Text('学习资源共享').fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode))
             }
+            Blank()
+            // 收起/展开按钮
+            Text(this.sidebarCollapsed ? '»' : '«')
+              .fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode))
+              .padding(6).borderRadius(8)
+              .onClick(() => { this.sidebarCollapsed = !this.sidebarCollapsed; })
           }
-          .width('100%').padding({ top: 20, bottom: 20 })
-          .alignItems(HorizontalAlign.Center)
+          .width('100%').padding({ top: 16, bottom: 12, left: 12, right: 12 })
+          .alignItems(VerticalAlign.Center)
 
           // Navigation items
           Column() {
@@ -187,11 +205,29 @@ struct Index {
             this.SidebarItem('👤', '我的', 3)
           }.layoutWeight(1)
 
-          // Upload button
+          // 底部：主题切换 + 上传按钮
           Column() {
+            // 主题切换
+            Row() {
+              Text(this.isDarkMode ? '☀️' : '🌙').fontSize(18)
+              if (this.sidebarShowLabels()) {
+                Text(this.isDarkMode ? '亮色模式' : '深色模式').fontSize(12)
+                  .fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 8 })
+              }
+            }
+            .width('100%').height(40)
+            .padding({ left: this.sidebarShowLabels() ? 16 : 0 })
+            .justifyContent(this.sidebarShowLabels() ? FlexAlign.Start : FlexAlign.Center)
+            .borderRadius(10).margin({ left: 8, right: 8, bottom: 8 })
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode))
+            .onClick(() => {
+              AppTheme.getInstance().setThemeMode(this.isDarkMode ? ThemeMode.LIGHT : ThemeMode.DARK);
+            })
+
+            // Upload button
             Button('+ 上传资源')
-              .fontSize(12).fontColor('#FFFFFF')
-              .backgroundColor(ColorTokens.PRIMARY)
+              .fontSize(12).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+              .backgroundColor(ColorTokens.primary(this.isDarkMode))
               .borderRadius(20).height(40)
               .width(new BpType<Length>({ md: 44, lg: '100%', xl: '100%' }).getValue(this.currentBreakpoint) ?? 44)
               .onClick(() => { router.pushUrl({ url: 'pages/UploadPage' }); })
@@ -199,8 +235,8 @@ struct Index {
           .width('100%').padding({ bottom: 16, left: 10, right: 10 })
         }
         .width(this.sidebarWidth()).height('100%')
-        .backgroundColor(ColorTokens.BG_CARD)
-        .border({ width: { right: 1 }, color: ColorTokens.DIVIDER })
+        .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+        .border({ width: { right: 1 }, color: ColorTokens.divider(this.isDarkMode) })
 
         // 右侧内容区
         Tabs({ index: this.currentTab }) {
@@ -219,7 +255,7 @@ struct Index {
         .barHeight(0)
         .onChange((index: number) => { this.currentTab = index; })
         .width('100%').height('100%')
-        .backgroundColor(ColorTokens.BG_PAGE)
+        .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
         .animation({ curve: Curve.EaseOut, duration: 200 })
       }
       .width('100%').height('100%')
@@ -230,19 +266,19 @@ struct Index {
   SidebarItem(icon: string, label: string, index: number) {
     Row() {
       Text(icon).fontSize(20)
-      if (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) {
+      if (this.sidebarShowLabels()) {
         Text(label).fontSize(14)
           .fontWeight(this.currentTab === index ? FontWeight.Bold : FontWeight.Regular)
-          .fontColor(this.currentTab === index ? ColorTokens.PRIMARY : ColorTokens.TEXT_PRIMARY)
+          .fontColor(this.currentTab === index ? (this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode)) : ColorTokens.textPrimary(this.isDarkMode))
           .margin({ left: 8 })
       }
     }
     .width('100%').height(48)
-    .padding({ left: (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) ? 16 : 0, right: 4 })
-    .justifyContent((this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) ? FlexAlign.Start : FlexAlign.Center)
+    .padding({ left: this.sidebarShowLabels() ? 16 : 0, right: 4 })
+    .justifyContent(this.sidebarShowLabels() ? FlexAlign.Start : FlexAlign.Center)
     .borderRadius(12)
     .margin({ left: 8, right: 8, top: 4, bottom: 4 })
-    .backgroundColor(this.currentTab === index ? ColorTokens.PRIMARY_LIGHT : '#00000000')
+    .backgroundColor(this.currentTab === index ? ColorTokens.accentLight(this.isDarkMode) : '#00000000')
     .onClick(() => { this.currentTab = index; })
   }
 
@@ -251,10 +287,10 @@ struct Index {
     Column() {
       Text(label).fontSize(12)
         .fontWeight(index === this.currentTab ? FontWeight.Bold : FontWeight.Regular)
-        .fontColor(index === this.currentTab ? ColorTokens.PRIMARY : ColorTokens.TEXT_HINT)
+        .fontColor(index === this.currentTab ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
       if (index === this.currentTab) {
         Row().width(16).height(3).borderRadius(2)
-          .backgroundColor(ColorTokens.PRIMARY).margin({ top: 4 })
+          .backgroundColor(ColorTokens.primary(this.isDarkMode)).margin({ top: 4 })
       }
     }.width('25%').height(52).justifyContent(FlexAlign.Center)
   }

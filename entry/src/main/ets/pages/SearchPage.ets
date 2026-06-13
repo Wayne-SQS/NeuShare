@@ -17,7 +17,49 @@ struct SearchPage {
   @State sortMode: SortMode = 'default';
   @State isSearching: boolean = false;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private resourceService: ResourceService = ResourceService.getInstance();
+
+  // ── 响应式参数 ─────────────────────────────────────────
+  private maxContentWidth(): number {
+    return new BpType<number>({ sm: 9999, md: 640, lg: 780, xl: 920 }).getValue(this.currentBreakpoint) ?? 9999;
+  }
+
+  private contentPadding(): number {
+    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 36 }).getValue(this.currentBreakpoint) ?? 24;
+  }
+
+  private titleFontSize(): number {
+    return new BpType<number>({ sm: 18, md: 20, lg: 24, xl: 28 }).getValue(this.currentBreakpoint) ?? 18;
+  }
+
+  private bodyFontSize(): number {
+    return new BpType<number>({ sm: 14, md: 16, lg: 18, xl: 20 }).getValue(this.currentBreakpoint) ?? 14;
+  }
+
+  private captionFontSize(): number {
+    return new BpType<number>({ sm: 12, md: 13, lg: 15, xl: 17 }).getValue(this.currentBreakpoint) ?? 12;
+  }
+
+  private smallFontSize(): number {
+    return new BpType<number>({ sm: 11, md: 12, lg: 14, xl: 16 }).getValue(this.currentBreakpoint) ?? 11;
+  }
+
+  private hintIconSize(): number {
+    return new BpType<number>({ sm: 48, md: 60, lg: 72, xl: 84 }).getValue(this.currentBreakpoint) ?? 48;
+  }
+
+  private hintTitleSize(): number {
+    return new BpType<number>({ sm: 16, md: 18, lg: 22, xl: 26 }).getValue(this.currentBreakpoint) ?? 16;
+  }
+
+  private hintDescSize(): number {
+    return new BpType<number>({ sm: 13, md: 15, lg: 17, xl: 19 }).getValue(this.currentBreakpoint) ?? 13;
+  }
+
+  private headerHeight(): number {
+    return new BpType<number>({ sm: 56, md: 60, lg: 64, xl: 68 }).getValue(this.currentBreakpoint) ?? 56;
+  }
 
   aboutToAppear(): void {
     this.popularTags = this.resourceService.getLocalAllTags();
@@ -76,82 +118,83 @@ struct SearchPage {
       // Search header
       Row() {
         Text('←')
-          .fontSize(24)
-          .fontColor(ColorTokens.TEXT_PRIMARY)
+          .fontSize(this.titleFontSize())
+          .fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => { router.back(); })
 
         TextInput({ text: this.keyword, placeholder: '搜标签、标题、作者...' })
-          .fontSize(14)
+          .fontSize(this.bodyFontSize() + 2).fontWeight(FontWeight.Medium)
           .layoutWeight(1)
-          .height(40)
-          .backgroundColor(ColorTokens.BG_INPUT)
-          .borderRadius(20)
-          .padding({ left: 12 })
+          .height(this.bodyFontSize() + 32)
+          .backgroundColor(ColorTokens.bgInput(this.isDarkMode))
+          .borderRadius(24)
+          .padding({ left: 14 })
           .margin({ left: 8, right: 12 })
           .onChange((value: string) => { this.onSearch(value); })
 
         if (this.keyword.length > 0) {
           Text('✕')
-            .fontSize(18)
-            .fontColor(ColorTokens.TEXT_HINT)
+            .fontSize(this.bodyFontSize() + 4)
+            .fontColor(ColorTokens.textHint(this.isDarkMode))
             .onClick(() => { this.onSearch(''); })
         }
       }
-      .width('100%').height(56).padding({ left: 16, right: 16 })
-      .backgroundColor(ColorTokens.BG_CARD)
+      .width('100%').height(this.headerHeight()).padding({ left: this.contentPadding(), right: this.contentPadding() })
+      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
 
       Scroll() {
         Column() {
+          Column() {
           // Tag cloud — always visible until keyword entered
           if (!this.keyword.trim() && this.popularTags.length > 0) {
             Row() {
-              Text('🏷️ 热门标签').fontSize(14).fontWeight(FontWeight.Bold)
-                .fontColor(ColorTokens.TEXT_PRIMARY)
-            }.width('100%').padding({ left: 16, top: 16 })
+              Text('🏷️ 热门标签').fontSize(this.bodyFontSize()).fontWeight(FontWeight.Bold)
+                .fontColor(ColorTokens.textPrimary(this.isDarkMode))
+            }.width('100%').padding({ left: this.contentPadding(), top: 16 })
 
             Flex({ wrap: FlexWrap.Wrap }) {
               ForEach(this.popularTags, (item: TagCount) => {
                 Text(item.tag)
-                  .fontSize(12)
-                  .fontColor(ColorTokens.PRIMARY)
+                  .fontSize(this.captionFontSize())
+                  .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
                   .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                  .backgroundColor(ColorTokens.PRIMARY_LIGHT)
+                  .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                   .borderRadius(14)
                   .margin({ right: 8, top: 8 })
                   .onClick(() => { this.searchByTag(item.tag); })
               })
-            }.width('100%').padding({ left: 16, right: 16, bottom: 12 })
+            }.width('100%').padding({ left: this.contentPadding(), right: this.contentPadding(), bottom: 12 })
           }
 
           // Empty state
           if (this.keyword.trim().length === 0) {
             Column() {
-              Text('🔍').fontSize(48).margin({ top: 60 })
-              Text('搜索资源、标签、作者').fontSize(16)
-                .fontColor(ColorTokens.TEXT_HINT).margin({ top: 12 })
-              Text('直接点击上方标签即可快速检索').fontSize(13)
+              Text('🔍').fontSize(this.hintIconSize()).margin({ top: 60 })
+              Text('搜索资源、标签、作者').fontSize(this.hintTitleSize())
+                .fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
+              Text('直接点击上方标签即可快速检索').fontSize(this.hintDescSize())
                 .fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
             }.width('100%')
           } else if (this.results.length === 0) {
             Column() {
-              Text('😔').fontSize(48).margin({ top: 60 })
-              Text('未找到「' + this.keyword + '」相关资源').fontSize(16)
-                .fontColor(ColorTokens.TEXT_HINT).margin({ top: 12 })
-              Text('试试其他关键词或点击热门标签').fontSize(13)
+              Text('😔').fontSize(this.hintIconSize()).margin({ top: 60 })
+              Text('未找到「' + this.keyword + '」相关资源').fontSize(this.hintTitleSize())
+                .fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
+              Text('试试其他关键词或点击热门标签').fontSize(this.hintDescSize())
                 .fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
             }.width('100%')
           } else {
             // Results count
             Row() {
-              Text('找到 ' + this.results.length.toString() + ' 个结果').fontSize(13)
-                .fontColor(ColorTokens.TEXT_HINT)
+              Text('找到 ' + this.results.length.toString() + ' 个结果').fontSize(this.captionFontSize())
+                .fontColor(ColorTokens.textHint(this.isDarkMode))
               Blank()
-              Text('标签: ' + this.keyword).fontSize(11)
-                .fontColor(ColorTokens.PRIMARY)
+              Text('标签: ' + this.keyword).fontSize(this.smallFontSize())
+                .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
                 .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                .backgroundColor(ColorTokens.PRIMARY_LIGHT)
+                .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                 .borderRadius(8)
-            }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 4 })
+            }.width('100%').padding({ left: this.contentPadding(), right: this.contentPadding(), top: 12, bottom: 4 })
 
             // Sort chips
             Row() {
@@ -164,7 +207,7 @@ struct SearchPage {
               SortChip({ label: '按时间', active: this.sortMode === 'date',
                 onSort: () => { this.sortMode = 'date'; this.applySort(); } })
             }
-            .width('100%').padding({ left: 16, right: 16, bottom: 8 })
+            .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding(), bottom: 8 })
 
             Grid() {
               LazyForEach(this.resultsDataSource, (item: ResourceItemModel) => {
@@ -179,17 +222,22 @@ struct SearchPage {
               }, (item: ResourceItemModel) => item.id.toString())
             }
             .columnsTemplate(new BpType<string>({ sm: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr')
-            .rowsGap(4)
-            .columnsGap(4)
+            .rowsGap(12)
+            .columnsGap(12)
             .layoutWeight(1)
           }
 
           Column().height(40)
+          }
+          .constraintSize({ maxWidth: this.maxContentWidth() })
+          .width('100%')
         }
+        .width('100%')
       }
       .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.BG_PAGE)
+    .alignItems(HorizontalAlign.Center)
+    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 }
 
@@ -197,15 +245,17 @@ struct SearchPage {
 struct SortChip {
   @Prop label: string = '';
   @Prop active: boolean = false;
+  @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   onSort: () => void = () => {};
 
   build() {
     Text(this.label)
-      .fontSize(12)
+      .fontSize(new BpType<number>({ sm: 12, md: 13, lg: 14, xl: 15 }).getValue(this.currentBreakpoint) ?? 12)
       .fontWeight(this.active ? FontWeight.Bold : FontWeight.Regular)
-      .fontColor(this.active ? ColorTokens.TEXT_WHITE : ColorTokens.TEXT_HINT)
+      .fontColor(this.active ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textHint(this.isDarkMode))
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor(this.active ? ColorTokens.PRIMARY : ColorTokens.BG_INPUT)
+      .backgroundColor(this.active ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
       .borderRadius(16)
       .margin({ right: 8 })
       .onClick(() => { this.onSort(); })

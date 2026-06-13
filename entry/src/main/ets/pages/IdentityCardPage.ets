@@ -7,6 +7,7 @@ import { Context } from '@ohos.abilityAccessCtrl';
 @Entry
 @Component
 struct IdentityCardPage {
+  @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State selectedGrade: string = '';
   @State studentId: string = '';
   @State password: string = '';
@@ -70,17 +71,17 @@ struct IdentityCardPage {
       // Top band
       Column()
         .width('100%').height(120)
-        .backgroundColor(ColorTokens.PRIMARY)
+        .backgroundColor(ColorTokens.primary(this.isDarkMode))
 
       Scroll() {
         Column() {
           // Welcome header
           Column() {
             Text('🎓 创建你的学习身份')
-              .fontSize(22).fontWeight(FontWeight.Bold).fontColor(ColorTokens.TEXT_PRIMARY)
+              .fontSize(22).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
               .opacity(this.titleOpacity).translate({ y: this.titleY })
             Text('只需一次设置，为你精准推荐课程与资源')
-              .fontSize(13).fontColor(ColorTokens.TEXT_HINT)
+              .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode))
               .margin({ top: 8 })
               .opacity(this.titleOpacity).translate({ y: this.titleY })
           }
@@ -91,24 +92,24 @@ struct IdentityCardPage {
             // Major (pre-filled)
             Row() {
               Column() {
-                Text('📚 专业').fontSize(12).fontColor(ColorTokens.TEXT_HINT)
+                Text('📚 专业').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode))
                 Text('软件工程').fontSize(17).fontWeight(FontWeight.Bold)
-                  .fontColor(ColorTokens.TEXT_PRIMARY).margin({ top: 4 })
+                  .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 4 })
               }
               Blank()
               Row() {
-                Text('NEU').fontSize(11).fontColor('#FFFFFF')
+                Text('NEU').fontSize(11).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
                   .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                  .backgroundColor(ColorTokens.PRIMARY).borderRadius(8)
+                  .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(8)
                 Text(' ✓ 已认证').fontSize(11).fontColor(ColorTokens.GREEN).margin({ left: 6 })
               }
             }.width('100%')
 
-            Divider().color(ColorTokens.DIVIDER).margin({ top: 14, bottom: 14 })
+            Divider().color(ColorTokens.divider(this.isDarkMode)).margin({ top: 14, bottom: 14 })
 
             // Grade selector
             Column() {
-              Text('🎯 年级').fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ bottom: 12 })
+              Text('🎯 年级').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ bottom: 12 })
               Row() {
                 ForEach(this.grades, (grade: string) => {
                   GradePill({
@@ -120,30 +121,30 @@ struct IdentityCardPage {
               }.width('100%')
             }
 
-            Divider().color(ColorTokens.DIVIDER).margin({ top: 14, bottom: 14 })
+            Divider().color(ColorTokens.divider(this.isDarkMode)).margin({ top: 14, bottom: 14 })
 
             // Student ID
             Column() {
-              Text('🆔 学号（选填）').fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ bottom: 8 })
+              Text('🆔 学号（选填）').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ bottom: 8 })
               TextInput({ text: this.studentId, placeholder: '例：20230001' })
                 .fontSize(15).width('100%').height(44)
-                .backgroundColor(ColorTokens.BG_INPUT).borderRadius(12)
+                .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
                 .padding({ left: 14 })
                 .onChange((value: string) => { this.studentId = value; })
             }
 
-            Divider().color(ColorTokens.DIVIDER).margin({ top: 14, bottom: 14 })
+            Divider().color(ColorTokens.divider(this.isDarkMode)).margin({ top: 14, bottom: 14 })
 
             // Password
             Column() {
               Text('🔒 设置密码（选填，用于账户保护）')
-                .fontSize(12).fontColor(ColorTokens.TEXT_HINT).margin({ bottom: 8 })
+                .fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ bottom: 8 })
 
               Row() {
                 TextInput({ text: this.password, placeholder: '6-16位密码' })
                   .fontSize(15).layoutWeight(1).height(44)
                   .type(this.showPassword ? InputType.Normal : InputType.Password)
-                  .backgroundColor(ColorTokens.BG_INPUT).borderRadius(12)
+                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
                   .padding({ left: 14 })
                   .onChange((value: string) => { this.password = value; })
                 Text(this.showPassword ? '🙈' : '👁️')
@@ -155,7 +156,7 @@ struct IdentityCardPage {
                 TextInput({ text: this.confirmPassword, placeholder: '确认密码' })
                   .fontSize(15).width('100%').height(44)
                   .type(InputType.Password)
-                  .backgroundColor(ColorTokens.BG_INPUT).borderRadius(12)
+                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
                   .padding({ left: 14 }).margin({ top: 8 })
                   .onChange((value: string) => { this.confirmPassword = value; })
 
@@ -166,28 +167,28 @@ struct IdentityCardPage {
             }
           }
           .width('100%').padding(22)
-          .backgroundColor(ColorTokens.BG_CARD).borderRadius(20)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(20)
           .shadow({ radius: 16, color: '#12000000', offsetX: 0, offsetY: 4 })
           .border({ width: 1, color: '#08000000', radius: 20 })
-          .margin({ top: 28, left: 16, right: 16 })
+          .margin({ top: 28, left: 24, right: 24 })
           .opacity(this.cardOpacity).translate({ y: this.cardTranslateY })
 
           // Confirm button
           Button(this.selectedGrade ? '✓ 完成注册，开始探索' : '请先选择年级')
             .width('100%').height(54)
-            .fontSize(16).fontWeight(FontWeight.Bold).fontColor('#FFFFFF')
-            .backgroundColor(this.selectedGrade ? ColorTokens.PRIMARY : ColorTokens.TEXT_DISABLED)
+            .fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+            .backgroundColor(this.selectedGrade ? ColorTokens.primary(this.isDarkMode) : ColorTokens.TEXT_DISABLED)
             .borderRadius(16)
             .shadow(this.selectedGrade ? {
-              radius: 12, color: ColorTokens.PRIMARY + '40', offsetX: 0, offsetY: 6
+              radius: 12, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), offsetX: 0, offsetY: 6
             } : { radius: 0, color: '#00000000', offsetX: 0, offsetY: 0 })
-            .margin({ top: 32, left: 16, right: 16 })
+            .margin({ top: 32, left: 24, right: 24 })
             .enabled(this.selectedGrade.length > 0 && !this.isSaving)
             .onClick(() => { this.confirmAndEnter(); })
 
           // Skip link
           Text('暂时跳过，以后设置 →')
-            .fontSize(13).fontColor(ColorTokens.TEXT_HINT)
+            .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode))
             .margin({ top: 18 })
             .onClick(() => { this.skipRegistration(); })
 
@@ -200,6 +201,6 @@ struct IdentityCardPage {
       }
       .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.BG_PAGE)
+    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 }

@@ -6,6 +6,7 @@
 // ============================================================
 import { mediaquery } from '@kit.ArkUI';
 import { window } from '@kit.ArkUI';
+import { display } from '@kit.ArkUI';
 
 interface BreakpointTypeOption<T> {
   xs?: T
@@ -58,7 +59,7 @@ const BP_THRESHOLDS: [string, number][] = [
   ['sm', 320],
   ['md', 600],
   ['lg', 840],
-  ['xl', 1500]
+  ['xl', 1440]
 ];
 
 /**
@@ -74,16 +75,6 @@ function widthToBreakpoint(width: number): string {
   return result;
 }
 
-/**
- * 向后兼容别名 — 项目中大量使用 BreakpointType.SM/MD/LG
- * 保留旧名，指向新枚举值
- */
-export class BreakpointTypeOld {
-  SM: string = BreakpointTypeEnum.SM;
-  MD: string = BreakpointTypeEnum.MD;
-  LG: string = BreakpointTypeEnum.LG;
-}
-
 export class BreakpointSystem {
   private currentBreakpoint: string = BreakpointTypeEnum.SM;
   private breakpoints: BreakpointItem[] = [
@@ -91,7 +82,7 @@ export class BreakpointSystem {
     new BreakpointItem('sm', 320),
     new BreakpointItem('md', 600),
     new BreakpointItem('lg', 840),
-    new BreakpointItem('xl', 1500)
+    new BreakpointItem('xl', 1440)
   ];
   private isRegistered: boolean = false;
 
@@ -114,18 +105,41 @@ export class BreakpointSystem {
   /**
    * 通过 window 尺寸直接检测断点（主力初始检测通道）
    * 在 EntryAbility.onWindowStageCreate 中调用
+   *
+   * 关键修复: windowRect.width 返回物理像素(px)，需除以 densityPixels 转为 vp
+   * 手机 1080px @ density 3.0 → 360vp → sm（修复前误判为 lg）
    */
   async detectFromWindow(windowStage: window.WindowStage): Promise<void> {
     try {
       const mainWindow = await windowStage.getMainWindow();
       const props = mainWindow.getWindowProperties();
-      const w = props.windowRect.width;
+      let w = props.windowRect.width;
+      try {
+        const density = display.getDefaultDisplaySync().densityPixels;
+        if (density > 0) {
+          w = w / density; // px → vp
+        }
+      } catch (e) {
+        console.warn('[BreakpointSystem] density fetch failed, using raw px: ' + JSON.stringify(e));
+      }
       const bp = widthToBreakpoint(w);
-      console.info('[BreakpointSystem] detectFromWindow: width=' + w + ' → ' + bp);
+      console.info('[BreakpointSystem] detectFromWindow: width=' + w + 'vp → ' + bp);
+      AppStorage.setOrCreate<number>('windowVpWidth', w);
       this.updateCurrentBreakpoint(bp);
     } catch (e) {
       console.warn('[BreakpointSystem] detectFromWindow failed: ' + JSON.stringify(e));
     }
+  }
+
+  /**
+   * 通过 vp 宽度更新断点（供 window.on('windowSizeChange') 回调使用）
+   * windowSizeChange 回调的 size.width 自动为 vp 单位，无需转换
+   * 同时将原始宽度存入 AppStorage，供侧边栏自适应等组件使用
+   */
+  updateFromVpWidth(vpWidth: number): void {
+    AppStorage.setOrCreate<number>('windowVpWidth', vpWidth);
+    const bp = widthToBreakpoint(vpWidth);
+    this.updateCurrentBreakpoint(bp);
   }
 
   register(): void {
@@ -152,10 +166,7 @@ export class BreakpointSystem {
     for (let i = this.breakpoints.length - 1; i >= 0; i--) {
       const bp = this.breakpoints[i];
       if (bp.mediaQueryListener && bp.mediaQueryListener.matches) {
-        if (this.currentBreakpoint !== bp.name) {
-          this.currentBreakpoint = bp.name;
-          AppStorage.setOrCreate<string>('currentBreakpoint', this.currentBreakpoint);
-        }
+        this.updateCurrentBreakpoint(bp.name);
         break;
       }
     }
