@@ -23,11 +23,32 @@ export function getHotResources(limit = 6) {
   })
 }
 
-export function searchResources(keyword, sortBy = 'new') {
+export function searchResources(params) {
   return request({
     url: '/resource/search',
     method: 'get',
-    params: { keyword, sortBy }
+    params
+  })
+}
+
+/**
+ * 结构化筛选项：已发布资源中出现过的课程与教师
+ */
+export function getResourceFilters() {
+  return request({
+    url: '/resource/filters',
+    method: 'get'
+  })
+}
+
+/**
+ * 搜索联想：标题候选
+ */
+export function suggestResources(keyword, limit = 10) {
+  return request({
+    url: '/resource/suggest',
+    method: 'get',
+    params: { keyword, limit }
   })
 }
 

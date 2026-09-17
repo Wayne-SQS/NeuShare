@@ -29,6 +29,26 @@ public class ResourceDTO {
     private Long categoryId;
 
     /**
+     * 课程名称（建议填写，用户主要按课程找资料）
+     */
+    private String courseName;
+
+    /**
+     * 授课教师
+     */
+    private String teacher;
+
+    /**
+     * 学年，如 2024-2025
+     */
+    private String schoolYear;
+
+    /**
+     * 学期：spring / summer / autumn / winter
+     */
+    private String term;
+
+    /**
      * 资源类型
      */
     private String type;

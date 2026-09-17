@@ -3,6 +3,7 @@ package com.neushare.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.neushare.dto.ResourceDTO;
+import com.neushare.dto.ResourceQuery;
 import com.neushare.entity.Resource;
 import com.neushare.vo.ResourceVO;
 
@@ -97,4 +98,26 @@ public interface ResourceService extends IService<Resource> {
      * 获取用户收到的总点赞数
      */
     Long getTotalLikesReceived(Long userId);
+
+    /**
+     * 统一查询入口：关键词（全文检索 + 相关度排序）与结构化筛选（课程/教师/学年/学期/类型）
+     *
+     * @param query 查询条件，方法内部会做关键词清洗与全文降级判断
+     */
+    IPage<ResourceVO> search(ResourceQuery query);
+
+    /**
+     * 搜索联想：根据输入返回标题候选
+     */
+    List<String> suggest(String keyword, Integer limit);
+
+    /**
+     * 结构化筛选项：课程名列表
+     */
+    List<String> listCourseNames();
+
+    /**
+     * 结构化筛选项：教师名列表
+     */
+    List<String> listTeachers();
 }

@@ -5,8 +5,22 @@
       <div class="card-header">
         <span class="category-tag">{{ resource.categoryName || '未分类' }}</span>
       </div>
-      <h3 class="title">{{ resource.title }}</h3>
-      <p class="description">{{ resource.description || '暂无描述' }}</p>
+      <h3 class="title" v-html="highlightedTitle"></h3>
+
+      <!-- 结构化归属信息：既是结果可信度的信号，也是二次筛选的入口 -->
+      <div class="structured-meta" v-if="structuredTags.length">
+        <span
+          v-for="tag in structuredTags"
+          :key="tag.text"
+          class="meta-chip"
+          :title="`只看「${tag.text}」的资料`"
+          @click.stop="router.push({ path: '/resource', query: tag.query })"
+        >
+          {{ tag.text }}
+        </span>
+      </div>
+
+      <p class="description" v-html="highlightedDescription"></p>
       <div class="card-meta">
         <div class="meta-item">
           <el-icon><User /></el-icon>
@@ -35,11 +49,14 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { formatTime } from '@/utils/format'
+import { formatTime, highlight, buildStructuredTags } from '@/utils/format'
 
 const props = defineProps({
-  resource: { type: Object, required: true }
+  resource: { type: Object, required: true },
+  // 关键词，用于高亮命中词；列表页搜索时传入
+  keyword: { type: String, default: '' }
 })
 
 const router = useRouter()
@@ -47,6 +64,15 @@ const router = useRouter()
 const handleClick = () => {
   router.push(`/resource/${props.resource.id}`)
 }
+
+const highlightedTitle = computed(() => highlight(props.resource.title, props.keyword))
+
+const highlightedDescription = computed(() =>
+  highlight(props.resource.description || '暂无描述', props.keyword)
+)
+
+// 课程 / 教师 / 学年学期：有值才展示，避免卡片里出现一堆"未填写"
+const structuredTags = computed(() => buildStructuredTags(props.resource))
 </script>
 
 <style scoped>
@@ -109,6 +135,41 @@ const handleClick = () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   letter-spacing: -0.01em;
+}
+
+.structured-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.meta-chip {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: var(--transition);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta-chip:hover {
+  color: var(--accent);
+  border-color: var(--border-accent);
+}
+
+/* 搜索结果高亮：不用纯黄底，和靛蓝/极简双主题都能搭 */
+:deep(mark.hl) {
+  background: rgba(37, 99, 235, 0.16);
+  color: var(--accent);
+  padding: 0 1px;
+  border-radius: 2px;
 }
 
 .description {

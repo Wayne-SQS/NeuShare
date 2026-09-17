@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.neushare.mapper.ResourceMapper">
 
     <resultMap id="ResourceVOMap" type="com.neushare.vo.ResourceVO">
@@ -7,10 +7,15 @@
         <result column="title" property="title"/>
         <result column="category_id" property="categoryId"/>
         <result column="category_name" property="categoryName"/>
+        <result column="course_name" property="courseName"/>
+        <result column="teacher" property="teacher"/>
+        <result column="school_year" property="schoolYear"/>
+        <result column="term" property="term"/>
         <result column="type" property="type"/>
         <result column="content_url" property="contentUrl"/>
         <result column="description" property="description"/>
         <result column="cover_url" property="coverUrl"/>
+        <result column="source" property="source"/>
         <result column="upload_user_id" property="uploadUserId"/>
         <result column="status" property="status"/>
         <result column="view_count" property="viewCount"/>
@@ -22,10 +27,94 @@
         <result column="upload_nickname" property="uploadNickname"/>
         <result column="upload_avatar" property="uploadAvatar"/>
         <result column="tags" property="tags"/>
+        <result column="relevance" property="relevance"/>
     </resultMap>
 
+    <!-- 列表场景字段集：description 截断，避免把 TEXT 全文拉出来拖慢列表查询 -->
+    <sql id="listColumns">
+        r.id, r.title, r.category_id, r.type, r.content_url, r.cover_url, r.source, r.tags,
+        r.course_name, r.teacher, r.school_year, r.term,
+        r.upload_user_id, r.status, r.view_count, r.like_count, r.favorite_count,
+        r.create_time, r.update_time,
+        LEFT(r.description, 150) AS description,
+        u.username AS upload_username, u.nickname AS upload_nickname, u.avatar_url AS upload_avatar,
+        c.name AS category_name
+    </sql>
+
+    <!-- 结构化筛选条件，列表与搜索共用 -->
+    <sql id="filterConditions">
+        <if test="query.status != null">
+            AND r.status = #{query.status}
+        </if>
+        <if test="query.categoryId != null">
+            AND r.category_id = #{query.categoryId}
+        </if>
+        <if test="query.courseName != null and query.courseName != ''">
+            AND r.course_name = #{query.courseName}
+        </if>
+        <if test="query.teacher != null and query.teacher != ''">
+            AND r.teacher = #{query.teacher}
+        </if>
+        <if test="query.schoolYear != null and query.schoolYear != ''">
+            AND r.school_year = #{query.schoolYear}
+        </if>
+        <if test="query.term != null and query.term != ''">
+            AND r.term = #{query.term}
+        </if>
+        <if test="query.type != null and query.type != ''">
+            AND r.type = #{query.type}
+        </if>
+        <if test="query.uploadUserId != null">
+            AND r.upload_user_id = #{query.uploadUserId}
+        </if>
+    </sql>
+
+    <!-- 关键词条件：优先全文索引，否则降级 LIKE -->
+    <sql id="keywordCondition">
+        <choose>
+            <when test="query.fulltextKeyword != null and query.fulltextKeyword != ''">
+                AND MATCH(r.title, r.description, r.tags) AGAINST (#{query.fulltextKeyword} IN BOOLEAN MODE)
+            </when>
+            <otherwise>
+                <if test="query.keyword != null and query.keyword != ''">
+                    AND (r.title LIKE CONCAT('%', #{query.keyword}, '%')
+                      OR r.description LIKE CONCAT('%', #{query.keyword}, '%')
+                      OR r.tags LIKE CONCAT('%', #{query.keyword}, '%'))
+                </if>
+            </otherwise>
+        </choose>
+    </sql>
+
+    <!-- 统一查询：结构化筛选 + 关键词检索 + 相关度排序 -->
+    <select id="selectByQuery" resultMap="ResourceVOMap">
+        SELECT
+        <include refid="listColumns"/>
+        <if test="query.fulltextKeyword != null and query.fulltextKeyword != ''">
+            , MATCH(r.title, r.description, r.tags) AGAINST (#{query.fulltextKeyword} IN BOOLEAN MODE) AS relevance
+        </if>
+        FROM resource r
+        LEFT JOIN user u ON r.upload_user_id = u.id
+        LEFT JOIN category c ON r.category_id = c.id
+        <where>
+            <include refid="filterConditions"/>
+            <include refid="keywordCondition"/>
+        </where>
+        <choose>
+            <when test="query.sortBy == 'relevance' and query.fulltextKeyword != null and query.fulltextKeyword != ''">
+                ORDER BY relevance DESC, r.view_count DESC
+            </when>
+            <when test="query.sortBy == 'hot'">
+                ORDER BY r.view_count DESC, r.like_count DESC
+            </when>
+            <otherwise>
+                ORDER BY r.create_time DESC
+            </otherwise>
+        </choose>
+    </select>
+
     <select id="selectResourcePage" resultMap="ResourceVOMap">
-        SELECT r.*, u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar, c.name as category_name
+        SELECT
+        <include refid="listColumns"/>
         FROM resource r
         LEFT JOIN user u ON r.upload_user_id = u.id
         LEFT JOIN category c ON r.category_id = c.id
@@ -58,7 +147,8 @@
     </select>
 
     <select id="selectHotResources" resultMap="ResourceVOMap">
-        SELECT r.*, u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar, c.name as category_name
+        SELECT
+        <include refid="listColumns"/>
         FROM resource r
         LEFT JOIN user u ON r.upload_user_id = u.id
         LEFT JOIN category c ON r.category_id = c.id
@@ -68,7 +158,8 @@
     </select>
 
     <select id="selectUserResources" resultMap="ResourceVOMap">
-        SELECT r.*, u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar, c.name as category_name
+        SELECT
+        <include refid="listColumns"/>
         FROM resource r
         LEFT JOIN user u ON r.upload_user_id = u.id
         LEFT JOIN category c ON r.category_id = c.id
@@ -77,7 +168,8 @@
     </select>
 
     <select id="selectUserResourcesByStatus" resultMap="ResourceVOMap">
-        SELECT r.*, u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar, c.name as category_name
+        SELECT
+        <include refid="listColumns"/>
         FROM resource r
         LEFT JOIN user u ON r.upload_user_id = u.id
         LEFT JOIN category c ON r.category_id = c.id
@@ -89,7 +181,8 @@
     </select>
 
     <select id="searchResources" resultMap="ResourceVOMap">
-        SELECT r.*, u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar, c.name as category_name
+        SELECT
+        <include refid="listColumns"/>
         FROM resource r
         LEFT JOIN user u ON r.upload_user_id = u.id
         LEFT JOIN category c ON r.category_id = c.id
@@ -109,6 +202,34 @@
         SELECT COALESCE(SUM(like_count), 0)
         FROM resource
         WHERE upload_user_id = #{userId} AND status = 1
+    </select>
+
+    <!-- 搜索联想：标题候选，供前端搜索框下拉提示 -->
+    <select id="suggestTitles" resultType="java.lang.String">
+        SELECT DISTINCT r.title
+        FROM resource r
+        WHERE r.status = 1
+        <if test="keyword != null and keyword != ''">
+            AND r.title LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY r.view_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 结构化筛选项：课程名去重 -->
+    <select id="selectCourseNames" resultType="java.lang.String">
+        SELECT DISTINCT r.course_name
+        FROM resource r
+        WHERE r.status = 1 AND r.course_name IS NOT NULL AND r.course_name != ''
+        ORDER BY r.course_name
+    </select>
+
+    <!-- 结构化筛选项：教师名去重 -->
+    <select id="selectTeachers" resultType="java.lang.String">
+        SELECT DISTINCT r.teacher
+        FROM resource r
+        WHERE r.status = 1 AND r.teacher IS NOT NULL AND r.teacher != ''
+        ORDER BY r.teacher
     </select>
 
 </mapper>

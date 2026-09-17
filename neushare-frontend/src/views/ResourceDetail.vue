@@ -5,6 +5,20 @@
         <div class="resource-info">
           <el-tag class="category-tag">{{ resource.categoryName || '未分类' }}</el-tag>
           <h1 class="title">{{ resource.title }}</h1>
+
+          <!-- 结构化归属信息：让用户一眼确认"这份资料是不是我这门课的" -->
+          <div class="structured-bar" v-if="structuredTags.length">
+            <router-link
+              v-for="tag in structuredTags"
+              :key="tag.text"
+              class="structured-chip"
+              :to="{ path: '/resource', query: tag.query }"
+            >
+              <el-icon><Collection /></el-icon>
+              {{ tag.text }}
+            </router-link>
+          </div>
+
           <div class="meta">
             <span class="meta-item">
               <el-icon><User /></el-icon>
@@ -133,7 +147,7 @@ import { useUserStore } from '@/store/modules/user'
 import { getResourceDetail, likeResource, unlikeResource, checkLiked } from '@/api/resource'
 import { getComments, addComment } from '@/api/comment'
 import { addFavorite, removeFavorite, checkFavorite } from '@/api/favorite'
-import { formatTime, getInitial } from '@/utils/format'
+import { formatTime, getInitial, buildStructuredTags } from '@/utils/format'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -151,6 +165,9 @@ const commentForm = reactive({
 })
 
 const resourceId = computed(() => route.params.id)
+
+// 课程 / 教师 / 学年学期，点击即按该维度筛选同类资料
+const structuredTags = computed(() => buildStructuredTags(resource.value))
 
 const totalComments = computed(() => {
   let count = 0
@@ -326,6 +343,32 @@ onMounted(async () => {
   margin-bottom: 18px;
   letter-spacing: -0.02em;
   line-height: 1.3;
+}
+
+.structured-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.structured-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.structured-chip:hover {
+  color: var(--accent);
+  border-color: var(--border-accent);
 }
 
 .meta {

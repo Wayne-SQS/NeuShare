@@ -6,23 +6,27 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.neushare.dto.ResourceDTO;
+import com.neushare.dto.ResourceQuery;
 import com.neushare.entity.Comment;
 import com.neushare.entity.Favorite;
 import com.neushare.entity.Resource;
 import com.neushare.entity.ResourceLike;
+import com.neushare.entity.SearchLog;
 import com.neushare.entity.User;
 import com.neushare.exception.BusinessException;
 import com.neushare.mapper.CommentMapper;
 import com.neushare.mapper.FavoriteMapper;
 import com.neushare.mapper.ResourceLikeMapper;
 import com.neushare.mapper.ResourceMapper;
+import com.neushare.mapper.SearchLogMapper;
 import com.neushare.mapper.UserMapper;
 import com.neushare.service.NotificationService;
 import com.neushare.service.ResourceService;
 import com.neushare.vo.ResourceVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,7 @@ import java.util.List;
 /**
  * 资源服务实现类
  */
+@Slf4j
 @Service
 public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> implements ResourceService {
 
@@ -52,6 +57,17 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private SearchLogMapper searchLogMapper;
+
+    /** 是否启用全文检索（未建 ngram 索引时可关闭，自动降级为 LIKE） */
+    @Value("${neushare.search.fulltext-enabled:true}")
+    private boolean fulltextEnabled;
+
+    /** 走全文检索的最小关键词长度，ngram 按 2 字切分，单字没有意义 */
+    @Value("${neushare.search.fulltext-min-length:2}")
+    private int fulltextMinLength;
 
     @Override
     public IPage<ResourceVO> getResourcePage(Integer pageNum, Integer pageSize, Integer status, Long categoryId, String keyword, String sortBy) {
@@ -251,5 +267,92 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
     public Long getTotalLikesReceived(Long userId) {
         Long total = resourceMapper.selectTotalLikesReceived(userId);
         return total != null ? total : 0L;
+    }
+
+    @Override
+    public IPage<ResourceVO> search(ResourceQuery query) {
+        // 参数兜底，避免前端漏传导致分页插件抛错
+        if (query.getPageNum() == null || query.getPageNum() < 1) {
+            query.setPageNum(1);
+        }
+        if (query.getPageSize() == null || query.getPageSize() < 1) {
+            query.setPageSize(10);
+        }
+        if (query.getPageSize() > 100) {
+            query.setPageSize(100);
+        }
+
+        // 关键词清洗：布尔模式下 MySQL 的 + - ~ * 等字符是操作符，必须由用户输入里剔除
+        String raw = query.getKeyword();
+        if (raw != null && !raw.isBlank()) {
+            String cleaned = cleanKeyword(raw);
+            // 全文索引按 2 字切分，单字走全文没意义，降级为 LIKE
+            if (fulltextEnabled && cleaned.length() >= fulltextMinLength) {
+                query.setFulltextKeyword(cleaned);
+            }
+            // 用户没指定排序时，有关键词默认按相关度排
+            if (query.getSortBy() == null || query.getSortBy().isBlank()
+                    || (!"hot".equals(query.getSortBy()) && !"new".equals(query.getSortBy()))) {
+                query.setSortBy("relevance");
+            }
+        }
+
+        Page<ResourceVO> page = new Page<>(query.getPageNum(), query.getPageSize());
+        IPage<ResourceVO> result = resourceMapper.selectByQuery(page, query);
+
+        // 搜索行为落库：失败不影响搜索结果返回
+        if (raw != null && !raw.isBlank()) {
+            recordSearchLog(query, result.getTotal());
+        }
+        return result;
+    }
+
+    @Override
+    public List<String> suggest(String keyword, Integer limit) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+        int size = (limit == null || limit < 1) ? 10 : Math.min(limit, 20);
+        return resourceMapper.suggestTitles(cleanKeyword(keyword), size);
+    }
+
+    @Override
+    public List<String> listCourseNames() {
+        return resourceMapper.selectCourseNames();
+    }
+
+    @Override
+    public List<String> listTeachers() {
+        return resourceMapper.selectTeachers();
+    }
+
+    /**
+     * 关键词清洗：只保留中英文、数字与空格，多空格合并
+     * <p>
+     * 目的有两个：一是剔除 MySQL 布尔模式的操作符避免语法错误，
+     * 二是过滤掉纯符号输入导致无意义的全表扫描。
+     */
+    private String cleanKeyword(String keyword) {
+        if (keyword == null) {
+            return "";
+        }
+        return keyword.replaceAll("[^\\u4e00-\\u9fa5a-zA-Z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private void recordSearchLog(ResourceQuery query, long total) {
+        try {
+            SearchLog log = new SearchLog();
+            log.setUserId(null);
+            log.setKeyword(query.getKeyword());
+            log.setResultCount((int) total);
+            log.setFilters(query.filterSummary());
+            log.setSearchTime(LocalDateTime.now());
+            searchLogMapper.insert(log);
+        } catch (Exception e) {
+            // 日志落库失败不能影响搜索主流程
+            log.warn("搜索日志写入失败，keyword={}, reason={}", query.getKeyword(), e.getMessage());
+        }
     }
 }

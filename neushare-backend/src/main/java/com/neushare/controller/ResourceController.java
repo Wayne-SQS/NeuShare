@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.neushare.common.PageResult;
 import com.neushare.common.Result;
 import com.neushare.dto.ResourceDTO;
+import com.neushare.dto.ResourceQuery;
 import com.neushare.service.ResourceService;
 import com.neushare.util.FileUploadUtil;
 import com.neushare.vo.ResourceVO;
@@ -14,7 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resource")
@@ -33,14 +36,34 @@ public class ResourceController {
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "new") String sortBy,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String courseName,
+            @RequestParam(required = false) String teacher,
+            @RequestParam(required = false) String schoolYear,
+            @RequestParam(required = false) String term,
+            @RequestParam(required = false) String type,
             HttpServletRequest request) {
         // 公开接口：非管理员只能看已发布资源，防止通过 status 参数窥探待审核/驳回内容
         Long userId = (Long) request.getAttribute("userId");
         String role = (String) request.getAttribute("role");
         boolean isAdmin = userId != null && "admin".equals(role);
         Integer effectiveStatus = (status != null && isAdmin) ? status : 1;
-        IPage<ResourceVO> page = resourceService.getResourcePage(pageNum, pageSize, effectiveStatus, categoryId, keyword, sortBy);
+
+        ResourceQuery query = new ResourceQuery();
+        query.setPageNum(pageNum);
+        query.setPageSize(pageSize);
+        query.setStatus(effectiveStatus);
+        query.setCategoryId(categoryId);
+        query.setKeyword(keyword);
+        query.setCourseName(courseName);
+        query.setTeacher(teacher);
+        query.setSchoolYear(schoolYear);
+        query.setTerm(term);
+        query.setType(type);
+        // 不传 sortBy 且无关键词时按时间倒序；有关键词时 Service 内部会切成相关度排序
+        query.setSortBy(sortBy == null || sortBy.isBlank() ? "new" : sortBy);
+
+        IPage<ResourceVO> page = resourceService.search(query);
         PageResult<ResourceVO> pageResult = new PageResult<>(page.getCurrent(), page.getSize(), page.getTotal(), page.getRecords());
         return Result.success(pageResult);
     }
@@ -113,10 +136,51 @@ public class ResourceController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "new") String sortBy) {
-        IPage<ResourceVO> page = resourceService.searchResources(pageNum, pageSize, keyword, sortBy);
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String courseName,
+            @RequestParam(required = false) String teacher,
+            @RequestParam(required = false) String schoolYear,
+            @RequestParam(required = false) String term,
+            @RequestParam(required = false) String type) {
+        ResourceQuery query = new ResourceQuery();
+        query.setPageNum(pageNum);
+        query.setPageSize(pageSize);
+        query.setKeyword(keyword);
+        query.setCategoryId(categoryId);
+        query.setCourseName(courseName);
+        query.setTeacher(teacher);
+        query.setSchoolYear(schoolYear);
+        query.setTerm(term);
+        query.setType(type);
+        query.setStatus(1);
+        // 搜索接口默认按相关度，用户可显式指定 hot / new
+        query.setSortBy(sortBy == null || sortBy.isBlank() ? "relevance" : sortBy);
+
+        IPage<ResourceVO> page = resourceService.search(query);
         PageResult<ResourceVO> pageResult = new PageResult<>(page.getCurrent(), page.getSize(), page.getTotal(), page.getRecords());
         return Result.success(pageResult);
+    }
+
+    /**
+     * 搜索联想：根据输入返回标题候选，供前端下拉提示
+     */
+    @GetMapping("/suggest")
+    public Result<List<String>> suggest(@RequestParam String keyword,
+                                        @RequestParam(defaultValue = "10") Integer limit) {
+        return Result.success(resourceService.suggest(keyword, limit));
+    }
+
+    /**
+     * 结构化筛选项：当前已发布资源中出现过的课程与教师
+     * <p>前端用它渲染筛选下拉，避免让用户面对空选项
+     */
+    @GetMapping("/filters")
+    public Result<Map<String, List<String>>> filters() {
+        Map<String, List<String>> data = new HashMap<>();
+        data.put("courses", resourceService.listCourseNames());
+        data.put("teachers", resourceService.listTeachers());
+        return Result.success(data);
     }
 
     @PostMapping("/like/{id}")

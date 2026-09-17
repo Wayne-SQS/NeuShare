@@ -26,8 +26,9 @@
           <el-form-item label="所属分类" prop="categoryId">
             <el-select
               v-model="uploadForm.categoryId"
-              placeholder="请选择分类"
+              placeholder="请选择分类（选课程后会自动带出）"
               style="width: 100%"
+              @change="handleCategoryChange"
             >
               <el-option
                 v-for="category in categories"
@@ -35,6 +36,56 @@
                 :label="category.name"
                 :value="category.id"
               />
+            </el-select>
+          </el-form-item>
+
+          <!-- 结构化归属信息：这几个字段决定了资料能不能被"按课程+教师+学年"精确找到 -->
+          <el-form-item label="课程名称" prop="courseName">
+            <el-select
+              v-model="uploadForm.courseName"
+              placeholder="选择或输入课程名，如「操作系统」"
+              filterable
+              allow-create
+              default-first-option
+              clearable
+              style="width: 100%"
+              @change="handleCourseChange"
+            >
+              <el-option v-for="name in courseOptions" :key="name" :label="name" :value="name" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="授课教师" prop="teacher">
+            <el-select
+              v-model="uploadForm.teacher"
+              placeholder="选择或输入教师姓名（选填）"
+              filterable
+              allow-create
+              default-first-option
+              clearable
+              style="width: 100%"
+            >
+              <el-option v-for="name in teacherOptions" :key="name" :label="name" :value="name" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="学年学期" prop="schoolYear">
+            <div class="inline-group">
+              <el-select v-model="uploadForm.schoolYear" placeholder="学年（选填）" clearable style="flex: 1">
+                <el-option v-for="y in schoolYears" :key="y" :label="y" :value="y" />
+              </el-select>
+              <el-select v-model="uploadForm.term" placeholder="学期（选填）" clearable style="flex: 1">
+                <el-option label="春季" value="spring" />
+                <el-option label="夏季" value="summer" />
+                <el-option label="秋季" value="autumn" />
+                <el-option label="冬季" value="winter" />
+              </el-select>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="资料类型" prop="type">
+            <el-select v-model="uploadForm.type" placeholder="选择类型" style="width: 100%">
+              <el-option v-for="t in typeOptions" :key="t.value" :label="t.label" :value="t.value" />
             </el-select>
           </el-form-item>
 
@@ -92,7 +143,14 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getCategories, createResource, updateResource, getResourceDetail } from '@/api/resource'
+import {
+  getCategories,
+  createResource,
+  updateResource,
+  getResourceDetail,
+  getResourceFilters
+} from '@/api/resource'
+import { getAllCourses } from '@/utils/courseData'
 
 const route = useRoute()
 const router = useRouter()
@@ -104,14 +162,55 @@ const categories = ref([])
 const fileList = ref([])
 const uploadProgress = ref(0)
 
+// 课程名词典（含课程→分类映射），用于下拉候选与选课后自动带出分类
+const courseCategoryMap = new Map()
+getAllCourses().forEach((course) => {
+  if (course.categoryId != null && !courseCategoryMap.has(course.name)) {
+    courseCategoryMap.set(course.name, course.categoryId)
+  }
+})
+
+// 平台里已经出现过的课程/教师，优先排在候选前面
+const existingCourses = ref([])
+const existingTeachers = ref([])
+
+const courseOptions = computed(() =>
+  Array.from(new Set([...existingCourses.value, ...courseCategoryMap.keys()]))
+)
+const teacherOptions = computed(() => existingTeachers.value)
+
+// 学年候选：以当前年份向前推五年，与列表页筛选保持一致
+const currentYear = new Date().getFullYear()
+const schoolYears = Array.from({ length: 5 }, (_, i) => {
+  const start = currentYear - i
+  return `${start}-${start + 1}`
+})
+
+const typeOptions = [
+  { label: '文档（PDF / Word / PPT 等）', value: 'document' },
+  { label: '视频', value: 'video' },
+  { label: '图片', value: 'image' },
+  { label: '外部链接', value: 'link' },
+  { label: '其他', value: 'other' }
+]
+
+
 const isEdit = computed(() => !!route.params.id)
 
 const uploadForm = reactive({
   title: '',
   categoryId: '',
+  courseName: '',
+  teacher: '',
+  schoolYear: '',
+  term: '',
+  type: 'document',
   description: '',
   file: null
 })
+
+// 记录分类是否由课程自动带出，避免覆盖用户手动选择的分类
+let categoryAutoFilled = false
 
 const uploadRules = {
   title: [
@@ -135,6 +234,32 @@ const fetchCategories = async () => {
   }
 }
 
+// 候选取自真实数据，空库时才退回内置词典，不给用户空选项
+const fetchFilterOptions = async () => {
+  try {
+    const res = await getResourceFilters()
+    existingCourses.value = res.data?.courses || []
+    existingTeachers.value = res.data?.teachers || []
+  } catch (error) {
+    console.error('Failed to fetch filter options:', error)
+  }
+}
+
+// 选中已知课程时自动带出对应分类，省一次选择
+const handleCourseChange = (name) => {
+  const categoryId = courseCategoryMap.get(name)
+  if (categoryId == null) return
+  if (categoryAutoFilled || !uploadForm.categoryId) {
+    uploadForm.categoryId = categoryId
+    categoryAutoFilled = true
+  }
+}
+
+// 用户手动改过分类后，后续选课程不再抢着覆盖他的选择
+const handleCategoryChange = () => {
+  categoryAutoFilled = false
+}
+
 const fetchResource = async () => {
   if (!isEdit.value) return
   try {
@@ -142,6 +267,11 @@ const fetchResource = async () => {
     const data = res.data
     uploadForm.title = data.title
     uploadForm.categoryId = data.categoryId
+    uploadForm.courseName = data.courseName || ''
+    uploadForm.teacher = data.teacher || ''
+    uploadForm.schoolYear = data.schoolYear || ''
+    uploadForm.term = data.term || ''
+    uploadForm.type = data.type || 'document'
     uploadForm.description = data.description
   } catch (error) {
     console.error('Failed to fetch resource:', error)
@@ -172,13 +302,23 @@ const handleSubmit = async () => {
   }
 
   submitting.value = true
+  // 空值统一转空串：FormData 只能传字符串，传 null 后端会收到 "null"
+  const structured = {
+    courseName: uploadForm.courseName || '',
+    teacher: uploadForm.teacher || '',
+    schoolYear: uploadForm.schoolYear || '',
+    term: uploadForm.term || '',
+    type: uploadForm.type || 'document'
+  }
+
   try {
     if (isEdit.value) {
       await updateResource({
         id: route.params.id,
         title: uploadForm.title,
         categoryId: uploadForm.categoryId,
-        description: uploadForm.description
+        description: uploadForm.description,
+        ...structured
       })
       ElMessage.success('修改成功')
     } else {
@@ -186,6 +326,7 @@ const handleSubmit = async () => {
       formData.append('title', uploadForm.title)
       formData.append('categoryId', uploadForm.categoryId)
       formData.append('description', uploadForm.description)
+      Object.entries(structured).forEach(([key, value]) => formData.append(key, value))
       if (uploadForm.file) {
         formData.append('file', uploadForm.file)
       }
@@ -208,10 +349,11 @@ const handleReset = () => {
   formRef.value.resetFields()
   fileList.value = []
   uploadForm.file = null
+  categoryAutoFilled = false
 }
 
 onMounted(() => {
-  Promise.all([fetchCategories(), fetchResource()])
+  Promise.all([fetchCategories(), fetchFilterOptions(), fetchResource()])
 })
 </script>
 
@@ -253,6 +395,12 @@ onMounted(() => {
 
 .upload-form {
   padding: 0;
+}
+
+.inline-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
 }
 
 :deep(.el-upload-dragger) {

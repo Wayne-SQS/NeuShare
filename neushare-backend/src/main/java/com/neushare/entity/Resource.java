@@ -37,6 +37,30 @@ public class Resource implements Serializable {
     private Long categoryId;
 
     /**
+     * 课程名称（结构化维度，支持按课程定位资料）
+     */
+    @TableField("course_name")
+    private String courseName;
+
+    /**
+     * 授课教师（结构化维度）
+     */
+    @TableField("teacher")
+    private String teacher;
+
+    /**
+     * 学年，如 2024-2025（结构化维度）
+     */
+    @TableField("school_year")
+    private String schoolYear;
+
+    /**
+     * 学期：spring / summer / autumn / winter
+     */
+    @TableField("term")
+    private String term;
+
+    /**
      * 资源类型：document-文档，video-视频，image-图片，other-其他
      */
     @TableField("type")
