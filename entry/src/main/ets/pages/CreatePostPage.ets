@@ -1,10 +1,11 @@
 import router from '@ohos.router';
 import { ColorTokens } from '@neushare/common';
 import { CommunityService } from '../services/CommunityService';
-import { Post, PostFile, formatFileSize, fileIcon } from '../models/PostModel';
+import { PostFile, formatFileSize, fileIcon } from '../models/PostModel';
+import { PostApi } from '../api/PostApi';
 import { picker } from '@kit.CoreFileKit';
 import { fileIo } from '@kit.CoreFileKit';
-import { Context } from '@ohos.abilityAccessCtrl';
+import promptAction from '@ohos.promptAction';
 
 const SUPPORTED_TYPES: string[] = [
   '.zip', '.rar', '.7z',
@@ -17,6 +18,15 @@ const SUPPORTED_TYPES: string[] = [
   '.mp4', '.avi', '.mov',
   '.mp3', '.wav', '.flac'
 ];
+
+interface UpdatePostBody {
+  id: number;
+  title: string;
+  content: string;
+  tags: string;
+  imageUrls: string;
+  files: string;
+}
 
 const PRESET_TAGS: string[] = [
   '人工智能', '机器学习', '深度学习', '计算机视觉', '自然语言处理',
@@ -36,10 +46,13 @@ struct CreatePostPage {
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State title: string = '';
   @State content: string = '';
-  @State author: string = '';
   @State selectedTags: string[] = [];
   @State files: PostFile[] = [];
   @State isSubmitting: boolean = false;
+  @State tagPulse: string = '';
+  @State fileAnimIds: Set<number> = new Set();
+  @State editPostId: number = 0;
+  @State isEditing: boolean = false;
   private communityService: CommunityService = CommunityService.getInstance();
 
   toggleTag(tag: string): void {
@@ -68,6 +81,7 @@ struct CreatePostPage {
       });
 
       if (uris && uris.length > 0) {
+        const startIdx = this.files.length;
         const newFiles: PostFile[] = [];
         for (let i = 0; i < uris.length; i++) {
           const uri = uris[i];
@@ -83,6 +97,17 @@ struct CreatePostPage {
           newFiles.push({ name: name, uri: uri, type: ext, size: size });
         }
         this.files = [...this.files, ...newFiles];
+
+        // 弹出动画：逐个显示新文件
+        for (let i = 0; i < newFiles.length; i++) {
+          const fileIdx = startIdx + i;
+          setTimeout(() => {
+            this.fileAnimIds.add(fileIdx);
+            const newSet = new Set<number>();
+            this.fileAnimIds.forEach(id => newSet.add(id));
+            this.fileAnimIds = newSet;
+          }, i * 80);
+        }
       }
     } catch (e) {
       console.error('pickFiles failed: ' + JSON.stringify(e));
@@ -101,33 +126,56 @@ struct CreatePostPage {
     if (!this.title.trim() || !this.content.trim() || this.isSubmitting) return;
     this.isSubmitting = true;
 
-    const post: Post = {
-      id: Date.now().toString(),
-      title: this.title.trim(),
-      content: this.content.trim(),
-      author: this.author.trim() || '匿名',
-      tags: this.selectedTags.slice(),
-      createdAt: new Date().toISOString().slice(0, 10),
-      recommended: false,
-      likes: 0,
-      favorites: 0,
-      commentsCount: 0,
-      imageUrls: [],
-      files: this.files.slice()
-    };
-
     try {
-      const context = this.getUIContext().getHostContext() as Context;
-      await this.communityService.init(context);
-      await this.communityService.createPost(post);
+      if (this.isEditing) {
+        const postApi = new PostApi();
+        const updateBody: UpdatePostBody = {
+          id: this.editPostId,
+          title: this.title.trim(),
+          content: this.content.trim(),
+          tags: JSON.stringify(this.selectedTags.slice()),
+          imageUrls: JSON.stringify([]),
+          files: JSON.stringify(this.files.slice())
+        };
+        const res = await postApi.updatePost(updateBody);
+        if (res.code === 200) {
+          router.back();
+        } else {
+          promptAction.showToast({ message: '发布失败: ' + (res.message || '请重试') });
+        }
+      } else {
+        const success = await this.communityService.createPost(
+          this.title.trim(),
+          this.content.trim(),
+          this.selectedTags.slice(),
+          [],
+          this.files.slice()
+        );
+        if (success) {
+          router.back();
+        }
+      }
     } catch (e) {
       console.error('CreatePostPage submit failed: ' + JSON.stringify(e));
+      promptAction.showToast({ message: '发布失败，请检查网络' });
     }
 
-    router.back();
+    this.isSubmitting = false;
   }
 
-  aboutToAppear(): void {}
+  async aboutToAppear(): Promise<void> {
+    const params = router.getParams() as Record<string, Object>;
+    if (params && params['editPostId']) {
+      this.editPostId = params['editPostId'] as number;
+      this.isEditing = true;
+      const post = await this.communityService.getPostDetail(this.editPostId);
+      if (post) {
+        this.title = post.title;
+        this.content = post.content;
+        this.selectedTags = post.tags.slice();
+      }
+    }
+  }
 
   build() {
     Column() {
@@ -136,11 +184,11 @@ struct CreatePostPage {
         Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Blank()
-        Text('发布帖子').fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text(this.isEditing ? '编辑帖子' : '发布帖子').fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
         Blank()
-        Text('发布')
+        Text(this.isEditing ? '保存' : '发布')
           .fontSize(15).fontWeight(FontWeight.Bold)
-          .fontColor(this.title.trim() && this.content.trim() ? (this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode)) : ColorTokens.TEXT_DISABLED)
+          .fontColor(this.title.trim() && this.content.trim() ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textDisabled(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
           .borderRadius(16)
           .backgroundColor(this.title.trim() && this.content.trim() ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
@@ -151,19 +199,6 @@ struct CreatePostPage {
 
       Scroll() {
         Column() {
-          // Author
-          Row() {
-            Text('👤').fontSize(16)
-            TextInput({ text: this.author, placeholder: '你的昵称（选填，默认「匿名」）' })
-              .fontSize(14).layoutWeight(1).height(46)
-              .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
-              .onChange((value: string) => { this.author = value; })
-          }
-          .width('100%').padding({ left: 24, right: 24, top: 8, bottom: 8 })
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-
-          Divider().color(ColorTokens.divider(this.isDarkMode))
-
           // Title
           TextInput({ text: this.title, placeholder: '帖子标题...' })
             .fontSize(17).fontWeight(FontWeight.Bold)
@@ -190,7 +225,7 @@ struct CreatePostPage {
               Text('📂').fontSize(16)
               Text('添加附件').fontSize(14).fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
               Blank()
-              Text('＋ 选择文件').fontSize(13).fontWeight(FontWeight.Bold).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+              Text('＋ 选择文件').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                 .padding({ left: 14, right: 14, top: 8, bottom: 8 })
                 .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(16)
                 .onClick(() => { this.pickFiles(); })
@@ -198,7 +233,7 @@ struct CreatePostPage {
             .width('100%').padding({ left: 24, right: 12 })
 
             Text('支持 zip · png · svg · md · docx · xlsx · ppt · pptx · pdf · txt 等')
-              .fontSize(11).fontColor(ColorTokens.TEXT_DISABLED)
+              .fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode))
               .padding({ left: 24 }).margin({ top: 6 })
 
             if (this.files.length > 0) {
@@ -211,18 +246,21 @@ struct CreatePostPage {
                         .fontSize(13).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                         .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                       Text(file.type.toUpperCase().replace('.', '') + (file.size > 0 ? ' · ' + formatFileSize(file.size) : ''))
-                        .fontSize(11).fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 2 })
+                        .fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 2 })
                     }
                     .margin({ left: 10 }).layoutWeight(1)
 
-                    Text('✕').fontSize(12).fontColor(ColorTokens.RED)
+                    Text('✕').fontSize(12).fontColor(ColorTokens.error(this.isDarkMode))
                       .width(22).height(22).borderRadius(11)
-                      .backgroundColor(ColorTokens.withAlpha(ColorTokens.RED, '15')).textAlign(TextAlign.Center)
+                      .backgroundColor(ColorTokens.withAlpha(ColorTokens.error(this.isDarkMode), '15')).textAlign(TextAlign.Center)
                       .onClick(() => { this.removeFile(idx); })
                   }
                   .width('100%').padding(12)
                   .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
                   .margin({ top: 6 })
+                  .scale({ x: this.fileAnimIds.has(idx) ? 1 : 0.8, y: this.fileAnimIds.has(idx) ? 1 : 0.8 })
+                  .opacity(this.fileAnimIds.has(idx) ? 1 : 0)
+                  .animation({ duration: 200, curve: Curve.EaseOut })
                 }, (file: PostFile, idx: number) => 'file' + idx.toString())
               }
               .width('100%').padding({ left: 24, right: 24 }).margin({ top: 4 })
@@ -250,7 +288,7 @@ struct CreatePostPage {
               Flex({ wrap: FlexWrap.Wrap }) {
                 ForEach(this.selectedTags, (tag: string) => {
                   Text(tag)
-                    .fontSize(12).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+                    .fontSize(12).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                     .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                     .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
                     .margin({ right: 6, top: 6 })
@@ -265,12 +303,14 @@ struct CreatePostPage {
               ForEach(PRESET_TAGS, (tag: string) => {
                 Text(tag)
                   .fontSize(12)
-                  .fontColor(this.isTagSelected(tag) ? (this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode)) : ColorTokens.textHint(this.isDarkMode))
+                  .fontColor(this.isTagSelected(tag) ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
                   .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                   .backgroundColor(this.isTagSelected(tag) ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                   .border({ width: 1, color: this.isTagSelected(tag) ? ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30') : '#00000000', radius: 14 })
                   .margin({ right: 6, top: 6 })
-                  .onClick(() => { this.toggleTag(tag); })
+                  .scale({ x: this.tagPulse === tag ? 1.12 : 1, y: this.tagPulse === tag ? 1.12 : 1 })
+                  .animation({ curve: Curve.EaseOut, duration: 200 })
+                  .onClick(() => { this.toggleTag(tag); this.tagPulse = tag; setTimeout(() => { this.tagPulse = ''; }, 180); })
               })
             }
             .width('100%').padding({ left: 24, right: 24, top: 8, bottom: 10 })
@@ -281,7 +321,18 @@ struct CreatePostPage {
         }
       }
       .layoutWeight(1)
+      .scrollBar(BarState.Auto)
+      .align(Alignment.Top)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }

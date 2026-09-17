@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, BlurPerformance } from '@neushare/common';
 import { ResourceService } from '../../services/ResourceService';
 import { CommunityService } from '../../services/CommunityService';
 import { Post } from '../../models/PostModel';
@@ -21,6 +21,7 @@ export struct HomeTab {
   @Prop historyCount: number = 0;
   @State hotResources: ResourceItem[] = [];
   @State hotResourcesLoading: boolean = true;
+  @State appearOpacity: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   onSwitchTab?: (index: number) => void;
@@ -28,6 +29,9 @@ export struct HomeTab {
 
   async aboutToAppear(): Promise<void> {
     await this.loadHotResources();
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => {
+      this.appearOpacity = 1;
+    });
   }
 
   async loadHotResources(): Promise<void> {
@@ -47,7 +51,7 @@ export struct HomeTab {
         SearchBar({
           placeholder: '搜索学习资源...',
           onSearch: () => { router.pushUrl({ url: 'pages/SearchPage' }); }
-        }).margin({ top: 8, left: 24, right: 24 })
+        }).margin({ top: 8, left: 16, right: 16 })
 
         // Banner
         BannerSwiper({
@@ -55,13 +59,15 @@ export struct HomeTab {
           onBannerTap: (item: BannerItem) => {
             if (item.linkType === 'post') {
               router.pushUrl({ url: 'pages/CommunityPage', params: { highlightPostId: item.linkValue } });
+            } else if (item.linkType === 'postgrad') {
+              router.pushUrl({ url: 'pages/PostgradGuidePage' });
             } else {
               const catId = parseInt(item.linkValue);
               const cat = this.categories.find(c => c.id === catId);
               router.pushUrl({ url: 'pages/CategoryPage', params: { categoryId: catId, categoryTitle: cat?.title || '' } });
             }
           }
-        }).margin({ top: 12, left: 24, right: 24 })
+        }).margin({ top: 12, left: 0, right: 0 })
 
         // Developer-recommended post
         if (this.recommendedPost) {
@@ -71,16 +77,16 @@ export struct HomeTab {
               Column() {
                 Text(this.recommendedPost.title)
                   .fontSize(15).fontWeight(FontWeight.Bold)
-                  .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE).maxLines(1)
+                  .fontColor(ColorTokens.textOnPrimary(this.isDarkMode)).maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
-                Text(this.recommendedPost.author + ' · ' + this.recommendedPost.createdAt)
-                  .fontSize(11).fontColor(this.isDarkMode ? '#0E0E10BB' : '#FFFFFFBB').margin({ top: 3 })
+                Text(this.recommendedPost.authorNickname + ' · ' + this.recommendedPost.createTime)
+                  .fontSize(11).fontColor(ColorTokens.withAlpha(ColorTokens.textOnPrimary(this.isDarkMode), 'BB')).margin({ top: 3 })
               }.layoutWeight(1).margin({ left: 10 })
-              Text('查看 ›').fontSize(12).fontColor(this.isDarkMode ? '#0E0E10CC' : '#FFFFFFCC').fontWeight(FontWeight.Medium)
+              Text('查看 ›').fontSize(12).fontColor(ColorTokens.withAlpha(ColorTokens.textOnPrimary(this.isDarkMode), 'CC')).fontWeight(FontWeight.Medium)
             }.width('100%').padding(14)
           }
           .width('100%')
-          .margin({ left: 24, right: 24, top: 8 })
+          .margin({ left: 16, right: 16, top: 8 })
           .linearGradient({ direction: GradientDirection.Right, colors: [[ColorTokens.primary(this.isDarkMode), 0], [ColorTokens.ACCENT_TEAL_LIGHT, 1]] })
           .borderRadius(14)
           .shadow({ radius: 8, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30'), offsetX: 0, offsetY: 3 })
@@ -99,11 +105,12 @@ export struct HomeTab {
             Text('进入 ›').fontSize(12).fontColor(ColorTokens.primary(this.isDarkMode))
           }.width('100%').padding(14)
           .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
-          .margin({ left: 24, right: 24, top: 8 })
           .shadow({ radius: 8, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 2 })
           .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
           .onClick(() => { router.pushUrl({ url: 'pages/CommunityPage' }); })
         }
+        .width('100%')
+        .margin({ left: 16, right: 16, top: 8 })
 
         // Course recommendations
         if (this.courseRecommendations.length > 0) {
@@ -112,41 +119,40 @@ export struct HomeTab {
               .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
             Blank()
             Row() {
-              Text(this.userGrade || '').fontSize(11).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+              Text(this.userGrade || '').fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                 .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                 .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(8)
             }
-          }.width('100%').padding({ left: 24, right: 24 }).margin({ top: 20 })
+          }.width('100%').padding({ left: 16, right: 16 }).margin({ top: 20 })
 
-          ForEach(this.courseRecommendations, (course: CurriculumCourse) => {
+          ForEach(this.courseRecommendations, (course: CurriculumCourse, idx: number) => {
             CourseRecommendCard({
-              courseName: course.name, 
-              courseEmoji: course.emoji, 
+              courseName: course.name,
+              courseEmoji: course.emoji,
               courseDesc: course.description,
               searchKeyword: course.name
             })
-          })
+          }, (course: CurriculumCourse, idx: number) => 'crc_' + idx.toString())
         }
 
-        // Postgrad entry (大三/大四)
-        if (this.userGrade === '大三' || this.userGrade === '大四') {
+        // Postgrad entry（所有用户可见）
+        Row() {
           Row() {
-            Row() {
-              Text('🎓').fontSize(30)
-              Column() {
-                Text('考研指南').fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-                Text('报名流程 · 科目攻略 · 院校选择 · 备考规划').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
-              }.margin({ left: 14 })
-              Blank()
-              Text('查看 ›').fontSize(13).fontColor(ColorTokens.primary(this.isDarkMode))
-            }.width('100%').padding(18)
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(16)
-            .margin({ left: 24, right: 24, top: 10 })
-            .shadow({ radius: 12, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 3 })
-            .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 16 })
-            .onClick(() => { router.pushUrl({ url: 'pages/PostgradGuidePage' }); })
-          }.width('100%')
+            Text('🎓').fontSize(30)
+            Column() {
+              Text('考研指南').fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('报名流程 · 科目攻略 · 院校选择 · 备考规划').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+            }.margin({ left: 14 })
+            Blank()
+            Text('查看 ›').fontSize(13).fontColor(ColorTokens.primary(this.isDarkMode))
+          }.width('100%').padding(18)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(16)
+          .shadow({ radius: 12, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 3 })
+          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 16 })
+          .onClick(() => { router.pushUrl({ url: 'pages/PostgradGuidePage' }); })
         }
+        .width('100%')
+        .margin({ left: 16, right: 16, top: 10 })
 
         // Model compare
         Row() {
@@ -160,11 +166,12 @@ export struct HomeTab {
             Text('查看 ›').fontSize(13).fontColor(ColorTokens.primary(this.isDarkMode))
           }.width('100%').padding(18)
           .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(16)
-          .margin({ left: 24, right: 24, top: 10 })
           .shadow({ radius: 12, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 3 })
           .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 16 })
           .onClick(() => { router.pushUrl({ url: 'pages/ModelComparePage' }); })
-        }.width('100%')
+        }
+        .width('100%')
+        .margin({ left: 16, right: 16, top: 10 })
 
         // Hot resources
         if (this.hotResources.length > 0) {
@@ -175,7 +182,7 @@ export struct HomeTab {
             Text(this.hotResources.length.toString() + '个')
               .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
           }
-          .width('100%').padding({ left: 24, right: 24 }).margin({ top: 20 })
+          .width('100%').padding({ left: 16, right: 16 }).margin({ top: 20 })
 
           Grid() {
             ForEach(this.hotResources, (item: ResourceItem) => {
@@ -203,7 +210,12 @@ export struct HomeTab {
 
         Column().height(80)
       }
+      .width('100%')
+      .constraintSize({ maxWidth: new BpType<number>({ sm: 9999, md: 576, lg: 656, xl: 900 }).getValue(this.currentBreakpoint) ?? 9999 })
     }
-    .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+    .scrollable(ScrollDirection.Vertical).scrollBar(BarState.On)
+    .width('100%').height('100%')
+    .opacity(this.appearOpacity)
+    .animation({ curve: Curve.EaseOut, duration: 200 })
   }
 }

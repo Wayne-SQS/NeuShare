@@ -55,6 +55,12 @@ public class Comment implements Serializable {
     private Integer deleted;
 
     /**
+     * 点赞数
+     */
+    @TableField("like_count")
+    private Integer likeCount;
+
+    /**
      * 创建时间
      */
     @TableField("create_time")

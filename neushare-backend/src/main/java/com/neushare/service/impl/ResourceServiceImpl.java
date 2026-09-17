@@ -54,9 +54,9 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
     private UserMapper userMapper;
 
     @Override
-    public IPage<ResourceVO> getResourcePage(Integer pageNum, Integer pageSize, Integer status, Long categoryId, String keyword) {
+    public IPage<ResourceVO> getResourcePage(Integer pageNum, Integer pageSize, Integer status, Long categoryId, String keyword, String sortBy) {
         Page<ResourceVO> page = new Page<>(pageNum, pageSize);
-        return resourceMapper.selectResourcePage(page, status, categoryId, keyword);
+        return resourceMapper.selectResourcePage(page, status, categoryId, keyword, sortBy);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
         resource.setViewCount(0);
         resource.setLikeCount(0);
         resource.setFavoriteCount(0);
-        if (resource.getType() == null) {
+        if (resource.getType() == null || resource.getType().isBlank()) {
             resource.setType("document");
         }
         if (resource.getContentUrl() == null) {
@@ -86,6 +86,10 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
         resource.setCreateTime(LocalDateTime.now());
         resource.setUpdateTime(LocalDateTime.now());
         save(resource);
+        // 实时更新用户资源计数（待审核也算，校准任务只算已发布）
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, userId)
+                .setSql("resource_count = resource_count + 1"));
     }
 
     @Override
@@ -119,6 +123,11 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
         favoriteMapper.delete(new LambdaQueryWrapper<Favorite>().eq(Favorite::getResourceId, id));
         resourceLikeMapper.delete(new LambdaQueryWrapper<ResourceLike>().eq(ResourceLike::getResourceId, id));
         removeById(id);
+        // 实时更新用户资源计数
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, resource.getUploadUserId())
+                .gt(User::getResourceCount, 0)
+                .setSql("resource_count = resource_count - 1"));
     }
 
     @Override
@@ -194,6 +203,10 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
         resourceLikeMapper.insert(like);
         // 原子更新点赞数
         incrementLikeCount(resourceId);
+        // 实时更新资源作者的 totalLikesReceived
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, resource.getUploadUserId())
+                .setSql("total_likes_received = total_likes_received + 1"));
         // 通知资源上传者（如果点赞者不是上传者本人）
         if (!resource.getUploadUserId().equals(userId)) {
             User user = userMapper.selectById(userId);
@@ -216,6 +229,11 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
         }
         resourceLikeMapper.deleteById(exist.getId());
         decrementLikeCount(resourceId);
+        // 实时更新资源作者的 totalLikesReceived
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, resource.getUploadUserId())
+                .gt(User::getTotalLikesReceived, 0)
+                .setSql("total_likes_received = total_likes_received - 1"));
     }
 
     @Override
@@ -227,5 +245,11 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
     public IPage<ResourceVO> searchResources(Integer pageNum, Integer pageSize, String keyword, String sortBy) {
         Page<ResourceVO> page = new Page<>(pageNum, pageSize);
         return resourceMapper.searchResources(page, keyword, sortBy);
+    }
+
+    @Override
+    public Long getTotalLikesReceived(Long userId) {
+        Long total = resourceMapper.selectTotalLikesReceived(userId);
+        return total != null ? total : 0L;
     }
 }

@@ -72,14 +72,9 @@ export default class EntryAbility extends UIAbility {
     // Initialize theme from system config
     AppTheme.getInstance().initFromContext(this.context);
 
-    // ─── 断点检测：先准确初始检测，再注册监听变化 ───
-    // 顺序关键: detectFromWindow 必须在前 → 用 vp 准确值初始化
-    //           register 在后 → mediaQuery 仅监听后续变化
-    await BreakpointSystem.getInstance().detectFromWindow(windowStage);
-    BreakpointSystem.getInstance().register();
-
-    // 注册 window 尺寸变化监听（教程 §2.6 方式二：主通道）
+    // 注册 window 尺寸变化监听（教程 §2.6 方式二）
     // size.width 自动为 vp 单位，无需 px→vp 转换
+    // 断点初始值由 Index.aboutToAppear() 中的 mediaQuery 设置（对齐 QuickStart）
     try {
       const mainWindow = await windowStage.getMainWindow();
 

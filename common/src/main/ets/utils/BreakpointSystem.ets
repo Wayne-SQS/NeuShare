@@ -6,7 +6,6 @@
 // ============================================================
 import { mediaquery } from '@kit.ArkUI';
 import { window } from '@kit.ArkUI';
-import { display } from '@kit.ArkUI';
 
 interface BreakpointTypeOption<T> {
   xs?: T
@@ -103,31 +102,22 @@ export class BreakpointSystem {
   }
 
   /**
-   * 通过 window 尺寸直接检测断点（主力初始检测通道）
-   * 在 EntryAbility.onWindowStageCreate 中调用
-   *
-   * 关键修复: windowRect.width 返回物理像素(px)，需除以 densityPixels 转为 vp
-   * 手机 1080px @ density 3.0 → 360vp → sm（修复前误判为 lg）
+   * 通过 window 尺寸检测断点（初始检测）
+   * 不依赖 display API（display.getDefaultDisplaySync() 在非折叠屏模拟器上不可靠）
+   * windowRect.width 在 HarmonyOS NEXT API 22 中为 vp 单位
+   * 如果失败，register() 中的 mediaQuery 回读会兜底修正
    */
   async detectFromWindow(windowStage: window.WindowStage): Promise<void> {
     try {
       const mainWindow = await windowStage.getMainWindow();
-      const props = mainWindow.getWindowProperties();
-      let w = props.windowRect.width;
-      try {
-        const density = display.getDefaultDisplaySync().densityPixels;
-        if (density > 0) {
-          w = w / density; // px → vp
-        }
-      } catch (e) {
-        console.warn('[BreakpointSystem] density fetch failed, using raw px: ' + JSON.stringify(e));
-      }
+      // windowRect.width 在 API 22 中是 vp，不调用 display.getDefaultDisplaySync()
+      const w = mainWindow.getWindowProperties().windowRect.width;
       const bp = widthToBreakpoint(w);
       console.info('[BreakpointSystem] detectFromWindow: width=' + w + 'vp → ' + bp);
       AppStorage.setOrCreate<number>('windowVpWidth', w);
       this.updateCurrentBreakpoint(bp);
     } catch (e) {
-      console.warn('[BreakpointSystem] detectFromWindow failed: ' + JSON.stringify(e));
+      console.warn('[BreakpointSystem] detectFromWindow failed, will fall back to mediaQuery: ' + JSON.stringify(e));
     }
   }
 

@@ -147,16 +147,16 @@ struct RegisterPage {
             Text('学院').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
               .margin({ top: 14, bottom: 6 }).width('100%')
             Flex({ wrap: FlexWrap.Wrap }) {
-              ForEach(this.colleges, (item: string) => {
+              ForEach(this.colleges, (item: string, idx: number) => {
                 Text(item)
                   .fontSize(14)
-                  .fontColor(this.college === item ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textSecondary(this.isDarkMode))
+                  .fontColor(this.college === item ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
                   .padding({ left: 16, right: 16, top: 10, bottom: 10 })
                   .backgroundColor(this.college === item ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                   .borderRadius(10)
                   .margin({ right: 8, top: 4 })
                   .onClick(() => { this.college = item; })
-              })
+              }, (item: string, idx: number) => 'col_' + idx.toString())
             }.width('100%')
 
             // 年级
@@ -166,27 +166,27 @@ struct RegisterPage {
               ForEach(this.grades, (label: string, idx: number) => {
                 Text(label)
                   .fontSize(14)
-                  .fontColor(this.grade === (idx + 1) ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textSecondary(this.isDarkMode))
+                  .fontColor(this.grade === (idx + 1) ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
                   .padding({ left: 20, right: 20, top: 10, bottom: 10 })
                   .backgroundColor(this.grade === (idx + 1) ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                   .borderRadius(10)
                   .margin({ right: 8 })
                   .onClick(() => { this.toggleGrade(idx); })
-              })
+              }, (label: string, idx: number) => 'grad_' + idx.toString())
             }.width('100%')
 
             if (this.errorMsg) {
-              Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.RED).margin({ top: 14 })
+              Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.error(this.isDarkMode)).margin({ top: 14 })
             }
 
             Button(this.isLoading ? '注册中...' : '注 册')
               .width('100%').height(48)
-              .fontSize(16).fontWeight(FontWeight.Bolder).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+              .fontSize(16).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
               .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
               .margin({ top: 28 })
               .enabled(!this.isLoading)
               .scale({ x: this.btnPressed ? 0.96 : 1, y: this.btnPressed ? 0.96 : 1 })
-              .animation({ curve: Curve.FastOutSlowIn, duration: 120 })
+              .animation({ curve: Curve.EaseOut, duration: 200 })
               .onTouch((event: TouchEvent) => {
                 if (event.type === TouchType.Down) { this.btnPressed = true; }
                 else if (event.type === TouchType.Up || event.type === TouchType.Cancel) { this.btnPressed = false; }
@@ -204,8 +204,17 @@ struct RegisterPage {
           Column().height(60)
         }
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }

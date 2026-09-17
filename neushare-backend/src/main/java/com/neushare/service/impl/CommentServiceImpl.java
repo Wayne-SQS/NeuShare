@@ -1,16 +1,20 @@
 package com.neushare.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.neushare.entity.Comment;
+import com.neushare.entity.CommentLike;
 import com.neushare.entity.Resource;
 import com.neushare.exception.BusinessException;
+import com.neushare.mapper.CommentLikeMapper;
 import com.neushare.mapper.CommentMapper;
 import com.neushare.service.CommentService;
 import com.neushare.service.NotificationService;
 import com.neushare.service.ResourceService;
 import com.neushare.vo.CommentVO;
+import com.neushare.vo.MyCommentVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +31,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     @Autowired
     private CommentMapper commentMapper;
+
+    @Autowired
+    private CommentLikeMapper commentLikeMapper;
 
     @Autowired
     private ResourceService resourceService;
@@ -50,6 +57,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         List<CommentVO> children = new ArrayList<>();
         for (CommentVO comment : allComments) {
             if (parentId.equals(comment.getParentId())) {
+                // 跳过已删除的子评论（直接消失，不显示"该评论已被删除"占位）
+                if (comment.getDeleted() != null && comment.getDeleted() == 1) {
+                    continue;
+                }
                 comment.setChildren(findChildren(comment.getId(), allComments));
                 children.add(comment);
             }
@@ -115,5 +126,52 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     public IPage<CommentVO> getCommentVOPage(Integer pageNum, Integer pageSize) {
         Page<CommentVO> page = new Page<>(pageNum, pageSize);
         return commentMapper.selectCommentVOPage(page);
+    }
+
+    @Override
+    public IPage<MyCommentVO> getMyCommentsMerged(Integer pageNum, Integer pageSize, Long userId) {
+        Page<MyCommentVO> page = new Page<>(pageNum, pageSize);
+        return commentMapper.selectMyCommentsMerged(page, userId);
+    }
+
+    @Override
+    public void likeComment(Long commentId, Long userId) {
+        Comment comment = getById(commentId);
+        if (comment == null) {
+            throw new BusinessException("评论不存在");
+        }
+        CommentLike existing = commentLikeMapper.selectByUserIdAndCommentId(userId, commentId);
+        if (existing != null) {
+            throw new BusinessException("已经点过赞了");
+        }
+        CommentLike like = new CommentLike();
+        like.setUserId(userId);
+        like.setCommentId(commentId);
+        commentLikeMapper.insert(like);
+        update(new LambdaUpdateWrapper<Comment>()
+                .eq(Comment::getId, commentId)
+                .setSql("like_count = like_count + 1"));
+    }
+
+    @Override
+    public void unlikeComment(Long commentId, Long userId) {
+        Comment comment = getById(commentId);
+        if (comment == null) {
+            throw new BusinessException("评论不存在");
+        }
+        CommentLike existing = commentLikeMapper.selectByUserIdAndCommentId(userId, commentId);
+        if (existing == null) {
+            throw new BusinessException("还没有点赞");
+        }
+        commentLikeMapper.deleteById(existing.getId());
+        update(new LambdaUpdateWrapper<Comment>()
+                .eq(Comment::getId, commentId)
+                .gt(Comment::getLikeCount, 0)
+                .setSql("like_count = like_count - 1"));
+    }
+
+    @Override
+    public boolean isCommentLiked(Long commentId, Long userId) {
+        return commentLikeMapper.selectByUserIdAndCommentId(userId, commentId) != null;
     }
 }

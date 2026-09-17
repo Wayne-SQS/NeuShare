@@ -52,4 +52,9 @@ public class ResourceDTO {
      * 来源网站
      */
     private String source;
+
+    /**
+     * 标签（JSON数组字符串）
+     */
+    private String tags;
 }

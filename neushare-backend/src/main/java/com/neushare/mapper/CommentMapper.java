@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.neushare.entity.Comment;
 import com.neushare.vo.CommentVO;
+import com.neushare.vo.MyCommentVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -30,4 +31,9 @@ public interface CommentMapper extends BaseMapper<Comment> {
      * 分页查询所有评论（管理员）
      */
     IPage<CommentVO> selectCommentVOPage(Page<CommentVO> page);
+
+    /**
+     * 查询用户的所有评论（合并资源评论 + 帖子评论）
+     */
+    IPage<MyCommentVO> selectMyCommentsMerged(Page<MyCommentVO> page, @Param("userId") Long userId);
 }

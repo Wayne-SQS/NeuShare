@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, BlurPerformance } from '@neushare/common';
 import { CategoryItem } from '../../models/ResourceModel';
 import { CategoryCard } from '../../components/CategoryCard';
 
@@ -8,21 +8,26 @@ export struct CategoryTab {
   @Prop categories: CategoryItem[] = [];
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
+  @State appearOpacity: number = 0;
+
+  aboutToAppear(): void {
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
+  }
 
   private columnsTemplate(): string {
     return new BpType<string>({ sm: '1fr 1fr', md: '1fr 1fr 1fr', lg: '1fr 1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr 1fr';
   }
 
   private maxContentWidth(): number {
-    return new BpType<number>({ sm: 9999, md: 640, lg: 780, xl: 920 }).getValue(this.currentBreakpoint) ?? 9999;
+    return new BpType<number>({ sm: 9999, md: 576, lg: 656, xl: 900 }).getValue(this.currentBreakpoint) ?? 9999;
   }
 
   private contentPadding(): number {
-    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 36 }).getValue(this.currentBreakpoint) ?? 24;
+    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 44 }).getValue(this.currentBreakpoint) ?? 24;
   }
 
   private titleFontSize(): number {
-    return new BpType<number>({ sm: 20, md: 22, lg: 26, xl: 30 }).getValue(this.currentBreakpoint) ?? 20;
+    return new BpType<number>({ sm: 20, md: 22, lg: 26, xl: 34 }).getValue(this.currentBreakpoint) ?? 20;
   }
 
   build() {
@@ -44,7 +49,7 @@ export struct CategoryTab {
                     }
                   })
                 }
-              })
+              }, (item: CategoryItem) => item.id.toString())
             }
             .columnsTemplate(this.columnsTemplate())
             .rowsGap(8)
@@ -59,9 +64,12 @@ export struct CategoryTab {
         }
         .width('100%')
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
+      .onScrollFrameBegin(() => { BlurPerformance.onScrollStart(); return { offsetRemain: 0 }; })
+      .onScrollStop(() => { BlurPerformance.onScrollStop(); })
     }
-    .alignItems(HorizontalAlign.Center)
+    .alignItems(HorizontalAlign.Start)
     .width('100%').layoutWeight(1)
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
   }
 }

@@ -38,4 +38,52 @@
         ORDER BY c.create_time DESC
     </select>
 
+    <resultMap id="MyCommentVOMap" type="com.neushare.vo.MyCommentVO">
+        <id column="id" property="id"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="source_title" property="sourceTitle"/>
+        <result column="content" property="content"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="deleted" property="deleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="reply_count" property="replyCount"/>
+    </resultMap>
+
+    <select id="selectMyCommentsMerged" resultMap="MyCommentVOMap">
+        SELECT * FROM (
+            SELECT
+                c.id,
+                c.resource_id AS source_id,
+                'resource' AS source_type,
+                r.title AS source_title,
+                c.content,
+                c.parent_id,
+                c.deleted,
+                c.create_time,
+                c.like_count,
+                (SELECT COUNT(*) FROM comment WHERE parent_id = c.id AND deleted = 0) AS reply_count
+            FROM comment c
+            LEFT JOIN resource r ON c.resource_id = r.id
+            WHERE c.user_id = #{userId} AND c.deleted = 0
+            UNION ALL
+            SELECT
+                pc.id,
+                pc.post_id AS source_id,
+                'post' AS source_type,
+                p.title AS source_title,
+                pc.content,
+                pc.parent_id,
+                pc.deleted,
+                pc.create_time,
+                pc.like_count,
+                (SELECT COUNT(*) FROM post_comment WHERE parent_id = pc.id AND deleted = 0) AS reply_count
+            FROM post_comment pc
+            LEFT JOIN post p ON pc.post_id = p.id
+            WHERE pc.user_id = #{userId} AND pc.deleted = 0
+        ) merged
+        ORDER BY create_time DESC
+    </select>
+
 </mapper>

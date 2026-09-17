@@ -21,6 +21,7 @@
         <result column="upload_username" property="uploadUsername"/>
         <result column="upload_nickname" property="uploadNickname"/>
         <result column="upload_avatar" property="uploadAvatar"/>
+        <result column="tags" property="tags"/>
     </resultMap>
 
     <select id="selectResourcePage" resultMap="ResourceVOMap">
@@ -36,9 +37,16 @@
             AND r.category_id = #{categoryId}
         </if>
         <if test="keyword != null and keyword != ''">
-            AND (r.title LIKE CONCAT('%', #{keyword}, '%') OR r.description LIKE CONCAT('%', #{keyword}, '%'))
+            AND (r.title LIKE CONCAT('%', #{keyword}, '%') OR r.description LIKE CONCAT('%', #{keyword}, '%') OR r.tags LIKE CONCAT('%', #{keyword}, '%'))
         </if>
-        ORDER BY r.create_time DESC
+        <choose>
+            <when test="sortBy == 'hot'">
+                ORDER BY r.view_count DESC, r.like_count DESC
+            </when>
+            <otherwise>
+                ORDER BY r.create_time DESC
+            </otherwise>
+        </choose>
     </select>
 
     <select id="selectResourceById" resultMap="ResourceVOMap">
@@ -86,7 +94,7 @@
         LEFT JOIN user u ON r.upload_user_id = u.id
         LEFT JOIN category c ON r.category_id = c.id
         WHERE r.status = 1
-        AND (r.title LIKE CONCAT('%', #{keyword}, '%') OR r.description LIKE CONCAT('%', #{keyword}, '%'))
+        AND (r.title LIKE CONCAT('%', #{keyword}, '%') OR r.description LIKE CONCAT('%', #{keyword}, '%') OR r.tags LIKE CONCAT('%', #{keyword}, '%'))
         <choose>
             <when test="sortBy == 'hot'">
                 ORDER BY r.view_count DESC, r.like_count DESC
@@ -95,6 +103,12 @@
                 ORDER BY r.create_time DESC
             </otherwise>
         </choose>
+    </select>
+
+    <select id="selectTotalLikesReceived" resultType="java.lang.Long">
+        SELECT COALESCE(SUM(like_count), 0)
+        FROM resource
+        WHERE upload_user_id = #{userId} AND status = 1
     </select>
 
 </mapper>

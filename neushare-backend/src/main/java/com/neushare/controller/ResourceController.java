@@ -32,8 +32,15 @@ public class ResourceController {
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String keyword) {
-        IPage<ResourceVO> page = resourceService.getResourcePage(pageNum, pageSize, status, categoryId, keyword);
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "new") String sortBy,
+            HttpServletRequest request) {
+        // 公开接口：非管理员只能看已发布资源，防止通过 status 参数窥探待审核/驳回内容
+        Long userId = (Long) request.getAttribute("userId");
+        String role = (String) request.getAttribute("role");
+        boolean isAdmin = userId != null && "admin".equals(role);
+        Integer effectiveStatus = (status != null && isAdmin) ? status : 1;
+        IPage<ResourceVO> page = resourceService.getResourcePage(pageNum, pageSize, effectiveStatus, categoryId, keyword, sortBy);
         PageResult<ResourceVO> pageResult = new PageResult<>(page.getCurrent(), page.getSize(), page.getTotal(), page.getRecords());
         return Result.success(pageResult);
     }

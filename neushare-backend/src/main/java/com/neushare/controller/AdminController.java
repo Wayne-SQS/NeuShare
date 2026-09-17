@@ -85,7 +85,7 @@ public class AdminController {
     public Result<PageResult<ResourceVO>> getPendingResources(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        IPage<ResourceVO> page = resourceService.getResourcePage(pageNum, pageSize, 0, null, null);
+        IPage<ResourceVO> page = resourceService.getResourcePage(pageNum, pageSize, 0, null, null, null);
         PageResult<ResourceVO> pageResult = new PageResult<>(page.getCurrent(), page.getSize(), page.getTotal(), page.getRecords());
         return Result.success(pageResult);
     }

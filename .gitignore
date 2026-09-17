@@ -21,3 +21,10 @@ neushare-backend/target/
 # OS files
 .DS_Store
 Thumbs.db
+
+# 运行时上传目录（用户上传的文件，不入库）
+neushare-backend/uploads/
+
+# 临时调试脚本（含 DROP TABLE 等高危语句，禁止入库）
+_*.sql
+_insert_test_data.*

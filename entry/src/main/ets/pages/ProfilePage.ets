@@ -5,6 +5,9 @@ import { FavoriteService } from '../services/FavoriteService';
 import { ResourceItem as ResourceItemModel } from '../models/ResourceModel';
 import { ResourceCard } from '../components/ResourceCard';
 import { AuthApi, UserInfo } from '../api/AuthApi';
+import { PostApi, PostVO } from '../api/PostApi';
+import { CommentApi, MyCommentItem } from '../api/CommentApi';
+import { UserApi } from '../api/UserApi';
 import { Context } from '@ohos.abilityAccessCtrl';
 
 type SortMode = 'default' | 'name' | 'rating' | 'date';
@@ -24,12 +27,23 @@ struct ProfilePage {
   @State userCollege: string = '';
   @State userGrade: number = 0;
   @State isLoggedIn: boolean = false;
+  @State myPosts: PostVO[] = [];
+  @State postCount: number = 0;
+  @State myComments: MyCommentItem[] = [];
+  @State commentCount: number = 0;
+  @State followerCount: number = 0;
+  @State followingCount: number = 0;
+  @State myUserId: number = 0;
+  @State appearOpacity: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private resourceService: ResourceService = ResourceService.getInstance();
   private favoriteService: FavoriteService = FavoriteService.getInstance();
   private authStore: AuthStore = AuthStore.getInstance();
   private authApi: AuthApi = new AuthApi();
+  private postApi: PostApi = new PostApi();
+  private commentApi: CommentApi = new CommentApi();
+  private userApi: UserApi = new UserApi();
 
   async aboutToAppear(): Promise<void> {
     const context = this.getUIContext().getHostContext() as Context;
@@ -37,11 +51,18 @@ struct ProfilePage {
     await this.authStore.init(context);
     await this.loadData();
     await this.loadUserInfo();
+    this.loadMyPosts();
+    this.loadCommentStats();
+    this.loadFollowStats();
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
   }
 
   async onPageShow(): Promise<void> {
     await this.loadData();
     await this.loadUserInfo();
+    this.loadMyPosts();
+    this.loadCommentStats();
+    this.loadFollowStats();
     this.searchKeyword = '';
     this.sortMode = 'default';
   }
@@ -58,6 +79,7 @@ struct ProfilePage {
           this.userAvatar = u.avatarUrl || '';
           this.userCollege = u.college || '';
           this.userGrade = u.grade || 0;
+          this.myUserId = u.id || 0;
         }
       } catch (e) {
         this.isLoggedIn = false;
@@ -118,6 +140,147 @@ struct ProfilePage {
     return result;
   }
 
+  async loadMyPosts(): Promise<void> {
+    if (!this.isLoggedIn) return;
+    try {
+      const resp = await this.postApi.getUserPosts(1, 50);
+      if (resp.code === 200 && resp.data) {
+        this.myPosts = resp.data.records;
+        this.postCount = resp.data.total;
+      }
+    } catch (e) {
+      console.error('loadMyPosts failed: ' + JSON.stringify(e));
+    }
+  }
+
+  async loadCommentStats(): Promise<void> {
+    if (!this.isLoggedIn) return;
+    try {
+      const resp = await this.commentApi.getMyComments(1, 1);
+      if (resp.code === 200 && resp.data) {
+        this.commentCount = resp.data.total;
+      }
+    } catch (e) {
+      console.error('loadCommentStats failed: ' + JSON.stringify(e));
+    }
+  }
+
+  async loadMyComments(): Promise<void> {
+    if (!this.isLoggedIn) return;
+    try {
+      const resp = await this.commentApi.getMyComments(1, 50);
+      if (resp.code === 200 && resp.data) {
+        this.myComments = resp.data.records;
+        this.commentCount = resp.data.total;
+      }
+    } catch (e) {
+      console.error('loadMyComments failed: ' + JSON.stringify(e));
+    }
+  }
+
+  async loadFollowStats(): Promise<void> {
+    if (!this.isLoggedIn || this.myUserId === 0) return;
+    try {
+      const profile = await this.userApi.getProfile(this.myUserId);
+      if (profile.code === 200 && profile.data) {
+        this.followerCount = profile.data.followerCount || 0;
+        this.followingCount = profile.data.followingCount || 0;
+      }
+    } catch (e) {
+      console.error('loadFollowStats failed: ' + JSON.stringify(e));
+    }
+  }
+
+  formatTimeAgo(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      const then = new Date(dateStr.replace(' ', 'T') + 'Z').getTime();
+      const now = Date.now();
+      const diff = now - then;
+      if (diff < 60000) return '刚刚';
+      if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+      if (diff < 2592000000) return Math.floor(diff / 86400000) + '天前';
+      return dateStr.substring(0, 10);
+    } catch (e) {
+      return dateStr.substring(0, 10);
+    }
+  }
+
+  @Builder PostCardBuilder(post: PostVO) {
+    Column() {
+      Row() {
+        Column() {
+          Text(post.title)
+            .fontSize(15).fontWeight(FontWeight.Bold)
+            .fontColor(ColorTokens.textPrimary(this.isDarkMode))
+            .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(post.content)
+            .fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode))
+            .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
+            .margin({ top: 4 })
+          Row() {
+            Text('❤ ' + post.likeCount).fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+            Text('💬 ' + post.commentCount).fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
+            Text(this.formatTimeAgo(post.createTime)).fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
+          }.margin({ top: 8 })
+        }.layoutWeight(1).alignItems(HorizontalAlign.Start)
+        Text('›').fontSize(20).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+      }
+      .width('100%').padding(16).alignItems(VerticalAlign.Center)
+    }
+    .width('100%')
+    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+    .margin({ left: 24, right: 24, top: 8 })
+    .border({ width: 1, color: '#08000000', radius: 14 })
+    .onClick(() => {
+      router.pushUrl({ url: 'pages/PostDetailPage', params: { postId: post.id } });
+    })
+  }
+
+  @Builder CommentCardBuilder(comment: MyCommentItem) {
+    Column() {
+      Row() {
+        Column() {
+          Row() {
+            Text(comment.sourceType === 'resource' ? '📄' : '📝')
+              .fontSize(12)
+              .fontColor(comment.sourceType === 'resource' ?
+                ColorTokens.resolve('#4A6BFF', '#FFFFFF', this.isDarkMode) :
+                ColorTokens.resolve('#6BCB77', '#FFFFFF', this.isDarkMode))
+            Text(comment.sourceTitle)
+              .fontSize(13).fontWeight(FontWeight.Medium)
+              .fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
+              .margin({ left: 6 })
+          }
+          Text(comment.content)
+            .fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode))
+            .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
+            .margin({ top: 4 })
+          Row() {
+            Text('❤ ' + comment.likeCount).fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+            Text('💬 ' + comment.replyCount).fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
+            Text(this.formatTimeAgo(comment.createTime)).fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
+          }.margin({ top: 6 })
+        }.layoutWeight(1).alignItems(HorizontalAlign.Start)
+        Text('›').fontSize(20).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+      }
+      .width('100%').padding(16).alignItems(VerticalAlign.Center)
+    }
+    .width('100%')
+    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+    .margin({ left: 24, right: 24, top: 8 })
+    .border({ width: 1, color: '#08000000', radius: 14 })
+    .onClick(() => {
+      if (comment.sourceType === 'resource') {
+        router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: comment.sourceId } });
+      } else {
+        router.pushUrl({ url: 'pages/PostDetailPage', params: { postId: comment.sourceId } });
+      }
+    })
+  }
+
   build() {
     Column() {
       // Header
@@ -132,7 +295,7 @@ struct ProfilePage {
           // Profile card
           Row() {
             Stack({ alignContent: Alignment.Center }) {
-              Column().width(72).height(72).borderRadius(36).backgroundColor(ColorTokens.BG_AVATAR)
+              Column().width(72).height(72).borderRadius(36).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
               if (this.userAvatar) {
                 Image(this.userAvatar).width(72).height(72).borderRadius(36).objectFit(ImageFit.Cover)
               } else {
@@ -160,9 +323,9 @@ struct ProfilePage {
           // Login/Logout row
           Row() {
             if (this.isLoggedIn) {
-              Text('🔑 退出登录').fontSize(12).fontColor(ColorTokens.RED)
+              Text('🔑 退出登录').fontSize(12).fontColor(ColorTokens.error(this.isDarkMode))
                 .padding({ left: 14, right: 14, top: 7, bottom: 7 })
-                .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.RED, '30'), radius: 14 })
+                .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.error(this.isDarkMode), '30'), radius: 14 })
                 .onClick(() => { this.doLogout(); })
             } else {
               Text('🔑 登录账号').fontSize(12).fontColor(ColorTokens.primary(this.isDarkMode))
@@ -178,7 +341,7 @@ struct ProfilePage {
           Row() {
             Column() {
               Text(this.favoriteCount.toString())
-                .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 36 }).getValue(this.currentBreakpoint) ?? 28)
+                .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 28)
                 .fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode))
               Text('我的收藏').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
             }
@@ -188,8 +351,8 @@ struct ProfilePage {
 
             Column() {
               Text(this.historyResources.length.toString())
-                .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 36 }).getValue(this.currentBreakpoint) ?? 28)
-                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.GREEN)
+                .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 28)
+                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.success(this.isDarkMode))
               Text('浏览历史').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
             }
             .layoutWeight(1).padding(16).margin({ left: 8 })
@@ -197,7 +360,7 @@ struct ProfilePage {
             .onClick(() => { this.activeTab = 1; this.searchKeyword = ''; this.sortMode = 'default'; })
 
             Column() {
-              Text('📄').fontSize(new BpType<number>({ sm: 24, md: 26, lg: 28, xl: 32 }).getValue(this.currentBreakpoint) ?? 24)
+              Text('📄').fontSize(new BpType<number>({ sm: 24, md: 26, lg: 28, xl: 36 }).getValue(this.currentBreakpoint) ?? 24)
               Text('我的资源').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
             }
             .layoutWeight(1).padding(16).margin({ left: 8 })
@@ -207,6 +370,63 @@ struct ProfilePage {
           .width('100%').padding({ left: 24, right: 24 })
           .justifyContent(FlexAlign.SpaceBetween)
           .margin({ top: 10 })
+
+          Row() {
+            Column() {
+              Text(this.postCount.toString())
+                .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 28)
+                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.warning(this.isDarkMode))
+              Text('我的帖子').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+            }
+            .layoutWeight(1).padding(16)
+            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+            .onClick(() => { this.activeTab = 2; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyPosts(); })
+
+            Column() {
+              Text(this.commentCount.toString())
+                .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 28)
+                .fontWeight(FontWeight.Bold).fontColor('#FF9500')
+              Text('我的评论').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+            }
+            .layoutWeight(1).padding(16).margin({ left: 8 })
+            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+            .onClick(() => { this.activeTab = 3; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyComments(); })
+          }
+          .width('100%').padding({ left: 24, right: 24 })
+          .justifyContent(FlexAlign.SpaceBetween)
+          .margin({ top: 8 })
+
+          // Follower / Following stats row
+          if (this.isLoggedIn) {
+            Row() {
+              Column() {
+                Text(this.followerCount.toString())
+                  .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 28)
+                  .fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode))
+                Text('粉丝').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+              }
+              .layoutWeight(1).padding(16)
+              .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+              .onClick(() => {
+                router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 0 } });
+              })
+
+              Column() {
+                Text(this.followingCount.toString())
+                  .fontSize(new BpType<number>({ sm: 28, md: 30, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 28)
+                  .fontWeight(FontWeight.Bold).fontColor(ColorTokens.success(this.isDarkMode))
+                Text('关注').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+              }
+              .layoutWeight(1).padding(16).margin({ left: 8 })
+              .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+              .onClick(() => {
+                router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 1 } });
+              })
+            }
+            .width('100%').padding({ left: 24, right: 24 })
+            .justifyContent(FlexAlign.SpaceBetween)
+            .margin({ top: 8 })
+          }
 
           // Tab pills
           Row() {
@@ -227,12 +447,30 @@ struct ProfilePage {
               .margin({ left: 8 })
               .onClick(() => { this.activeTab = 1; this.searchKeyword = ''; this.sortMode = 'default'; })
 
+            Text('帖子')
+              .fontSize(14).fontWeight(this.activeTab === 2 ? FontWeight.Bold : FontWeight.Regular)
+              .fontColor(this.activeTab === 2 ? ColorTokens.TEXT_WHITE : ColorTokens.textHint(this.isDarkMode))
+              .padding({ left: 20, right: 20, top: 8, bottom: 8 })
+              .borderRadius(20)
+              .backgroundColor(this.activeTab === 2 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
+              .margin({ left: 8 })
+              .onClick(() => { this.activeTab = 2; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyPosts(); })
+
+            Text('评论')
+              .fontSize(14).fontWeight(this.activeTab === 3 ? FontWeight.Bold : FontWeight.Regular)
+              .fontColor(this.activeTab === 3 ? ColorTokens.TEXT_WHITE : ColorTokens.textHint(this.isDarkMode))
+              .padding({ left: 20, right: 20, top: 8, bottom: 8 })
+              .borderRadius(20)
+              .backgroundColor(this.activeTab === 3 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
+              .margin({ left: 8 })
+              .onClick(() => { this.activeTab = 3; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyComments(); })
+
             Blank()
           }
           .width('100%').padding({ left: 24 }).margin({ top: 16 })
 
-          // Search bar
-          if (this.getFilteredList().length > 0 || this.searchKeyword.trim()) {
+          // Search bar — only for favorites (tab 0) and history (tab 1)
+          if ((this.activeTab === 0 || this.activeTab === 1) && (this.getFilteredList().length > 0 || this.searchKeyword.trim())) {
             Row() {
               Text('🔍').fontSize(14)
               TextInput({ text: this.searchKeyword, placeholder: '搜索已收藏资源...' })
@@ -270,7 +508,7 @@ struct ProfilePage {
               Column() {
                 Text('☆').fontSize(48).margin({ top: 60 })
                 Text('还没有收藏').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
-                Text('浏览资源时点击 ☆ 即可收藏').fontSize(13).fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
+                Text('浏览资源时点击 ☆ 即可收藏').fontSize(13).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
               }.width('100%')
             } else {
               if (this.searchKeyword.trim() && this.getFilteredList().length === 0) {
@@ -305,7 +543,7 @@ struct ProfilePage {
                 }
               }
             }
-          } else {
+          } else if (this.activeTab === 1) {
             if (this.historyResources.length === 0) {
               Column() {
                 Text('🕐').fontSize(48).margin({ top: 60 })
@@ -342,14 +580,50 @@ struct ProfilePage {
                 }
               }
             }
+          } else if (this.activeTab === 2) {
+            // My Posts tab
+            if (this.myPosts.length === 0) {
+              Column() {
+                Text('📝').fontSize(48).margin({ top: 60 })
+                Text('还没有发布帖子').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
+                Text('去社区发个帖子吧').fontSize(13).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
+              }.width('100%')
+            } else {
+              ForEach(this.myPosts, (item: PostVO) => {
+                this.PostCardBuilder(item)
+              }, (item: PostVO) => item.id.toString())
+            }
+          } else if (this.activeTab === 3) {
+            // My Comments tab
+            if (this.myComments.length === 0) {
+              Column() {
+                Text('💬').fontSize(48).margin({ top: 60 })
+                Text('还没有评论').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
+                Text('你的评论会在这里显示').fontSize(13).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
+              }.width('100%')
+            } else {
+              ForEach(this.myComments, (item: MyCommentItem) => {
+                this.CommentCardBuilder(item)
+              }, (item: MyCommentItem) => item.sourceType + '_' + item.id.toString())
+            }
           }
 
           Column().height(80)
         }
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }
 

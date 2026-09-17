@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neushare.mapper.PostMapper">
+
+    <resultMap id="PostVOMap" type="com.neushare.vo.PostVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="tags" property="tags"/>
+        <result column="image_urls" property="imageUrls"/>
+        <result column="files" property="files"/>
+        <result column="is_recommended" property="isRecommended"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="favorite_count" property="favoriteCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="author_nickname" property="authorNickname"/>
+        <result column="author_avatar_url" property="authorAvatarUrl"/>
+        <result column="author_college" property="authorCollege"/>
+    </resultMap>
+
+    <select id="selectPostPage" resultMap="PostVOMap">
+        SELECT p.*, u.nickname as author_nickname, u.avatar_url as author_avatar_url, u.college as author_college
+        FROM post p
+        LEFT JOIN user u ON p.user_id = u.id
+        WHERE 1=1
+        <if test="status != null">
+            AND p.status = #{status}
+        </if>
+        <if test="tag != null and tag != ''">
+            AND JSON_CONTAINS(p.tags, CONCAT('"', #{tag}, '"'))
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (p.title LIKE CONCAT('%', #{keyword}, '%') OR p.content LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <choose>
+            <when test="sortBy == 'hot'">
+                ORDER BY p.like_count DESC, p.comment_count DESC, p.create_time DESC
+            </when>
+            <otherwise>
+                ORDER BY p.create_time DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectPostById" resultMap="PostVOMap">
+        SELECT p.*, u.nickname as author_nickname, u.avatar_url as author_avatar_url, u.college as author_college
+        FROM post p
+        LEFT JOIN user u ON p.user_id = u.id
+        WHERE p.id = #{id}
+    </select>
+
+    <select id="selectHotPosts" resultMap="PostVOMap">
+        SELECT p.*, u.nickname as author_nickname, u.avatar_url as author_avatar_url, u.college as author_college
+        FROM post p
+        LEFT JOIN user u ON p.user_id = u.id
+        WHERE p.status = 1
+        ORDER BY p.like_count DESC, p.comment_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectUserPosts" resultMap="PostVOMap">
+        SELECT p.*, u.nickname as author_nickname, u.avatar_url as author_avatar_url, u.college as author_college
+        FROM post p
+        LEFT JOIN user u ON p.user_id = u.id
+        WHERE p.user_id = #{userId}
+        ORDER BY p.create_time DESC
+    </select>
+
+</mapper>

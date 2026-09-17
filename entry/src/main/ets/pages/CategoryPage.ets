@@ -9,7 +9,7 @@ type SortMode = 'default' | 'name' | 'rating' | 'date';
 @Entry
 @Component
 struct CategoryPage {
-  private filterTags: string[] = ['学科', '考研', '期末速成'];
+  @State filterTags: string[] = [];
   @State resources: ResourceItemModel[] = [];
   @State categoryTitle: string = '';
   @State categoryDesc: string = '';
@@ -19,6 +19,7 @@ struct CategoryPage {
   @State sortMode: SortMode = 'default';
   @State isLoading: boolean = false;
   @State totalCount: number = 0;
+  @State appearOpacity: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private categoryId: number = 1;
@@ -39,6 +40,7 @@ struct CategoryPage {
     this.checkFilters();
     // 再从后端加载
     this.loadFromApi();
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
   }
 
   async loadFromApi(): Promise<void> {
@@ -55,11 +57,28 @@ struct CategoryPage {
   }
 
   checkFilters(): void {
-    this.showFilters = this.resources.some(r =>
-      r.tags && r.tags.some(t => t === '学科' || t === '考研' || t === '期末速成')
-    );
+    // 从当前资源中动态收集所有标签，按出现频率排序
+    const tagCount: Record<string, number> = {};
+    for (let i = 0; i < this.resources.length; i++) {
+      const r = this.resources[i];
+      if (r.tags && r.tags.length > 0) {
+        for (let j = 0; j < r.tags.length; j++) {
+          const t = r.tags[j];
+          tagCount[t] = (tagCount[t] || 0) + 1;
+        }
+      }
+    }
+    let sorted = Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]);
+    // 降级：如果当前资源没有标签，使用全局标签列表
+    if (sorted.length === 0) {
+      const globalTags = this.resourceService.getLocalAllTags();
+      sorted = globalTags.map(t => t.tag);
+    }
+    this.filterTags = sorted;
+    this.showFilters = sorted.length > 0;
+    // 默认选中出现频率最高的标签
     if (this.showFilters && !this.filterTag) {
-      this.filterTag = '学科';
+      this.filterTag = sorted[0];
     }
   }
 
@@ -149,16 +168,16 @@ struct CategoryPage {
         // Tag filter pills — only show if category has tagged resources
         if (this.showFilters && this.filterTags.length > 0) {
           Row() {
-            ForEach(this.filterTags, (tag: string) => {
-              Text(tag === '学科' ? '学科' : tag === '考研' ? '考研' : '期末速成')
+            ForEach(this.filterTags, (tag: string, idx: number) => {
+              Text(tag)
                 .fontSize(11).fontWeight(this.filterTag === tag ? FontWeight.Bold : FontWeight.Regular)
-                .fontColor(this.filterTag === tag ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textPrimary(this.isDarkMode))
+                .fontColor(this.filterTag === tag ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textPrimary(this.isDarkMode))
                 .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                 .backgroundColor(this.filterTag === tag ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                 .borderRadius(16)
                 .margin({ left: 6 })
                 .onClick(() => { this.filterTag = tag; })
-            })
+            }, (tag: string, idx: number) => 'ftag_' + idx.toString())
             if (this.filterTag) {
               Text('全部')
                 .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
@@ -181,7 +200,7 @@ struct CategoryPage {
             .fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
           Text(this.searchKeyword ? '试试其他关键词' :
             (this.filterTag ? '试试切换其他筛选条件' : '该分类下暂无资源，敬请期待'))
-            .fontSize(13).fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
+            .fontSize(13).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
         }
         .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       } else {
@@ -195,7 +214,7 @@ struct CategoryPage {
                 }
               })
             }
-          })
+          }, (item: ResourceItemModel) => item.id.toString())
         }
         .columnsTemplate(new BpType<string>({ sm: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr')
         .rowsGap(12)
@@ -205,6 +224,16 @@ struct CategoryPage {
       }
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }
 
@@ -219,7 +248,7 @@ struct SortChip {
     Text(this.label)
       .fontSize(12)
       .fontWeight(this.active ? FontWeight.Bold : FontWeight.Regular)
-      .fontColor(this.active ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textHint(this.isDarkMode))
+      .fontColor(this.active ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.active ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
       .borderRadius(16)

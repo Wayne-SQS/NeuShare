@@ -21,12 +21,14 @@
         <result column="upload_username" property="uploadUsername"/>
         <result column="upload_nickname" property="uploadNickname"/>
         <result column="upload_avatar" property="uploadAvatar"/>
+        <result column="favorite_time" property="favoriteTime"/>
     </resultMap>
 
     <select id="selectUserFavorites" resultMap="ResourceVOMap">
         SELECT r.id, r.title, r.category_id, r.type, r.content_url, r.description, r.cover_url,
                r.upload_user_id, r.status, r.view_count, r.like_count, r.favorite_count,
                r.create_time, r.update_time,
+               f.create_time as favorite_time,
                u.username as upload_username, u.nickname as upload_nickname, u.avatar_url as upload_avatar,
                c.name as category_name
         FROM favorite f

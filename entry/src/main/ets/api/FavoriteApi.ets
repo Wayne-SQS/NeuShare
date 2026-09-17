@@ -1,22 +1,16 @@
 import { HttpClient, ApiResponse } from '@neushare/common';
 import { ResourceVO } from '../models/ResourceModel';
 
-export interface FavoriteItem {
-  id: number;
-  resourceId: number;
-  userId: number;
-  resource: ResourceVO;
-  createTime: string;
-}
-
 export interface FavoriteCheckResult {
   isFavorite: boolean;
 }
 
+// 后端 /api/favorite/list 返回的是 PageResult<ResourceVO>（扁平资源列表，含 favoriteTime）
+// 不是嵌套 { resource: ResourceVO } 结构
 export interface FavoriteListResult {
   current: number;
   pages: number;
-  records: FavoriteItem[];
+  records: ResourceVO[];
   size: number;
   total: number;
 }
@@ -26,6 +20,10 @@ interface FavoriteAddParams {
 }
 
 interface FavoriteCheckParams {
+  resourceId: number;
+}
+
+interface FavoriteRemoveParams {
   resourceId: number;
 }
 
@@ -43,7 +41,8 @@ export class FavoriteApi {
   }
 
   async remove(resourceId: number): Promise<ApiResponse<null>> {
-    return this.http.del<null>('/api/favorite/remove?resourceId=' + resourceId);
+    const removeParams: FavoriteRemoveParams = { resourceId: resourceId };
+    return this.http.deleteWithParams<null>('/api/favorite/remove', removeParams);
   }
 
   async check(resourceId: number): Promise<ApiResponse<FavoriteCheckResult>> {

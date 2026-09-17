@@ -1,46 +1,46 @@
 [
   {
     "id": 1,
-    "title": "大模型编程教程全面上线",
-    "subtitle": "DeepSeek · Claude · GPT API 从入门到实战",
-    "emoji": "🤖",
+    "title": "欢迎使用 NeuShare",
+    "subtitle": "校园学习资料共享平台 · 东北大学",
+    "emoji": "🏫",
     "gradientStart": "#4A6BFF",
-    "gradientEnd": "#00C2CB",
-    "imageUrl": "",
+    "gradientEnd": "#89CFEF",
+    "imageUrl": "http://10.0.2.2:8080/files/校园学习.png",
     "linkType": "category",
-    "linkValue": "3"
+    "linkValue": "1"
   },
   {
     "id": 2,
-    "title": "吴恩达AI课 + Hello算法",
-    "subtitle": "Andrew Ng机器学习 · 开源动画算法书",
-    "emoji": "🧠",
+    "title": "期末复习资料专区",
+    "subtitle": "高数 · 线代 · 概统 · 考研408 · 历年真题",
+    "emoji": "📺",
     "gradientStart": "#FF8FB1",
     "gradientEnd": "#C4B5FD",
-    "imageUrl": "",
+    "imageUrl": "http://10.0.2.2:8080/files/网课学习.png",
     "linkType": "category",
     "linkValue": "1"
   },
   {
     "id": 3,
-    "title": "软件学院推荐书单发布",
-    "subtitle": "CSAPP · 设计模式 · Hello算法 · 大模型实战",
-    "emoji": "📚",
+    "title": "上传优质资源",
+    "subtitle": "分享笔记 · 课件 · 代码 · 赢取社区积分",
+    "emoji": "💻",
     "gradientStart": "#4A6BFF",
-    "gradientEnd": "#FF8FB1",
-    "imageUrl": "",
+    "gradientEnd": "#00C2CB",
+    "imageUrl": "http://10.0.2.2:8080/files/计算机专业学习.png",
     "linkType": "category",
-    "linkValue": "2"
+    "linkValue": "3"
   },
   {
     "id": 4,
-    "title": "GitHub加速 · Watt Toolkit",
-    "subtitle": "微软商城免费下载 · 开源网络加速工具",
-    "emoji": "⚡",
+    "title": "AI 大模型前沿探索",
+    "subtitle": "DeepSeek · Claude · GPT · Prompt 工程 · RAG",
+    "emoji": "🤖",
     "gradientStart": "#89CFEF",
     "gradientEnd": "#00C2CB",
-    "imageUrl": "",
-    "linkType": "category",
-    "linkValue": "3"
+    "imageUrl": "http://10.0.2.2:8080/files/AI大模型.png",
+    "linkType": "community",
+    "linkValue": "community"
   }
 ]

@@ -18,6 +18,7 @@ export interface ResourceItem {
   likeCount: number
   viewCount: number
   uploadAvatar: string
+  status: number
 }
 
 export interface CategoryItem {
@@ -110,19 +111,20 @@ export function adaptResource(vo: ResourceVO): ResourceItem {
     rating: vo.likeCount > 0 ? Math.min(vo.likeCount / 10, 5.0) : 0,
     likeCount: vo.likeCount || 0,
     viewCount: vo.viewCount || 0,
-    uploadAvatar: vo.uploadAvatar || ''
+    uploadAvatar: vo.uploadAvatar || '',
+    status: vo.status !== undefined ? vo.status : 0
   };
 }
 
-export function adaptCategory(vo: CategoryVO): CategoryItem {
+export function adaptCategory(vo: CategoryVO, fallbackIcon?: string, fallbackDesc?: string): CategoryItem {
   const colors: string[] = ColorTokens.BANNER_COLORS;
-  const icons: string[] = ['📚', '💻', '🎬', '📝', '🔬'];
+  const icons: string[] = ['🎬', '📖', '📦', '🖥️', '🎓', '📚', '💻', '🔬', '📝', '📊'];
   return {
     id: vo.id,
     title: vo.name,
-    icon: vo.icon || icons[vo.id % icons.length],
-    color: colors[vo.id % colors.length],
-    description: ''
+    icon: vo.icon || fallbackIcon || icons[(vo.id - 1) % icons.length],
+    color: colors[(vo.id - 1) % colors.length],
+    description: fallbackDesc || ''
   };
 }
 

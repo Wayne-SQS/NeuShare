@@ -1,7 +1,8 @@
 import { ResourceItem, CategoryItem, BannerItem, adaptResource, adaptCategory, adaptBanner } from '../models/ResourceModel';
-import { ResourceApi } from '../api/ResourceApi';
+import { ResourceApi, ResourceListParams } from '../api/ResourceApi';
 import { BannerApi } from '../api/BannerApi';
 import { FavoriteApi } from '../api/FavoriteApi';
+import promptAction from '@ohos.promptAction';
 import categoriesData from '../data/categories.json';
 import resourcesData from '../data/resources.json';
 import bannersData from '../data/banners.json';
@@ -122,7 +123,8 @@ export class ResourceService {
 
   async fetchResourcesByCategory(categoryId: number, pageNum: number, pageSize: number): Promise<ResourcePageResult> {
     try {
-      const resp = await this.resourceApi.getList({ pageNum: pageNum, pageSize: pageSize, categoryId: categoryId, status: 1 });
+      const params: ResourceListParams = { pageNum: pageNum, pageSize: pageSize, categoryId: categoryId, status: 1 };
+      const resp = await this.resourceApi.getList(params);
       if (resp.code === 200 && resp.data) {
         const items: ResourceItem[] = [];
         for (let i = 0; i < resp.data.records.length; i++) {
@@ -174,8 +176,9 @@ export class ResourceService {
       const resp = await this.resourceApi.search(keyword);
       if (resp.code === 200 && resp.data) {
         const items: ResourceItem[] = [];
-        for (let i = 0; i < resp.data.length; i++) {
-          items.push(adaptResource(resp.data[i]));
+        const records = resp.data.records || [];
+        for (let i = 0; i < records.length; i++) {
+          items.push(adaptResource(records[i]));
         }
         return items;
       }
@@ -188,8 +191,13 @@ export class ResourceService {
   async likeResource(id: number): Promise<boolean> {
     try {
       const resp = await this.resourceApi.like(id);
-      return resp.code === 200;
+      if (resp.code === 200) {
+        return true;
+      }
+      promptAction.showToast({ message: '点赞失败，请重试', duration: 2000 });
+      return false;
     } catch (e) {
+      promptAction.showToast({ message: '点赞失败，请检查网络', duration: 2000 });
       return false;
     }
   }
@@ -197,8 +205,13 @@ export class ResourceService {
   async unlikeResource(id: number): Promise<boolean> {
     try {
       const resp = await this.resourceApi.unlike(id);
-      return resp.code === 200;
+      if (resp.code === 200) {
+        return true;
+      }
+      promptAction.showToast({ message: '取消点赞失败，请重试', duration: 2000 });
+      return false;
     } catch (e) {
+      promptAction.showToast({ message: '取消点赞失败，请检查网络', duration: 2000 });
       return false;
     }
   }
@@ -206,8 +219,12 @@ export class ResourceService {
   async addFavorite(id: number): Promise<boolean> {
     try {
       const resp = await this.favoriteApi.add(id);
+      if (resp.code !== 200) {
+        promptAction.showToast({ message: '收藏失败', duration: 2000 });
+      }
       return resp.code === 200;
     } catch (e) {
+      promptAction.showToast({ message: '收藏失败，请检查网络', duration: 2000 });
       return false;
     }
   }
@@ -215,8 +232,12 @@ export class ResourceService {
   async removeFavorite(id: number): Promise<boolean> {
     try {
       const resp = await this.favoriteApi.remove(id);
+      if (resp.code !== 200) {
+        promptAction.showToast({ message: '取消收藏失败', duration: 2000 });
+      }
       return resp.code === 200;
     } catch (e) {
+      promptAction.showToast({ message: '取消收藏失败，请检查网络', duration: 2000 });
       return false;
     }
   }

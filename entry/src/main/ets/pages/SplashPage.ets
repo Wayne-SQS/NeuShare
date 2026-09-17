@@ -98,7 +98,7 @@ struct SplashPage {
           Stack({ alignContent: Alignment.Center }) {
             Column().width(60).height(60).borderRadius(30)
               .backgroundColor(ColorTokens.primary(this.isDarkMode))
-            Text('N').fontSize(30).fontWeight(FontWeight.Bold).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+            Text('N').fontSize(30).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           }
           Text('加载中...')
             .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16 })
@@ -111,7 +111,7 @@ struct SplashPage {
           Stack({ alignContent: Alignment.Center }) {
             Column().width(80).height(80).borderRadius(40)
               .backgroundColor(ColorTokens.primary(this.isDarkMode))
-            Text('N').fontSize(40).fontWeight(FontWeight.Bold).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+            Text('N').fontSize(40).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           }
           .scale({ x: this.logoScale, y: this.logoScale })
           .opacity(this.logoOpacity)
@@ -145,5 +145,12 @@ struct SplashPage {
       }
     }
     .width('100%').height('100%')
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 500, curve: Curve.EaseOut })
+      .opacity(0)
+    PageTransitionExit({ duration: 300, curve: Curve.EaseIn })
+      .opacity(0)
   }
 }

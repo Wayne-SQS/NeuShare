@@ -17,4 +17,5 @@ public class UserProfileVO {
     private Long resourceCount;
     private Long followerCount;
     private Long followingCount;
+    private Long totalLikesReceived;
 }

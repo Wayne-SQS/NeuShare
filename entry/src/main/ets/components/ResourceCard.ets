@@ -65,14 +65,14 @@ export struct ResourceCard {
 
           Row() {
             if (this.resource.tags && this.resource.tags.length > 0) {
-              ForEach(this.resource.tags.slice(0, 2), (tag: string) => {
+              ForEach(this.resource.tags.slice(0, 2), (tag: string, idx: number) => {
                 Text(tag)
-                  .fontSize(9).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                  .fontSize(9).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                   .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                   .borderRadius(4).margin({ right: 4 })
                   .onClick(() => { router.pushUrl({ url: 'pages/SearchPage', params: { keyword: tag } }); })
-              })
+              }, (tag: string, idx: number) => 'tag_' + idx.toString())
             }
             Blank()
             Row() {
@@ -95,7 +95,9 @@ export struct ResourceCard {
       .shadow({ radius: 8, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 2 })
       .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 16 })
       .scale({ x: this.pressed ? 0.96 : 1, y: this.pressed ? 0.96 : 1 })
-      .animation({ curve: Curve.FastOutSlowIn, duration: 150 })
+      .animation({ curve: Curve.EaseOut, duration: 200 })
+      .hoverEffect(HoverEffect.Auto)
+      .transition(TransitionEffect.OPACITY.animation({ curve: Curve.EaseOut, duration: 300 }))
       .onClick(() => { this.onTap(); })
       .onTouch((event: TouchEvent) => {
         if (event.type === TouchType.Down) {
@@ -128,14 +130,14 @@ export struct ResourceCard {
 
           Row() {
             if (this.resource.tags && this.resource.tags.length > 0) {
-              ForEach(this.resource.tags.slice(0, 3), (tag: string) => {
+              ForEach(this.resource.tags.slice(0, 3), (tag: string, idx: number) => {
                 Text(tag)
-                  .fontSize(10).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                  .fontSize(10).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                   .padding({ left: 7, right: 7, top: 3, bottom: 3 })
                   .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                   .borderRadius(6).margin({ right: 6 })
                   .onClick(() => { router.pushUrl({ url: 'pages/SearchPage', params: { keyword: tag } }); })
-              })
+              }, (tag: string, idx: number) => 'tag_' + idx.toString())
             }
             Blank()
             Row() {
@@ -160,8 +162,10 @@ export struct ResourceCard {
       .margin({ left: 4, right: 4, top: 4, bottom: 4 })
       .shadow({ radius: 8, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 2 })
       .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 16 })
-      .scale({ x: this.pressed ? 0.97 : 1, y: this.pressed ? 0.97 : 1 })
-      .animation({ curve: Curve.FastOutSlowIn, duration: 150 })
+      .scale({ x: this.pressed ? 0.96 : 1, y: this.pressed ? 0.96 : 1 })
+      .animation({ curve: Curve.EaseOut, duration: 200 })
+      .hoverEffect(HoverEffect.Auto)
+      .transition(TransitionEffect.OPACITY.animation({ curve: Curve.EaseOut, duration: 300 }))
       .onClick(() => { this.onTap(); })
       .onTouch((event: TouchEvent) => {
         if (event.type === TouchType.Down) {

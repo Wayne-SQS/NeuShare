@@ -8,6 +8,7 @@ import com.neushare.entity.Notification;
 import com.neushare.exception.BusinessException;
 import com.neushare.mapper.NotificationMapper;
 import com.neushare.service.NotificationService;
+import com.neushare.vo.NotificationVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +35,9 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     }
 
     @Override
-    public IPage<Notification> getUserNotifications(Integer pageNum, Integer pageSize, Long userId) {
-        Page<Notification> page = new Page<>(pageNum, pageSize);
-        return notificationMapper.selectByUserId(page, userId);
+    public IPage<NotificationVO> getUserNotifications(Integer pageNum, Integer pageSize, Long userId, String type) {
+        Page<NotificationVO> page = new Page<>(pageNum, pageSize);
+        return notificationMapper.selectNotificationPageWithSender(page, userId, type);
     }
 
     @Override
@@ -60,5 +61,14 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
                 .eq(Notification::getUserId, userId)
                 .eq(Notification::getIsRead, 0)
                 .set(Notification::getIsRead, 1));
+    }
+
+    @Override
+    public void deleteNotification(Long id, Long userId) {
+        Notification notification = getById(id);
+        if (notification == null || !notification.getUserId().equals(userId)) {
+            throw new BusinessException("通知不存在");
+        }
+        removeById(id);
     }
 }

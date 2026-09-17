@@ -9,9 +9,14 @@ interface PostgradTimeline {
   description: string;
 }
 
+interface MaterialItem {
+  name: string;
+  purchaseUrl?: string;
+}
+
 interface PostgradSubject {
   sections: string[];
-  materials: string[];
+  materials: MaterialItem[];
   tip: string;
 }
 
@@ -35,11 +40,19 @@ interface PostgradSchedulePhase {
   tasks: string[];
 }
 
+interface NeuLink {
+  name: string;
+  url: string;
+  desc: string;
+}
+
 @Entry
 @Component
 struct PostgradGuidePage {
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State expandedSubject: string = '';
+  @State showPurchaseNotice: boolean = true;
+  @State appearOpacity: number = 0;
   private timeline: PostgradTimeline[] = [];
   private subjectNames: string[] = [];
   private subjectMap: Record<string, PostgradSubject> = {};
@@ -47,6 +60,7 @@ struct PostgradGuidePage {
   private schoolOptions: PostgradOption[] = [];
   private schoolIntro: string = '';
   private schoolSuggestion: string = '';
+  private neuLinks: NeuLink[] = [];
   private studySchedule: PostgradSchedulePhase[] = [];
 
   aboutToAppear(): void {
@@ -58,7 +72,9 @@ struct PostgradGuidePage {
     this.schoolOptions = data.schoolSelection.options;
     this.schoolIntro = data.schoolSelection.intro;
     this.schoolSuggestion = data.schoolSelection.suggestion;
+    this.neuLinks = data.schoolSelection.neuLinks || [];
     this.studySchedule = data.studySchedule;
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
   }
 
   toggleSubject(subject: string): void {
@@ -139,6 +155,25 @@ struct PostgradGuidePage {
           }
           .width('100%').padding({ left: 20, right: 24 })
 
+          // ── Purchase Notice ──────────────────
+          if (this.showPurchaseNotice) {
+            Row() {
+              Text('💡')
+                .fontSize(16).margin({ right: 8 })
+              Text('推荐资料为学习参考，请按需购买，不必贪多。书籍价格不菲，建议结合课程进度选择最需要的入手。')
+                .fontSize(12).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+                .layoutWeight(1).lineHeight(18)
+              Text('✕')
+                .fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode))
+                .padding({ left: 8, top: 4, bottom: 4 })
+                .onClick(() => { this.showPurchaseNotice = false; })
+            }
+            .width('100%').padding(12)
+            .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
+            .borderRadius(12)
+            .margin({ left: 24, right: 24, top: 12 })
+          }
+
           // ── Exam Subjects ────────────────────
           this.sectionTitle('📝 考试科目详解')
           Column() {
@@ -166,7 +201,7 @@ struct PostgradGuidePage {
                     Row() {
                       ForEach(this.subjectMap[subjectName].sections, (sec: string) => {
                         Text(sec)
-                          .fontSize(11).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                          .fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                           .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                           .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                           .borderRadius(6).margin({ right: 6, top: 4 })
@@ -177,18 +212,28 @@ struct PostgradGuidePage {
                     Text('推荐资料')
                       .fontSize(12).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textHint(this.isDarkMode))
                       .width('100%').margin({ top: 12 })
-                    ForEach(this.subjectMap[subjectName].materials, (mat: string) => {
+                    ForEach(this.subjectMap[subjectName].materials, (mat: MaterialItem) => {
                       Row() {
                         Text('·').fontSize(14).fontColor(ColorTokens.primary(this.isDarkMode)).margin({ right: 6 })
-                        Text(mat)
+                        Text(mat.name)
                           .fontSize(12).fontColor(ColorTokens.textSecondary(this.isDarkMode))
                           .layoutWeight(1)
+                        if (mat.purchaseUrl && mat.purchaseUrl.length > 0) {
+                          Text('去购买')
+                            .fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+                            .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(6)
+                            .margin({ left: 6 })
+                            .onClick(() => {
+                              router.pushUrl({ url: 'pages/WebViewPage', params: { url: mat.purchaseUrl, title: mat.name } });
+                            })
+                        }
                       }.width('100%').margin({ top: 3 })
                     })
 
                     // Tip
                     Text('💡 ' + this.subjectMap[subjectName].tip)
-                      .fontSize(11).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                      .fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                       .lineHeight(16)
                       .padding(10)
                       .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
@@ -224,7 +269,7 @@ struct PostgradGuidePage {
                     .fontSize(16)
                     .padding(6)
                     .onClick(() => {
-                      // External link would go here, but ArkWeb not included
+                      router.pushUrl({ url: 'pages/WebViewPage', params: { url: source.url, title: source.name } });
                     })
                 }
               }
@@ -238,6 +283,49 @@ struct PostgradGuidePage {
 
           // ── School Selection ─────────────────
           this.sectionTitle('🎯 择校建议')
+
+          // NEU links（母校单独列出）
+          if (this.neuLinks.length > 0) {
+            ForEach(this.neuLinks, (link: NeuLink) => {
+              Row() {
+                Column() {
+                  Text(link.name)
+                    .fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+                  Text(link.desc)
+                    .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
+                    .lineHeight(16).margin({ top: 2 })
+                }.layoutWeight(1)
+                Text('🔗')
+                  .fontSize(16)
+                  .padding(6)
+                  .onClick(() => {
+                    router.pushUrl({ url: 'pages/WebViewPage', params: { url: link.url, title: link.name } });
+                  })
+              }
+              .width('100%').padding(14)
+              .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
+              .margin({ left: 24, right: 24, bottom: 6 })
+              .shadow({ radius: 4, color: '#06000000', offsetX: 0, offsetY: 1 })
+            })
+          }
+
+          // 查看院校详情按钮
+          Row() {
+            Text('🏫')
+              .fontSize(16).margin({ right: 8 })
+            Text('查看 35 所 CS 院校详情')
+              .fontSize(14).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+              .layoutWeight(1)
+            Text('→').fontSize(16).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+          }
+          .width('100%').padding(14)
+          .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
+          .margin({ left: 24, right: 24, bottom: 12 })
+          .shadow({ radius: 8, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), offsetX: 0, offsetY: 4 })
+          .onClick(() => {
+            router.pushUrl({ url: 'pages/SchoolGuidePage' });
+          })
+
           Text(this.schoolIntro)
             .fontSize(13).fontColor(ColorTokens.textSecondary(this.isDarkMode))
             .lineHeight(20)
@@ -260,7 +348,7 @@ struct PostgradGuidePage {
                 Row() {
                   ForEach(option.schools, (school: string) => {
                     Text(school)
-                      .fontSize(11).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                      .fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                       .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                       .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                       .borderRadius(6).margin({ right: 6, top: 4 })
@@ -271,14 +359,14 @@ struct PostgradGuidePage {
               // Pros/Cons
               Row() {
                 Column() {
-                  Text('✅ 优势').fontSize(11).fontWeight(FontWeight.Bold).fontColor(ColorTokens.GREEN)
+                  Text('✅ 优势').fontSize(11).fontWeight(FontWeight.Bold).fontColor(ColorTokens.success(this.isDarkMode))
                   ForEach(option.pros, (pro: string) => {
                     Text('· ' + pro)
                       .fontSize(11).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ top: 2 })
                   })
                 }.width('48%')
                 Column() {
-                  Text('⚠️ 劣势').fontSize(11).fontWeight(FontWeight.Bold).fontColor(ColorTokens.RED)
+                  Text('⚠️ 劣势').fontSize(11).fontWeight(FontWeight.Bold).fontColor(ColorTokens.error(this.isDarkMode))
                   ForEach(option.cons, (con: string) => {
                     Text('· ' + con)
                       .fontSize(11).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ top: 2 })
@@ -313,9 +401,9 @@ struct PostgradGuidePage {
                 Column()
                   .width(36).height(36).borderRadius(18)
                   .backgroundColor(index === 0 ? ColorTokens.primary(this.isDarkMode) :
-                    index === 1 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.GREEN)
+                    index === 1 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.success(this.isDarkMode))
                 Text((index + 1).toString())
-                  .fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+                  .fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
               }
 
               Column() {
@@ -324,7 +412,7 @@ struct PostgradGuidePage {
                 Text(phase.period)
                   .fontSize(12).fontColor(
                     index === 0 ? ColorTokens.primary(this.isDarkMode) :
-                    index === 1 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.GREEN
+                    index === 1 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.success(this.isDarkMode)
                   ).margin({ top: 2 })
                 ForEach(phase.tasks, (task: string) => {
                   Row() {
@@ -346,7 +434,7 @@ struct PostgradGuidePage {
           // ── Bottom CTA ───────────────────────
           Button('浏览全部考研资源 →')
             .width('100%').height(50).fontSize(16).fontWeight(FontWeight.Bold)
-            .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+            .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
             .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
             .margin({ left: 24, right: 24, top: 8 })
             .shadow({ radius: 8, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), offsetX: 0, offsetY: 4 })
@@ -357,9 +445,19 @@ struct PostgradGuidePage {
           Column().height(80)
         }
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 
   @Builder

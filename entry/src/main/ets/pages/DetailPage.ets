@@ -1,86 +1,103 @@
-import router from '@ohos.router';
-import { ColorTokens, ResourceTypeUtils, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import router from '@ohos.router';
+import curves from '@ohos.curves';
+import { ColorTokens, ResourceTypeUtils, BreakpointType as BpType, BreakpointTypeEnum, AuthStore } from '@neushare/common';
 import { ResourceService } from '../services/ResourceService';
 import { FavoriteService } from '../services/FavoriteService';
-import { CommunityService } from '../services/CommunityService';
 import { RecommendService } from '../services/RecommendService';
 import { TtsService } from '../services/TtsService';
 import { ShareHelper } from '../services/ShareHelper';
 import { ResourceItem as ResourceItemModel } from '../models/ResourceModel';
-import { Post } from '../models/PostModel';
 import { CommentApi, CommentItem } from '../api/CommentApi';
 import { Context } from '@ohos.abilityAccessCtrl';
 import common from '@ohos.app.ability.common';
 import Want from '@ohos.app.ability.Want';
 import promptAction from '@ohos.promptAction';
+import { request } from '@kit.BasicServicesKit';
+import { fileIo } from '@kit.CoreFileKit';
+
+const FILE_BASE_URL: string = 'http://10.0.2.2:8080/files/';
 
 @Entry
 @Component
 struct DetailPage {
   @State resource: ResourceItemModel | null = null;
   @State isFavorited: boolean = false;
-  @State comments: Post[] = [];
   @State cloudComments: CommentItem[] = [];
   @State newComment: string = '';
   @State commentLoading: boolean = false;
+  @State replyToId: number = 0;
+  @State replyToName: string = '';
   @State similarResources: ResourceItemModel[] = [];
   @State isSpeaking: boolean = false;
   @State loadFailed: boolean = false;
   @State loadTimeout: boolean = false;
   @State showComments: boolean = false; // 半模态评论面板（教程 §13.3）
+  @State favBounce: boolean = false;
+  @State currentUserId: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private resourceId: number = 0;
   private loadTimer: number = -1;
   private resourceService: ResourceService = ResourceService.getInstance();
   private favoriteService: FavoriteService = FavoriteService.getInstance();
-  private communityService: CommunityService = CommunityService.getInstance();
   private commentApi: CommentApi = new CommentApi();
+  private authStore: AuthStore = AuthStore.getInstance();
   private recommendService: RecommendService = RecommendService.getInstance();
   private ttsService: TtsService = TtsService.getInstance();
   private shareHelper: ShareHelper = ShareHelper.getInstance();
 
   // ── 响应式参数 ─────────────────────────────────────────
   private maxContentWidth(): number {
-    return new BpType<number>({ sm: 9999, md: 640, lg: 780, xl: 920 }).getValue(this.currentBreakpoint) ?? 9999;
+    return new BpType<number>({ sm: 9999, md: 576, lg: 656, xl: 900 }).getValue(this.currentBreakpoint) ?? 9999;
   }
 
   private contentPadding(): number {
-    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 36 }).getValue(this.currentBreakpoint) ?? 24;
+    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 44 }).getValue(this.currentBreakpoint) ?? 24;
   }
 
   private titleFontSize(): number {
-    return new BpType<number>({ sm: 22, md: 26, lg: 30, xl: 34 }).getValue(this.currentBreakpoint) ?? 22;
+    return new BpType<number>({ sm: 22, md: 26, lg: 30, xl: 38 }).getValue(this.currentBreakpoint) ?? 22;
   }
 
   private subtitleFontSize(): number {
-    return new BpType<number>({ sm: 16, md: 18, lg: 22, xl: 26 }).getValue(this.currentBreakpoint) ?? 16;
+    return new BpType<number>({ sm: 16, md: 18, lg: 22, xl: 30 }).getValue(this.currentBreakpoint) ?? 16;
   }
 
   private bodyFontSize(): number {
-    return new BpType<number>({ sm: 14, md: 16, lg: 18, xl: 20 }).getValue(this.currentBreakpoint) ?? 14;
+    return new BpType<number>({ sm: 14, md: 16, lg: 18, xl: 22 }).getValue(this.currentBreakpoint) ?? 14;
   }
 
   private captionFontSize(): number {
-    return new BpType<number>({ sm: 12, md: 14, lg: 16, xl: 18 }).getValue(this.currentBreakpoint) ?? 12;
+    return new BpType<number>({ sm: 12, md: 14, lg: 16, xl: 20 }).getValue(this.currentBreakpoint) ?? 12;
   }
 
   private smallFontSize(): number {
-    return new BpType<number>({ sm: 11, md: 12, lg: 14, xl: 16 }).getValue(this.currentBreakpoint) ?? 11;
+    return new BpType<number>({ sm: 11, md: 12, lg: 14, xl: 17 }).getValue(this.currentBreakpoint) ?? 11;
   }
 
   private headerHeight(): number {
-    return new BpType<number>({ sm: 48, md: 52, lg: 58, xl: 64 }).getValue(this.currentBreakpoint) ?? 48;
+    return new BpType<number>({ sm: 48, md: 52, lg: 58, xl: 72 }).getValue(this.currentBreakpoint) ?? 48;
   }
 
   private cardPadding(): number {
-    return new BpType<number>({ sm: 14, md: 16, lg: 20, xl: 24 }).getValue(this.currentBreakpoint) ?? 14;
+    return new BpType<number>({ sm: 14, md: 16, lg: 20, xl: 28 }).getValue(this.currentBreakpoint) ?? 14;
+  }
+
+  private isWideScreen(): boolean {
+    return this.currentBreakpoint === BreakpointTypeEnum.MD ||
+      this.currentBreakpoint === BreakpointTypeEnum.LG ||
+      this.currentBreakpoint === BreakpointTypeEnum.XL;
   }
 
   async aboutToAppear(): Promise<void> {
     const params = router.getParams() as Record<string, Object>;
     if (params) {
       this.resourceId = params['resourceId'] as number;
+    }
+    // 获取当前用户ID（用于删除按钮权限判断）
+    const user = await this.authStore.getUser();
+    if (user && user['id']) {
+      this.currentUserId = user['id'] as number;
     }
     // 先从本地加载
     const localRes = this.resourceService.getLocalResourceById(this.resourceId);
@@ -89,10 +106,8 @@ struct DetailPage {
     }
     const context = this.getUIContext().getHostContext() as Context;
     await this.favoriteService.init(context);
-    await this.communityService.init(context);
     this.isFavorited = await this.favoriteService.isFavorite(this.resourceId);
     await this.favoriteService.addHistory(this.resourceId);
-    await this.loadComments();
     this.loadCloudComments();
     // 异步从后端加载详情
     this.loadDetailFromApi();
@@ -130,12 +145,6 @@ struct DetailPage {
     }
   }
 
-  async loadComments(): Promise<void> {
-    const allPosts = await this.communityService.getAllPosts();
-    this.comments = allPosts.filter(p =>
-      p.tags.some(t => t.includes(this.resourceId.toString()))
-    );
-  }
 
   async loadCloudComments(): Promise<void> {
     try {
@@ -154,7 +163,11 @@ struct DetailPage {
     if (!this.newComment.trim() || this.commentLoading) return;
     this.commentLoading = true;
     const content: string = this.newComment.trim();
+    const parentId: number = this.replyToId;
+    const parentName: string = this.replyToName;
     this.newComment = '';
+    this.replyToId = 0;
+    this.replyToName = '';
     // Optimistically append to list immediately
     const optimistic: CommentItem = {
       id: Date.now(),
@@ -163,16 +176,30 @@ struct DetailPage {
       nickname: '我',
       avatarUrl: '',
       content: content,
-      parentId: 0,
+      parentId: parentId,
       deleted: 0,
       children: [],
       createTime: '刚刚'
     };
-    this.cloudComments = [optimistic, ...this.cloudComments];
+    if (parentId === 0) {
+      this.cloudComments = [optimistic, ...this.cloudComments];
+    } else {
+      // Find parent and add as child
+      const addChild = (list: CommentItem[]): boolean => {
+        for (let i = 0; i < list.length; i++) {
+          if (list[i].id === parentId) {
+            list[i].children = [optimistic, ...list[i].children];
+            return true;
+          }
+          if (list[i].children && addChild(list[i].children)) return true;
+        }
+        return false;
+      };
+      addChild(this.cloudComments);
+    }
     try {
-      const resp = await this.commentApi.add(this.resourceId, content, 0);
+      const resp = await this.commentApi.add(this.resourceId, content, parentId);
       if (resp.code === 200) {
-        // Refresh to get real data from server
         await this.loadCloudComments();
       } else {
         promptAction.showToast({ message: '发送失败: ' + resp.message });
@@ -182,6 +209,51 @@ struct DetailPage {
       promptAction.showToast({ message: '无法连接服务器，评论仅本地可见' });
     }
     this.commentLoading = false;
+  }
+
+  async deleteComment(commentId: number): Promise<void> {
+    // 乐观删除：先从本地树中移除（立即生效），服务器异步确认
+    const removeFromTree = (list: CommentItem[]): boolean => {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === commentId) {
+          list.splice(i, 1);
+          return true;
+        }
+        if (list[i].children && list[i].children.length > 0) {
+          for (let j = 0; j < list[i].children.length; j++) {
+            if (list[i].children[j].id === commentId) {
+              list[i].children.splice(j, 1);
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    };
+    removeFromTree(this.cloudComments);
+    try {
+      const resp = await this.commentApi.deleteComment(commentId);
+      if (resp.code === 200) {
+        promptAction.showToast({ message: '已删除' });
+      } else {
+        promptAction.showToast({ message: '删除失败: ' + resp.message });
+        await this.loadCloudComments(); // 回滚
+      }
+    } catch (e) {
+      promptAction.showToast({ message: '无法连接服务器' });
+      await this.loadCloudComments(); // 回滚
+    }
+  }
+
+  startReply(commentId: number, nickname: string): void {
+    this.replyToId = commentId;
+    this.replyToName = nickname;
+    this.showComments = true;
+  }
+
+  cancelReply(): void {
+    this.replyToId = 0;
+    this.replyToName = '';
   }
 
   async toggleFavorite(): Promise<void> {
@@ -199,15 +271,23 @@ struct DetailPage {
     }
   }
 
-  async likeComment(postId: string): Promise<void> {
-    await this.communityService.likePost(postId);
-    await this.loadComments();
+
+  /**
+   * 将 bilibili 播放器 embed 链接还原为原始视频页面链接
+   */
+  private normalizeUrl(url: string): string {
+    // player.bilibili.com/player.html?bvid=xxx → www.bilibili.com/video/xxx
+    const bvidMatch = url.match(/bvid=([a-zA-Z0-9]+)/);
+    if (bvidMatch) {
+      return 'https://www.bilibili.com/video/' + bvidMatch[1];
+    }
+    return url;
   }
 
   openUrl(url: string): void {
     if (!url || url.trim().length === 0) return;
-    // 优先应用内 WebView 打开
-    router.pushUrl({ url: 'pages/WebViewPage', params: { url: url, title: this.resource?.title || '' } });
+    const normalizedUrl = this.normalizeUrl(url);
+    router.pushUrl({ url: 'pages/WebViewPage', params: { url: normalizedUrl, title: this.resource?.title || '' } });
   }
 
   openInBrowser(url: string): void {
@@ -216,9 +296,131 @@ struct DetailPage {
     const want: Want = {
       action: 'ohos.want.action.viewData',
       entities: ['entity.system.browser'],
-      uri: url
+      uri: this.normalizeUrl(url)
     };
     try { ctx.startAbility(want); } catch (e) {}
+  }
+
+  /**
+   * 判断当前资源是否为可下载的文件（非外部 URL）
+   */
+  private getMimeType(filename: string): string {
+    const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+    const mimeMap: Record<string, string> = {
+      '.pdf': 'application/pdf',
+      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      '.ppt': 'application/vnd.ms-powerpoint',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.doc': 'application/msword',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.xls': 'application/vnd.ms-excel',
+      '.txt': 'text/plain',
+      '.md': 'text/markdown',
+      '.java': 'text/x-java',
+      '.py': 'text/x-python',
+      '.sql': 'text/x-sql',
+      '.json': 'application/json',
+      '.xml': 'application/xml',
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'text/javascript',
+      '.zip': 'application/zip',
+      '.rar': 'application/x-rar-compressed',
+      '.7z': 'application/x-7z-compressed',
+      '.mp4': 'video/mp4',
+      '.mp3': 'audio/mpeg',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml'
+    };
+    return mimeMap[ext] || 'application/octet-stream';
+  }
+
+  private isDownloadable(): boolean {
+    if (!this.resource || !this.resource.url || this.resource.url.trim().length === 0) return false;
+    return !this.resource.url.startsWith('http://') && !this.resource.url.startsWith('https://');
+  }
+
+  /**
+   * 下载后端存储的文件到设备本地
+   */
+  async downloadFile(): Promise<void> {
+    if (!this.resource) return;
+    const filename = this.resource.url;
+    const downloadUrl = FILE_BASE_URL + filename;
+
+    try {
+      const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      const saveDir = ctx.filesDir + '/downloads';
+      if (!fileIo.accessSync(saveDir)) {
+        fileIo.mkdirSync(saveDir, true);
+      }
+      // 重名处理：自动加后缀 (1), (2)...
+      let savePath = saveDir + '/' + filename;
+      const dotIdx = filename.lastIndexOf('.');
+      const baseName = dotIdx >= 0 ? filename.substring(0, dotIdx) : filename;
+      const ext = dotIdx >= 0 ? filename.substring(dotIdx) : '';
+      let counter = 1;
+      while (fileIo.accessSync(savePath)) {
+        savePath = saveDir + '/' + baseName + '_' + counter + ext;
+        counter++;
+      }
+      const savedName = savePath.substring(savePath.lastIndexOf('/') + 1);
+
+      promptAction.showToast({ message: '开始下载...' });
+
+      const token = await this.authStore.getToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+      }
+      const task = await request.downloadFile(ctx, {
+        url: downloadUrl,
+        filePath: savePath,
+        header: headers
+      });
+
+      await task.on('complete', () => {
+        promptAction.showToast({ message: '已保存: ' + savedName, duration: 2000 });
+        // 询问用户是否打开
+        const ctx2 = this.getUIContext().getHostContext() as common.UIAbilityContext;
+        AlertDialog.show({
+          title: '下载完成',
+          message: savedName + '\n已保存到本地',
+          autoCancel: true,
+          alignment: DialogAlignment.Center,
+          primaryButton: {
+            value: '打开',
+            action: () => {
+              try {
+                const want: Want = {
+                  action: 'ohos.want.action.viewData',
+                  uri: 'file://' + savePath,
+                  type: this.getMimeType(filename)
+                };
+                ctx2.startAbility(want);
+              } catch (e) {
+                console.error('open file failed: ' + JSON.stringify(e));
+                promptAction.showToast({ message: '没有可打开此文件的应用' });
+              }
+            }
+          },
+          secondaryButton: {
+            value: '完成',
+            action: () => {}
+          }
+        });
+      });
+
+      task.on('fail', (code: number) => {
+        promptAction.showToast({ message: '下载失败 (code: ' + code + ')' });
+      });
+    } catch (e) {
+      console.error('downloadFile failed: ' + JSON.stringify(e));
+      promptAction.showToast({ message: '下载失败，请检查网络' });
+    }
   }
 
   build() {
@@ -231,7 +433,7 @@ struct DetailPage {
               .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 12 })
             Text('请检查网络连接或确认后端服务已启动')
               .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 6 })
-            Text('重试').fontSize(14).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+            Text('重试').fontSize(14).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
               .fontWeight(FontWeight.Bold)
               .padding({ left: 24, right: 24, top: 10, bottom: 10 })
               .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(20)
@@ -252,7 +454,7 @@ struct DetailPage {
         .width('100%').height('100%').justifyContent(FlexAlign.Center)
       } else {
         // 大屏：主内容 + 侧边推荐并排；小屏：全屏滚动
-        if (this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.MD || this.currentBreakpoint === BreakpointTypeEnum.XL) {
+        if (this.isWideScreen()) {
           Row() {
             // 主内容区
             Scroll() {
@@ -263,14 +465,17 @@ struct DetailPage {
                 if (this.resource.type === 'book') {
                   this.PriceComparison()
                 }
-                if (this.resource.url && this.resource.url.trim().length > 0) {
+                if (this.resource.url && (this.resource.url.startsWith('http://') || this.resource.url.startsWith('https://'))) {
                   this.ExternalLink()
+                }
+                if (this.isDownloadable()) {
+                  this.FileDownload()
                 }
                 this.CommentTrigger()
                 Column().height(40)
               }
             }
-            .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(2)
+            .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(2)
 
             // 侧边推荐栏
             if (this.similarResources.length > 0) {
@@ -288,7 +493,7 @@ struct DetailPage {
                           .textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%')
                         Row() {
                           if (item.tags && item.tags.length > 0) {
-                            Text(item.tags[0]).fontSize(this.smallFontSize()).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                            Text(item.tags[0]).fontSize(this.smallFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                               .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                               .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(6)
                           }
@@ -308,14 +513,14 @@ struct DetailPage {
                 }
                 .width('100%').padding({ left: 12, right: 12 })
               }
-              .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+              .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
               .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
               .border({ width: { left: 1 }, color: ColorTokens.divider(this.isDarkMode) })
             }
           }
           .layoutWeight(1)
         } else {
-          // 小屏：原样全屏滚动
+          // 小屏：全屏滚动
           Scroll() {
             Column() {
               this.HeaderBar()
@@ -324,8 +529,11 @@ struct DetailPage {
               if (this.resource.type === 'book') {
                 this.PriceComparison()
               }
-              if (this.resource.url && this.resource.url.trim().length > 0) {
+              if (this.resource.url && (this.resource.url.startsWith('http://') || this.resource.url.startsWith('https://'))) {
                 this.ExternalLink()
+              }
+              if (this.isDownloadable()) {
+                this.FileDownload()
               }
               this.CommentTrigger()
               // 小屏：相似推荐在底部
@@ -335,7 +543,7 @@ struct DetailPage {
               Column().height(40)
             }
           }
-          .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+          .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
         }
       }
     }
@@ -345,6 +553,15 @@ struct DetailPage {
       showClose: true,
       dragBar: true
     })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 
   @Builder
@@ -373,7 +590,9 @@ struct DetailPage {
         })
       Text(this.isFavorited ? '★' : '☆')
         .fontSize(this.titleFontSize() + 6).fontColor(ColorTokens.primary(this.isDarkMode))
-        .onClick(() => { this.toggleFavorite(); })
+        .scale({ x: this.favBounce ? 1.4 : 1, y: this.favBounce ? 1.4 : 1 })
+        .animation({ curve: Curve.EaseOut, duration: 200 })
+        .onClick(() => { this.toggleFavorite(); this.favBounce = true; setTimeout(() => { this.favBounce = false; }, 200); })
     }
     .width('100%').height(this.headerHeight()).padding({ left: this.contentPadding(), right: this.contentPadding() })
     .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
@@ -389,7 +608,7 @@ struct DetailPage {
       Row() {
         Text(this.resource!.author).fontSize(this.captionFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode))
         if (this.resource!.publishDate) {
-          Text(' · ').fontColor(ColorTokens.TEXT_DISABLED)
+          Text(' · ').fontColor(ColorTokens.textDisabled(this.isDarkMode))
           Text(this.resource!.publishDate).fontSize(this.captionFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode))
         }
       }.margin({ top: 8 })
@@ -403,7 +622,7 @@ struct DetailPage {
         Row() {
           ForEach(this.resource!.tags, (tag: string) => {
             Text(tag)
-              .fontSize(this.smallFontSize()).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+              .fontSize(this.smallFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
               .padding({ left: 8, right: 8, top: 3, bottom: 3 })
               .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
               .borderRadius(10).margin({ right: 6, top: 6 })
@@ -428,15 +647,31 @@ struct DetailPage {
   }
 
   @Builder
-  PriceComparison() {
+  FileDownload() {
     Column() {
-      Text('💰 各平台价格对比')
-        .fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-      Text('点击跳转购买').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
-
-      this.priceRow('京东', 'https://search.jd.com/Search?keyword=' + encodeURI(this.resource!.title), '#E74C3C')
-      this.priceRow('当当', 'https://search.dangdang.com/?key=' + encodeURI(this.resource!.title), '#E74C3C')
-      this.priceRow('淘宝', 'https://s.taobao.com/search?q=' + encodeURI(this.resource!.title), '#FF6600')
+      Text('📥 下载文件').fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold)
+        .fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      Row() {
+        Text('📄').fontSize(20)
+        Column() {
+          Text(this.resource!.url)
+            .fontSize(this.captionFontSize()).fontWeight(FontWeight.Medium)
+            .fontColor(ColorTokens.textPrimary(this.isDarkMode))
+            .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text('点击下载保存到设备本地')
+            .fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
+            .margin({ top: 2 })
+        }
+        .layoutWeight(1).margin({ left: 10 })
+        Text('⬇').fontSize(this.subtitleFontSize() + 4).fontColor(ColorTokens.primary(this.isDarkMode))
+          .width(36).height(36).borderRadius(18)
+          .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '15'))
+          .textAlign(TextAlign.Center)
+      }
+      .width('100%').padding(12).margin({ top: 10 })
+      .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
+      .border({ width: 1, color: ColorTokens.primary(this.isDarkMode), radius: 12 })
+      .onClick(() => { this.downloadFile(); })
     }
     .width('100%').padding(this.cardPadding()).backgroundColor(ColorTokens.bgCard(this.isDarkMode)).margin({ top: 8 })
   }
@@ -454,12 +689,12 @@ struct DetailPage {
       .width('100%').margin({ top: 10 })
       Row() {
         Text('应用内打开')
-          .fontSize(this.captionFontSize()).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+          .fontSize(this.captionFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
           .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(12)
           .onClick(() => { this.openUrl(this.resource!.url); })
         Text('浏览器打开')
-          .fontSize(this.captionFontSize()).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+          .fontSize(this.captionFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
           .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(12)
           .margin({ left: 10 })
@@ -469,13 +704,27 @@ struct DetailPage {
     .width('100%').padding(this.cardPadding()).backgroundColor(ColorTokens.bgCard(this.isDarkMode)).margin({ top: 8 })
   }
 
+  @Builder
+  PriceComparison() {
+    Column() {
+      Text('💰 各平台价格对比')
+        .fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      Text('点击跳转购买').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+
+      this.priceRow('京东', 'https://search.jd.com/Search?keyword=' + encodeURI(this.resource!.title), '#E74C3C')
+      this.priceRow('当当', 'https://search.dangdang.com/?key=' + encodeURI(this.resource!.title), '#E74C3C')
+      this.priceRow('淘宝', 'https://s.taobao.com/search?q=' + encodeURI(this.resource!.title), '#FF6600')
+    }
+    .width('100%').padding(this.cardPadding()).backgroundColor(ColorTokens.bgCard(this.isDarkMode)).margin({ top: 8 })
+  }
+
   // 评论触发按钮（教程 §13.3 半模态）
   @Builder
   CommentTrigger() {
     Row() {
       Text('💬').fontSize(this.bodyFontSize() + 2)
-      Text(this.cloudComments.length > 0 || this.comments.length > 0 ?
-        ' 查看评论 (' + (this.cloudComments.length + this.comments.length).toString() + ')' :
+      Text(this.cloudComments.length > 0 ?
+        ' 查看评论 (' + this.cloudComments.length.toString() + ')' :
         ' 写评论')
         .fontSize(this.bodyFontSize()).fontColor(ColorTokens.textPrimary(this.isDarkMode))
       Blank()
@@ -509,30 +758,49 @@ struct DetailPage {
       Scroll() {
         Column() {
           this.CloudComments()
-          if (this.comments.length > 0) {
-            this.LocalComments()
-          }
           Column().height(40)
         }
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 
   @Builder
   CommentInput() {
-    Row() {
-      TextInput({ text: this.newComment, placeholder: '写下你的评论...' })
-        .fontSize(this.bodyFontSize()).layoutWeight(1).height(this.bodyFontSize() + 26)
-        .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(20)
-        .padding({ left: 14 })
-        .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 20 })
-        .onChange((value: string) => { this.newComment = value; })
-      Text('发送').fontSize(this.bodyFontSize()).fontWeight(FontWeight.Bold)
-        .fontColor(this.newComment.trim() ? ColorTokens.primary(this.isDarkMode) : ColorTokens.TEXT_DISABLED)
-        .margin({ left: 10 })
-        .onClick(() => { this.submitComment(); })
+    Column() {
+      // Reply indicator
+      if (this.replyToId > 0) {
+        Row() {
+          Text('↩ 回复 @' + this.replyToName).fontSize(this.smallFontSize())
+            .fontColor(ColorTokens.primary(this.isDarkMode)).layoutWeight(1)
+          Text('✕').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
+            .width(24).height(24).textAlign(TextAlign.Center)
+            .onClick(() => { this.cancelReply(); })
+        }
+        .width('100%').padding({ left: 14, right: 10, top: 6, bottom: 6 })
+        .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '10'))
+        .borderRadius(10).margin({ bottom: 8 })
+      }
+      // Input row
+      Row() {
+        TextInput({ text: this.newComment, placeholder: this.replyToId > 0 ? '回复 @' + this.replyToName + '...' : '写下你的评论...' })
+          .fontSize(this.bodyFontSize()).layoutWeight(1).height(this.bodyFontSize() + 26)
+          .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(20)
+          .padding({ left: 14 })
+          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 20 })
+          .onChange((value: string) => { this.newComment = value; })
+        Text('发送')
+          .fontSize(this.bodyFontSize()).fontWeight(FontWeight.Bold)
+          .fontColor(ColorTokens.TEXT_WHITE)
+          .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+          .backgroundColor(this.newComment.trim() ? ColorTokens.primary(this.isDarkMode) :
+            ColorTokens.textDisabled(this.isDarkMode))
+          .borderRadius(18)
+          .margin({ left: 10 })
+          .opacity(this.newComment.trim() ? 1 : 0.5)
+          .onClick(() => { this.submitComment(); })
+      }
     }
     .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding(), top: 12, bottom: 12 })
     .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).margin({ top: 8 })
@@ -551,7 +819,7 @@ struct DetailPage {
           Column() {
             if (item.deleted === 1) {
               Text('该评论已被删除')
-                .fontSize(this.bodyFontSize()).fontColor(ColorTokens.TEXT_DISABLED).lineHeight(20)
+                .fontSize(this.bodyFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).lineHeight(20)
                 .width('100%')
             } else {
               Row() {
@@ -559,6 +827,20 @@ struct DetailPage {
                   .fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                 Text(' · ' + item.createTime).fontSize(this.smallFontSize())
                   .fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ left: 6 })
+                Blank()
+                // Reply button
+                Text('回复').fontSize(this.smallFontSize()).fontColor(ColorTokens.primary(this.isDarkMode))
+                  .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+                  .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '10'))
+                  .borderRadius(8)
+                  .onClick(() => { this.startReply(item.id, item.nickname); })
+                // Delete button (only for comment owner)
+                if (item.userId === this.currentUserId) {
+                  Text('删除').fontSize(this.smallFontSize()).fontColor('#E74C3C')
+                    .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                    .border({ width: 1, color: '#E74C3C', radius: 6 }).margin({ left: 6 })
+                    .onClick(() => { this.deleteComment(item.id); })
+                }
               }.width('100%')
               Text(item.content)
                 .fontSize(this.bodyFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode)).lineHeight(20)
@@ -570,7 +852,7 @@ struct DetailPage {
                   Column() {
                     if (child.deleted === 1) {
                       Text('该评论已被删除')
-                        .fontSize(this.captionFontSize()).fontColor(ColorTokens.TEXT_DISABLED).lineHeight(18)
+                        .fontSize(this.captionFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).lineHeight(18)
                         .width('100%')
                     } else {
                       Row() {
@@ -578,6 +860,19 @@ struct DetailPage {
                           .fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
                         Text(' · ' + child.createTime).fontSize(this.smallFontSize() - 1)
                           .fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ left: 4 })
+                        Blank()
+                        Text('回复').fontSize(this.smallFontSize() - 1).fontColor(ColorTokens.primary(this.isDarkMode))
+                          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                          .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '10'))
+                          .borderRadius(6)
+                          .onClick(() => { this.startReply(child.id, child.nickname); })
+                        // Delete button (only for comment owner)
+                        if (child.userId === this.currentUserId) {
+                          Text('删除').fontSize(this.smallFontSize() - 1).fontColor('#E74C3C')
+                            .padding({ left: 5, right: 5, top: 1, bottom: 1 })
+                            .border({ width: 1, color: '#E74C3C', radius: 4 }).margin({ left: 4 })
+                            .onClick(() => { this.deleteComment(child.id); })
+                        }
                       }.width('100%')
                       Text(child.content)
                         .fontSize(this.captionFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode)).lineHeight(18)
@@ -604,38 +899,6 @@ struct DetailPage {
   }
 
   @Builder
-  LocalComments() {
-    Column() {
-      ForEach(this.comments, (comment: Post) => {
-        Column() {
-          Row() {
-            Text('👤').fontSize(this.captionFontSize())
-            Text(comment.author).fontSize(this.captionFontSize())
-              .fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              .margin({ left: 4 })
-            Blank()
-            Row() {
-              Text('👍').fontSize(this.captionFontSize())
-              Text(comment.likes.toString()).fontSize(this.smallFontSize())
-                .fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ left: 3 })
-            }
-            .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
-            .onClick(() => { this.likeComment(comment.id); })
-          }.width('100%')
-          Text(comment.content)
-            .fontSize(this.captionFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-            .lineHeight(20).width('100%').margin({ top: 8 })
-        }
-        .width('100%').padding(this.cardPadding())
-        .backgroundColor(ColorTokens.bgPage(this.isDarkMode)).borderRadius(12)
-        .margin({ top: 8 })
-      })
-    }
-    .width('100%').padding(this.cardPadding()).backgroundColor(ColorTokens.bgCard(this.isDarkMode)).margin({ top: 4 })
-  }
-
-  @Builder
   SimilarRecommendations() {
     Column() {
       Text('📋 相似推荐')
@@ -650,7 +913,7 @@ struct DetailPage {
               .textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%')
             Row() {
               if (item.tags && item.tags.length > 0) {
-                Text(item.tags[0]).fontSize(this.smallFontSize()).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                Text(item.tags[0]).fontSize(this.smallFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                   .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(6)
               }

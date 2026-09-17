@@ -16,49 +16,50 @@ struct SearchPage {
   @State popularTags: TagCount[] = [];
   @State sortMode: SortMode = 'default';
   @State isSearching: boolean = false;
+  @State appearOpacity: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private resourceService: ResourceService = ResourceService.getInstance();
 
   // ── 响应式参数 ─────────────────────────────────────────
   private maxContentWidth(): number {
-    return new BpType<number>({ sm: 9999, md: 640, lg: 780, xl: 920 }).getValue(this.currentBreakpoint) ?? 9999;
+    return new BpType<number>({ sm: 9999, md: 576, lg: 656, xl: 900 }).getValue(this.currentBreakpoint) ?? 9999;
   }
 
   private contentPadding(): number {
-    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 36 }).getValue(this.currentBreakpoint) ?? 24;
+    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 44 }).getValue(this.currentBreakpoint) ?? 24;
   }
 
   private titleFontSize(): number {
-    return new BpType<number>({ sm: 18, md: 20, lg: 24, xl: 28 }).getValue(this.currentBreakpoint) ?? 18;
+    return new BpType<number>({ sm: 18, md: 20, lg: 24, xl: 32 }).getValue(this.currentBreakpoint) ?? 18;
   }
 
   private bodyFontSize(): number {
-    return new BpType<number>({ sm: 14, md: 16, lg: 18, xl: 20 }).getValue(this.currentBreakpoint) ?? 14;
+    return new BpType<number>({ sm: 14, md: 16, lg: 18, xl: 22 }).getValue(this.currentBreakpoint) ?? 14;
   }
 
   private captionFontSize(): number {
-    return new BpType<number>({ sm: 12, md: 13, lg: 15, xl: 17 }).getValue(this.currentBreakpoint) ?? 12;
+    return new BpType<number>({ sm: 12, md: 13, lg: 15, xl: 19 }).getValue(this.currentBreakpoint) ?? 12;
   }
 
   private smallFontSize(): number {
-    return new BpType<number>({ sm: 11, md: 12, lg: 14, xl: 16 }).getValue(this.currentBreakpoint) ?? 11;
+    return new BpType<number>({ sm: 11, md: 12, lg: 14, xl: 17 }).getValue(this.currentBreakpoint) ?? 11;
   }
 
   private hintIconSize(): number {
-    return new BpType<number>({ sm: 48, md: 60, lg: 72, xl: 84 }).getValue(this.currentBreakpoint) ?? 48;
+    return new BpType<number>({ sm: 48, md: 60, lg: 72, xl: 92 }).getValue(this.currentBreakpoint) ?? 48;
   }
 
   private hintTitleSize(): number {
-    return new BpType<number>({ sm: 16, md: 18, lg: 22, xl: 26 }).getValue(this.currentBreakpoint) ?? 16;
+    return new BpType<number>({ sm: 16, md: 18, lg: 22, xl: 30 }).getValue(this.currentBreakpoint) ?? 16;
   }
 
   private hintDescSize(): number {
-    return new BpType<number>({ sm: 13, md: 15, lg: 17, xl: 19 }).getValue(this.currentBreakpoint) ?? 13;
+    return new BpType<number>({ sm: 13, md: 15, lg: 17, xl: 21 }).getValue(this.currentBreakpoint) ?? 13;
   }
 
   private headerHeight(): number {
-    return new BpType<number>({ sm: 56, md: 60, lg: 64, xl: 68 }).getValue(this.currentBreakpoint) ?? 56;
+    return new BpType<number>({ sm: 56, md: 60, lg: 64, xl: 72 }).getValue(this.currentBreakpoint) ?? 56;
   }
 
   aboutToAppear(): void {
@@ -73,6 +74,7 @@ struct SearchPage {
       this.keyword = kw;
       this.doSearch(kw);
     }
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
   }
 
   async searchByTag(tag: string): Promise<void> {
@@ -153,16 +155,16 @@ struct SearchPage {
             }.width('100%').padding({ left: this.contentPadding(), top: 16 })
 
             Flex({ wrap: FlexWrap.Wrap }) {
-              ForEach(this.popularTags, (item: TagCount) => {
+              ForEach(this.popularTags, (item: TagCount, idx: number) => {
                 Text(item.tag)
                   .fontSize(this.captionFontSize())
-                  .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                  .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                   .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                   .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                   .borderRadius(14)
                   .margin({ right: 8, top: 8 })
                   .onClick(() => { this.searchByTag(item.tag); })
-              })
+              }, (item: TagCount, idx: number) => 'ptag_' + idx.toString())
             }.width('100%').padding({ left: this.contentPadding(), right: this.contentPadding(), bottom: 12 })
           }
 
@@ -173,7 +175,7 @@ struct SearchPage {
               Text('搜索资源、标签、作者').fontSize(this.hintTitleSize())
                 .fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
               Text('直接点击上方标签即可快速检索').fontSize(this.hintDescSize())
-                .fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
+                .fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
             }.width('100%')
           } else if (this.results.length === 0) {
             Column() {
@@ -181,7 +183,7 @@ struct SearchPage {
               Text('未找到「' + this.keyword + '」相关资源').fontSize(this.hintTitleSize())
                 .fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
               Text('试试其他关键词或点击热门标签').fontSize(this.hintDescSize())
-                .fontColor(ColorTokens.TEXT_DISABLED).margin({ top: 4 })
+                .fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
             }.width('100%')
           } else {
             // Results count
@@ -190,7 +192,7 @@ struct SearchPage {
                 .fontColor(ColorTokens.textHint(this.isDarkMode))
               Blank()
               Text('标签: ' + this.keyword).fontSize(this.smallFontSize())
-                .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+                .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                 .padding({ left: 8, right: 8, top: 2, bottom: 2 })
                 .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
                 .borderRadius(8)
@@ -234,10 +236,20 @@ struct SearchPage {
         }
         .width('100%')
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .alignItems(HorizontalAlign.Center)
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }
 
@@ -251,9 +263,9 @@ struct SortChip {
 
   build() {
     Text(this.label)
-      .fontSize(new BpType<number>({ sm: 12, md: 13, lg: 14, xl: 15 }).getValue(this.currentBreakpoint) ?? 12)
+      .fontSize(new BpType<number>({ sm: 12, md: 13, lg: 14, xl: 16 }).getValue(this.currentBreakpoint) ?? 12)
       .fontWeight(this.active ? FontWeight.Bold : FontWeight.Regular)
-      .fontColor(this.active ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textHint(this.isDarkMode))
+      .fontColor(this.active ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.active ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
       .borderRadius(16)

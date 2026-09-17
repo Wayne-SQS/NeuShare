@@ -130,7 +130,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
-import { getResourceDetail, likeResource, unlikeResource } from '@/api/resource'
+import { getResourceDetail, likeResource, unlikeResource, checkLiked } from '@/api/resource'
 import { getComments, addComment } from '@/api/comment'
 import { addFavorite, removeFavorite, checkFavorite } from '@/api/favorite'
 import { formatTime, getInitial } from '@/utils/format'
@@ -165,6 +165,17 @@ const fetchResource = async () => {
   try {
     const res = await getResourceDetail(resourceId.value)
     resource.value = res.data
+    // 在获取资源详情成功后检查点赞状态
+    if (userStore.token) {
+      try {
+        const likeRes = await checkLiked(resourceId.value)
+        if (likeRes.code === 200) {
+          isLiked.value = likeRes.data
+        }
+      } catch (e) {
+        // 未登录或接口报错，忽略
+      }
+    }
   } catch (error) {
     console.error('Failed to fetch resource:', error)
   }

@@ -37,7 +37,9 @@ export struct CourseRecommendCard {
     .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
     .shadow({ radius: 4, color: ColorTokens.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
     .scale({ x: this.pressed ? 0.97 : 1, y: this.pressed ? 0.97 : 1 })
-    .animation({ curve: Curve.FastOutSlowIn, duration: 120 })
+    .animation({ curve: Curve.EaseOut, duration: 200 })
+    .hoverEffect(HoverEffect.Auto)
+    .transition(TransitionEffect.OPACITY.animation({ curve: Curve.EaseOut, duration: 300 }))
     .onClick(() => {
       router.pushUrl({
         url: 'pages/SearchPage',

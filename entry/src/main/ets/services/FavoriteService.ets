@@ -2,6 +2,7 @@ import { Context } from '@ohos.abilityAccessCtrl';
 import { PreferencesStore, AuthStore } from '@neushare/common';
 import { FavoriteApi } from '../api/FavoriteApi';
 import { ResourceItem, adaptResource } from '../models/ResourceModel';
+import promptAction from '@ohos.promptAction';
 
 const FAVORITES_KEY = 'favorite_ids';
 const HISTORY_KEY = 'history_ids';
@@ -58,7 +59,7 @@ export class FavoriteService {
           const ids = new Set<number>();
           const records = resp.data.records;
           for (let i = 0; i < records.length; i++) {
-            ids.add(records[i].resourceId);
+            ids.add(records[i].id);
           }
           // 同步到本地缓存
           await this.saveLocalFavoriteIds(ids);
@@ -78,25 +79,30 @@ export class FavoriteService {
         if (isFav) {
           const resp = await this.favoriteApi.remove(id);
           if (resp.code === 200) {
-            // 更新本地缓存
             const ids = await this.getLocalFavoriteIds();
             ids.delete(id);
             await this.saveLocalFavoriteIds(ids);
+            promptAction.showToast({ message: '已取消收藏' });
             return false;
+          } else {
+            console.error('removeFavorite API failed: code=' + resp.code + ' msg=' + resp.message);
           }
         } else {
           const resp = await this.favoriteApi.add(id);
           if (resp.code === 200) {
-            // 更新本地缓存
             const ids = await this.getLocalFavoriteIds();
             ids.add(id);
             await this.saveLocalFavoriteIds(ids);
+            promptAction.showToast({ message: '已收藏' });
             return true;
+          } else {
+            console.error('addFavorite API failed: code=' + resp.code + ' msg=' + resp.message);
           }
         }
       } catch (e) {
-        console.error('toggleFavorite API failed, fallback to local: ' + JSON.stringify(e));
+        console.error('toggleFavorite API error: ' + JSON.stringify(e));
       }
+      // API 失败，走本地 fallback（静默，不弹错误 toast）
     }
     // 离线或 API 失败，本地操作
     const ids = await this.getLocalFavoriteIds();
@@ -126,11 +132,10 @@ export class FavoriteService {
         const resp = await this.favoriteApi.getList(pageNum, pageSize);
         if (resp.code === 200 && resp.data) {
           const items: ResourceItem[] = [];
-          const records = resp.data.records;
+          const records = resp.data.records || [];
+          // 后端 /api/favorite/list 返回 ResourceVO[]（扁平资源对象，含 favoriteTime）
           for (let i = 0; i < records.length; i++) {
-            if (records[i].resource) {
-              items.push(adaptResource(records[i].resource));
-            }
+            items.push(adaptResource(records[i]));
           }
           const result: FavoriteResourceResult = { items: items, total: resp.data.total };
           return result;
@@ -139,10 +144,9 @@ export class FavoriteService {
         console.error('getFavoriteResources API failed, fallback to local: ' + JSON.stringify(e));
       }
     }
-    // fallback: 本地 ID 匹配
+    // fallback: 本地 ID 匹配（离线时）
     const ids = await this.getLocalFavoriteIds();
-    const fallbackResult: FavoriteResourceResult = { items: [], total: ids.size };
-    return fallbackResult;
+    return { items: [], total: ids.size };
   }
 
   // ===== 浏览历史（纯本地） =====
@@ -180,7 +184,7 @@ export class FavoriteService {
       if (resp.code === 200 && resp.data) {
         const records = resp.data.records;
         for (let i = 0; i < records.length; i++) {
-          cloudIds.add(records[i].resourceId);
+          cloudIds.add(records[i].id);
         }
       }
     } catch (e) {

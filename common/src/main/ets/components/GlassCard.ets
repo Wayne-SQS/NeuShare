@@ -1,21 +1,26 @@
 // ============================================================
 // GlassCard — 毛玻璃卡片组件
 // 亮色模式：多彩玻璃质感 / 深色模式：极简黑白
+// 性能分级：滚动时关闭 blur / 低端设备降级为纯色
 // ============================================================
 
 import { ColorTokens } from '../theme/ColorTokens';
+import { BlurPerformance } from '../utils/BlurPerformance';
 
 @Component
 export struct GlassCard {
   // ── 主题状态 ────────────────────────────────
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
+  // isScrolling/blurLevel 通过 @StorageProp 订阅以触发重渲染（只读订阅即可）
+  @StorageProp('isScrolling') private _isScrolling: boolean = false;
+  @StorageProp('blurLevel') private _blurLevel: number = 40;
 
   // ── 可配置属性 ──────────────────────────────
   @Prop padding: Padding = { left: 16, right: 16, top: 16, bottom: 16 };
   @Prop margin: Margin = { left: 0, right: 0, top: 0, bottom: 12 };
   @Prop width: string | number = '100%';
   @Prop height: string | number | undefined = undefined;
-  @Prop blurRadius: number = 40; // 毛玻璃模糊半径
+  @Prop blurRadius: number = 40; // 毛玻璃模糊半径（静态时）
   @Prop showDot: boolean = false; // 是否显示装饰小圆点
   @Prop dotColor: string = ''; // 小圆点颜色（空则使用主色）
   @Prop dotSize: number = 10; // 小圆点尺寸
@@ -25,7 +30,15 @@ export struct GlassCard {
     return this.isDarkMode;
   }
 
+  private get effectiveBlur(): number {
+    return BlurPerformance.effectiveBlur(this.isDark);
+  }
+
   private get bgColor(): string {
+    // 模糊关闭时使用不透明降级色
+    if (this.effectiveBlur === 0 && !this.isDark) {
+      return BlurPerformance.fallbackBg(this.isDark);
+    }
     return this.isDark ? ColorTokens.BG_CARD_DARK : ColorTokens.BG_CARD_LIGHT;
   }
 
@@ -59,7 +72,7 @@ export struct GlassCard {
       .padding(this.padding)
       .margin(this.margin)
       .backgroundColor(this.bgColor)
-      .backdropBlur(this.blurRadius)
+      .backdropBlur(this.effectiveBlur)
       .borderRadius(this.cardRadius)
       .border({ width: 1, color: this.borderColor })
       .shadow({
@@ -68,6 +81,7 @@ export struct GlassCard {
         offsetX: 0,
         offsetY: 6
       })
+      .animation({ curve: Curve.EaseOut, duration: 150 })
 
       // ── 装饰小圆点（可选） ──────────────────
       if (this.showDot) {
@@ -78,6 +92,8 @@ export struct GlassCard {
       }
     }
     .width(this.width)
+    .hoverEffect(HoverEffect.Auto)
+    .transition(TransitionEffect.OPACITY.animation({ curve: Curve.EaseOut, duration: 300 }))
   }
 }
 

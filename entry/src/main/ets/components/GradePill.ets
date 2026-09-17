@@ -12,7 +12,7 @@ export struct GradePill {
     Text(this.label)
       .fontSize(16)
       .fontWeight(this.isSelected ? FontWeight.Bold : FontWeight.Regular)
-      .fontColor(this.isSelected ? (this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE) : ColorTokens.textPrimary(this.isDarkMode))
+      .fontColor(this.isSelected ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textPrimary(this.isDarkMode))
       .padding({ left: 22, right: 22, top: 12, bottom: 12 })
       .backgroundColor(this.isSelected ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
       .borderRadius(24)
@@ -23,7 +23,7 @@ export struct GradePill {
         offsetY: 4
       } : { radius: 0, color: '#00000000', offsetX: 0, offsetY: 0 })
       .scale({ x: this.pressed ? 0.95 : 1, y: this.pressed ? 0.95 : 1 })
-      .animation({ curve: Curve.FastOutSlowIn, duration: 120 })
+      .animation({ curve: Curve.EaseOut, duration: 200 })
       .onClick(() => { this.onTap(); })
       .onTouch((event: TouchEvent) => {
         if (event.type === TouchType.Down) {

@@ -73,6 +73,30 @@ public class User implements Serializable {
     private Integer status;
 
     /**
+     * 已发布资源数（冗余，定时校准）
+     */
+    @TableField("resource_count")
+    private Long resourceCount;
+
+    /**
+     * 粉丝数（冗余，定时校准）
+     */
+    @TableField("follower_count")
+    private Long followerCount;
+
+    /**
+     * 关注数（冗余，定时校准）
+     */
+    @TableField("following_count")
+    private Long followingCount;
+
+    /**
+     * 总获赞数（冗余，定时校准）
+     */
+    @TableField("total_likes_received")
+    private Long totalLikesReceived;
+
+    /**
      * 创建时间
      */
     @TableField("create_time")

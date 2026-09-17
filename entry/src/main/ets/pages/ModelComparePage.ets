@@ -6,6 +6,12 @@ import { ModelCompare } from '../components/ModelCompare';
 @Component
 struct ModelComparePage {
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
+  @State appearOpacity: number = 0;
+
+  aboutToAppear(): void {
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
+  }
+
   build() {
     Column() {
       Row() {
@@ -21,5 +27,15 @@ struct ModelComparePage {
       ModelCompare()
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.neushare.entity.Notification;
+import com.neushare.vo.NotificationVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -12,6 +13,9 @@ public interface NotificationMapper extends BaseMapper<Notification> {
 
     /** 查用户通知分页 */
     IPage<Notification> selectByUserId(Page<Notification> page, @Param("userId") Long userId);
+
+    /** 查用户通知分页（含触发者信息） */
+    IPage<NotificationVO> selectNotificationPageWithSender(Page<NotificationVO> page, @Param("userId") Long userId, @Param("type") String type);
 
     /** 查未读数量 */
     int countUnread(@Param("userId") Long userId);

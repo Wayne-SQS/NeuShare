@@ -1,6 +1,6 @@
 # NeuShare 开发计划
 
-> 最后更新：2026-06-13
+> 最后更新：2026-06-14
 
 ---
 
@@ -42,54 +42,50 @@
 - [x] SearchBar 搜索关键词传递
 - [x] 已删除资源的收藏列表过滤
 
+### 阶段五：社区动画微交互 ✓
+- [x] 点赞弹跳动画（curves.springMotion）
+- [x] 帖子列表交错入场（淡入 + slide-up，间隔 60ms）
+- [x] 标签筛选脉冲（springMotion 回弹反馈）
+- [x] 空状态呼吸动画（缓慢缩放 1→1.08，2s 循环）
+- [x] 文件附加弹出（scale 0.5→1 + opacity 过渡）
+
+### 阶段六：功能补全 ✓
+- [x] `/api/resource/list` 加 sortBy（ORDER BY like_count / create_time）
+- [x] 社区功能对接后端（PostController + post 表 + 鸿蒙 API 调用）
+- [x] UserProfilePage 调 API（GET /api/user/{id}）
+- [x] ProfileTab 加粉丝/关注数（FollowApi 统计数据）
+- [x] 新建关注/粉丝列表页（Tab 切换"我关注的"/"关注我的"）
+- [x] UserProfileVO 加 totalLikesReceived
+- [x] Web 端点赞状态持久化（mounted() 调 checkLiked API）
+- [x] 帖子详情页（帖子全文 + 评论树 + 点赞收藏）
+- [x] 通知列表加触发者信息（LEFT JOIN user 查昵称头像）
+
+### 阶段七：优化打磨 ✓
+- [x] 通知单条删除 + 按类型筛选（DELETE /api/notification/{id} + type 参数）
+- [x] 收藏列表返回收藏时间（FavoriteMapper.xml 加 f.create_time）
+- [x] 帖子编辑/删除（自己的帖子可编辑删除）
+- [x] 用户统计性能优化（冗余字段 resource_count/follower_count/following_count/total_likes_received + 定时校准 + 实时原子更新）
+- [x] 毛玻璃性能分级（BlurPerformance 工具类 + 滚动时关闭 blur + 降级纯色）
+- [x] 深色模式组件适配（textOnPrimary 方法 + 60+ 处硬编码修复 + ColorDot 星空闪烁）
+
+### 阶段八：审查修复 ✓
+- [x] FollowApi 参数名修复（userId→followedId + postWithParams + deleteWithParams）
+- [x] 删除帖子评论递减 comment_count（PostCommentServiceImpl 原子更新）
+- [x] StatsPage 路由注册（main_pages.json）
+- [x] WebMvcConfig /api/user/** → 精确路径（/api/user/* + /api/user/*/resources）
+- [x] 公开接口 status 参数安全加固（非管理员强制 status=1）
+- [x] HttpClient 401 竞态修复（Promise 锁替代 boolean 标志）+ 错误信息保留
+- [x] CounterCalibrationTask 分页 + dirty flag + SQL SUM 优化
+- [x] ResourceApi 返回类型修复（search/getUserResources 数组→分页 + 新增 checkLiked）
+- [x] FollowApi.check 返回类型修复（boolean→{isFollowing}）
+- [x] CommentApi 删除 getUserComments 死方法
+- [x] NotificationApi 创建（5 个端点对齐 NotificationController）
+- [x] HttpClient 新增 deleteWithParams 方法
+- [x] PageData 接口统一到 common 模块
+- [x] FollowListPage userId 死代码清理
+
 ---
 
 ## 待开发
 
-### 阶段五：社区动画微交互
-
-| # | 功能 | 说明 |
-|---|------|------|
-| 1 | 点赞弹跳动画 | 点赞时 emoji 弹簧放大回弹（curves.springMotion） |
-| 2 | 帖子列表交错入场 | 卡片依次淡入 + slide-up，间隔 60ms |
-| 3 | 标签筛选脉冲 | 选中标签时 springMotion 回弹反馈 |
-| 4 | 空状态呼吸动画 | 空列表 emoji 缓慢缩放 1→1.08，EaseInOut 2s 循环 |
-| 5 | 文件附加弹出 | 选完文件后附件卡片 scale(0.5→1) + opacity 过渡 |
-
-### 阶段六：功能补全
-
-| # | 功能 | 端 | 说明 |
-|---|------|------|------|
-| 6 | `/api/resource/list` 加 sortBy | 后端 | ORDER BY like_count / create_time |
-| 7 | 社区功能对接后端 | 全栈 | PostController + post 表 + 鸿蒙 API 调用 |
-| 8 | UserProfilePage 调 API | 鸿蒙 | GET /api/user/{id} 获取完整资料 |
-| 9 | ProfileTab 加粉丝/关注数 | 鸿蒙 | FollowApi 统计数据 |
-| 10 | 新建关注/粉丝列表页 | 鸿蒙 | Tab 切换"我关注的"/"关注我的" |
-| 11 | UserProfileVO 加 totalLikesReceived | 后端 | 用户主页显示总获赞数 |
-| 12 | Web 端点赞状态持久化 | Web | mounted() 调 checkLiked API |
-| 13 | 帖子详情页 | 鸿蒙 | 帖子全文 + 评论树 + 点赞收藏 |
-| 14 | 通知列表加触发者信息 | 后端 | LEFT JOIN user 查昵称头像 |
-
-### 阶段七：优化打磨
-
-| # | 功能 | 说明 |
-|---|------|------|
-| 15 | 通知单条删除 + 按类型筛选 | DELETE /api/notification/{id} + type 参数 |
-| 16 | 收藏列表返回收藏时间 | FavoriteMapper.xml 加 f.create_time |
-| 17 | 帖子编辑/删除 | 自己的帖子可编辑删除 |
-| 18 | 用户统计性能优化 | 冗余字段 + 定时同步校准 |
-| 19 | 毛玻璃性能分级 | 滚动时关闭 blur / 低端设备降级为纯色 |
-| 20 | 深色模式组件适配 | TypeTag 字母缩写 / 小圆点星空 / 全页面 dark 验证 |
-
----
-
-## 文档清单
-
-| 文件 | 用途 |
-|------|------|
-| `README.md` | 项目总览 + 快速开始 + 技术栈 |
-| `CLAUDE.md` | 开发规范 + API 清单 + 前后端约定 |
-| `DEV_PLAN.md` | 当前文件：开发计划 + 进度跟踪 |
-| `docs/配色美化方案.md` | 设计系统规范：亮色/深色双主题全部色值 |
-| `docs/HarmonyOS-一次开发多端部署-UI设计教程.md` | 鸿蒙一多开发教程参考 |
-| `docs/HarmonyOS-功能开发教程.md` | 鸿蒙功能开发教程参考 |
+（暂无新计划，根据需求迭代）

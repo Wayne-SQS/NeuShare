@@ -67,6 +67,12 @@ public class Resource implements Serializable {
     private String source;
 
     /**
+     * 标签（JSON数组字符串，如 ["专业学习","408考研"]）
+     */
+    @TableField("tags")
+    private String tags;
+
+    /**
      * 上传用户ID
      */
     @TableField("upload_user_id")

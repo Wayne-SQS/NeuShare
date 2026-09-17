@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.neushare.entity.Comment;
 import com.neushare.vo.CommentVO;
+import com.neushare.vo.MyCommentVO;
 
 import java.util.List;
 
@@ -36,4 +37,24 @@ public interface CommentService extends IService<Comment> {
      * 分页获取所有评论（管理员）
      */
     IPage<CommentVO> getCommentVOPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取用户的所有评论（合并资源评论 + 帖子评论）
+     */
+    IPage<MyCommentVO> getMyCommentsMerged(Integer pageNum, Integer pageSize, Long userId);
+
+    /**
+     * 点赞资源评论
+     */
+    void likeComment(Long commentId, Long userId);
+
+    /**
+     * 取消点赞资源评论
+     */
+    void unlikeComment(Long commentId, Long userId);
+
+    /**
+     * 检查是否已点赞资源评论
+     */
+    boolean isCommentLiked(Long commentId, Long userId);
 }

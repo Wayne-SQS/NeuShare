@@ -1,0 +1,182 @@
+================================================================
+  NeuShare 测试数据补充 - 修改记录文档
+  时间: 2026-06-15
+  目的: 添加带真实可下载文件的测试数据，用于测试关注/点赞/
+        评论/收藏/文件下载功能
+================================================================
+
+一、代码修改（1个文件）
+----------------------------------------------------------------
+
+文件: neushare-backend/src/main/java/com/neushare/config/WebMvcConfig.java
+
+修改内容:
+  1. 新增 import:
+     - java.io.File
+     - org.springframework.beans.factory.annotation.Value
+     - org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
+
+  2. 新增字段:
+     @Value("${file.upload.path:uploads}")
+     private String uploadPath;
+
+  3. 新增方法 addResourceHandlers():
+     将 uploads 目录映射为 /files/** 静态资源路径
+     重启后端后，通过 http://localhost:8080/files/文件名 即可下载文件
+
+二、数据库表结构修复
+----------------------------------------------------------------
+
+以下表在当前数据库中不存在或缺少字段，已补建:
+
+  1. post 表 (社区帖子表)
+     - 字段: id, user_id, title, content, tags(JSON), image_urls(JSON),
+       files(JSON), is_recommended, view_count, like_count,
+       favorite_count, comment_count, status, create_time, update_time
+
+  2. post_like 表 (帖子点赞记录)
+     - 字段: id, user_id, post_id, create_time
+     - 唯一键: (user_id, post_id)
+
+  3. post_favorite 表 (帖子收藏记录)
+     - 字段: id, user_id, post_id, create_time
+     - 唯一键: (user_id, post_id)
+
+  4. post_comment 表 (帖子评论)
+     - 字段: id, post_id, user_id, content, parent_id, deleted,
+       create_time, update_time
+
+  5. follow 表 (关注关系)
+     - 字段: id, follower_id, followed_id, create_time
+     - 唯一键: (follower_id, followed_id)
+
+  6. notification 表 (通知)
+     - 字段: id, user_id, type, resource_id, from_user_id, title,
+       content, is_read, create_time
+
+  7. user 表新增字段:
+     - resource_count BIGINT DEFAULT 0   (上传资源数)
+     - follower_count BIGINT DEFAULT 0   (粉丝数)
+     - following_count BIGINT DEFAULT 0  (关注数)
+     - total_likes_received BIGINT DEFAULT 0 (总获赞数)
+
+三、测试文件（6个，存放在 neushare-backend/uploads/）
+----------------------------------------------------------------
+
+  文件名                        类型      大小      说明
+  ----------------------------------------------------------------
+  test-math-notes.pdf           PDF       451 B    高数笔记PDF(有效PDF格式)
+  test-math-review.txt          TXT       977 B    高数复习要点整理(五章知识点)
+  test-dsa-notes.txt            TXT       1.4 KB   数据结构复习提纲(含排序复杂度表)
+  test-student-manager.java     JAVA      1.7 KB   学生管理系统源码(含增删改查)
+  test-data-analysis.py         PY        738 B    Python数据分析示例(Pandas+Matplotlib)
+  test-sql-exercise.sql         SQL       1.3 KB   SQL练习题精选(SELECT/JOIN/子查询等)
+
+四、插入的测试数据
+----------------------------------------------------------------
+
+【资源】ID 87-92，共 6 条，全部 status=1(已发布)，每个关联真实文件:
+  ID  标题                          分类  文件名
+  --  ----                          ----  ------
+  87  高等数学期末复习笔记(手写版)    1    test-math-notes.pdf
+  88  高等数学(上)复习要点整理       1    test-math-review.txt
+  89  数据结构与算法复习提纲         5    test-dsa-notes.txt
+  90  C语言课程设计-学生管理系统源码  3    test-student-manager.java
+  91  Python数据分析入门示例代码     11   test-data-analysis.py
+  92  MySQL练习题精选50道            9    test-sql-exercise.sql
+
+【帖子】ID 6-10，共 5 条，全部 status=1(已发布):
+  ID  标题                    作者  是否带文件附件
+  --  ----                    ----  --------------
+  6   分享我的高数复习资料包   张三  是(2个文件: PDF+TXT)
+  7   数据结构考前救命指南     李四  是(1个文件: DSA笔记)
+  8   编程入门资料大放送       王五  是(3个文件: Java+Python+SQL)
+  9   大家觉得这学期哪门课最难 赵六  否(纯讨论帖)
+  10  求推荐好的Java学习路线   张三  否(求助帖)
+
+【预置点赞】resource_like: 9 条 / post_like: 9 条
+  - 用户2(张三) 点赞了资源 50,51,52 和帖子 6,7,8
+  - 用户3(李四) 点赞了资源 51,52,54 和帖子 6,8
+  - 用户4(王五) 点赞了资源 50,53,55 和帖子 6,9
+  - 用户5(赵六) 点赞了帖子 6,8
+
+【预置收藏】favorite: 6 条 / post_favorite: 4 条
+  - 用户2 收藏资源 50,52; 收藏帖子 7
+  - 用户3 收藏资源 51,53; 收藏帖子 6
+  - 用户4 收藏资源 54,55; 收藏帖子 8
+  - 用户5 收藏帖子 9
+
+【评论】comment: 9 条(资源评论) / post_comment: 17 条(帖子评论)
+  - 含嵌套回复(如资源87下王五问"有下册吗?"→张三回复)
+  - 帖子9(讨论帖)有4条活跃讨论
+  - 帖子10(求助帖)有3条回答
+
+【关注关系】follow: 12 条
+  - 张三→李四,王五,王老师
+  - 李四→张三,王五,赵六
+  - 王五→张三,李四,王老师,李老师
+  - 赵六→张三,王五
+
+五、最终数据库数据量
+----------------------------------------------------------------
+
+  表名              行数
+  ----------------  -----
+  resource          67   (原49 + 新增6个带文件资源 + 原5条init.sql帖子转resource)
+  post              5    (新增社区帖子)
+  comment           91   (原45 + 新增9条资源评论)
+  post_comment      17   (新增帖子评论)
+  resource_like     59   (原50 + 新增9条)
+  favorite          36   (原30 + 新增6条)
+  post_like         9    (新增)
+  post_favorite     4    (新增)
+  follow            12   (新增)
+
+六、如何测试
+----------------------------------------------------------------
+
+  前置条件:
+    1. 重启后端: cd neushare-backend && mvn spring-boot:run
+    2. 启动前端: cd neushare-frontend && npm run dev
+
+  测试账号(密码均为 123456):
+    admin       - 管理员(可审核/管理)
+    20240001    - 张三(学生, 发了资源87/51/53和帖子6/10)
+    20240002    - 李四(学生, 发了资源89和帖子7)
+    20240003    - 王五(学生, 发了资源91和帖子8)
+    20230001    - 赵六(学生, 发了资源92和帖子9)
+    T20240001   - 王老师(教师)
+    T20240002   - 李老师(教师)
+
+  功能测试清单:
+    [ ] 文件下载: 访问资源详情页(ID 87-92)，点击下载链接
+        验证 URL 格式: http://localhost:8080/files/test-xxx.xxx
+    [ ] 直接访问文件: 浏览器打开 http://localhost:8080/files/test-math-review.txt
+    [ ] 点赞/取消点赞: 对资源或帖子操作，刷新后状态保持
+    [ ] 收藏/取消收藏: 同上
+    [ ] 发表评论: 在资源或帖子下发表一级评论
+    [ ] 回复评论: 点击某条评论的"回复"按钮，发表嵌套回复
+    [ ] 删除评论: 删除自己发的评论
+    [ ] 关注用户: 在他人主页点"关注"
+    [ ] 取消关注: 已关注状态下点"取关"
+    [ ] 帖子附件下载: 帖子详情页中点击附件文件名下载
+    [ ] 帖子点赞/收藏: 社区帖子的独立点赞收藏系统
+
+七、相关文件索引
+----------------------------------------------------------------
+
+  代码修改:
+    neushare-backend/src/main/java/com/neushare/config/WebMvcConfig.java
+
+  测试文件目录:
+    neushare-backend/uploads/
+
+  SQL脚本(供参考/复用):
+    neushare-backend/src/main/resources/db/test-data-with-files.sql
+
+  数据库初始化(完整schema):
+    neushare-backend/src/main/resources/db/init.sql
+
+================================================================
+  文档结束
+================================================================

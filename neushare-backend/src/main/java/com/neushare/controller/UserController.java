@@ -1,14 +1,10 @@
 package com.neushare.controller;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.neushare.entity.Follow;
-import com.neushare.entity.Resource;
 import com.neushare.entity.User;
 import com.neushare.common.PageResult;
 import com.neushare.common.Result;
-import com.neushare.service.FollowService;
 import com.neushare.service.ResourceService;
 import com.neushare.service.UserService;
 import com.neushare.vo.ResourceVO;
@@ -26,9 +22,6 @@ public class UserController {
     @Autowired
     private ResourceService resourceService;
 
-    @Autowired
-    private FollowService followService;
-
     @GetMapping("/{id}")
     public Result<UserProfileVO> getUserProfile(@PathVariable Long id) {
         User user = userService.getById(id);
@@ -37,15 +30,6 @@ public class UserController {
         }
         UserProfileVO vo = new UserProfileVO();
         BeanUtil.copyProperties(user, vo);
-
-        vo.setResourceCount(resourceService.count(new LambdaQueryWrapper<Resource>()
-                .eq(Resource::getUploadUserId, id)
-                .eq(Resource::getStatus, 1)));
-        vo.setFollowerCount(followService.count(new LambdaQueryWrapper<Follow>()
-                .eq(Follow::getFollowedId, id)));
-        vo.setFollowingCount(followService.count(new LambdaQueryWrapper<Follow>()
-                .eq(Follow::getFollowerId, id)));
-
         return Result.success(vo);
     }
 

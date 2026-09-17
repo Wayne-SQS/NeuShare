@@ -9,12 +9,14 @@ struct StatsPage {
   @State stats: StatsOverview | null = null;
   @State loading: boolean = true;
   @State loadError: boolean = false;
+  @State appearOpacity: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   private statsApi: StatsApi = new StatsApi();
 
   async aboutToAppear(): Promise<void> {
     await this.loadStats();
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
   }
 
   async loadStats(): Promise<void> {
@@ -67,7 +69,7 @@ struct StatsPage {
           Text('加载失败').fontSize(18).fontWeight(FontWeight.Bold)
             .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 12 })
           Text('请确认后端服务已启动').fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 6 })
-          Text('重试').fontSize(14).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE).fontWeight(FontWeight.Bold)
+          Text('重试').fontSize(14).fontColor(ColorTokens.textOnPrimary(this.isDarkMode)).fontWeight(FontWeight.Bold)
             .padding({ left: 24, right: 24, top: 10, bottom: 10 })
             .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(20).margin({ top: 20 })
             .onClick(() => { this.loadStats(); })
@@ -90,13 +92,32 @@ struct StatsPage {
             }
             .width('100%').padding({ left: 12, right: 12 })
 
+            // Recent uploads & pending
+            Row() {
+              Column() {
+                Text('📅 近7天新增').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
+                Text(this.stats!.recentUploads.toString()).fontSize(22).fontWeight(FontWeight.Bold)
+                  .fontColor(ColorTokens.primary(this.isDarkMode)).margin({ top: 2 })
+              }
+              .layoutWeight(1).alignItems(HorizontalAlign.Center)
+              Column() {
+                Text('⏳ 待审核').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
+                Text(this.stats!.pendingResources.toString()).fontSize(22).fontWeight(FontWeight.Bold)
+                  .fontColor(this.stats!.pendingResources > 0 ? ColorTokens.warning(this.isDarkMode) : ColorTokens.textPrimary(this.isDarkMode))
+                  .margin({ top: 2 })
+              }
+              .layoutWeight(1).alignItems(HorizontalAlign.Center)
+            }
+            .width('100%').padding({ top: 14, bottom: 14 }).margin({ left: 12, right: 12, top: 8 })
+            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+
             // Category distribution
             if (this.stats!.categoryDistribution.length > 0) {
               this.SectionTitle('📂 分类分布')
               Column() {
-                ForEach(this.stats!.categoryDistribution, (item: DistributionItem) => {
+                ForEach(this.stats!.categoryDistribution, (item: DistributionItem, idx: number) => {
                   this.BarRow(item, this.maxCount(this.stats!.categoryDistribution))
-                })
+                }, (item: DistributionItem, idx: number) => 'cdist_' + idx.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
               .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
@@ -106,9 +127,9 @@ struct StatsPage {
             if (this.stats!.typeDistribution.length > 0) {
               this.SectionTitle('📝 类型分布')
               Column() {
-                ForEach(this.stats!.typeDistribution, (item: DistributionItem) => {
+                ForEach(this.stats!.typeDistribution, (item: DistributionItem, idx: number) => {
                   this.BarRowType(item, this.maxCount(this.stats!.typeDistribution))
-                })
+                }, (item: DistributionItem, idx: number) => 'tdist_' + idx.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
               .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
@@ -118,10 +139,9 @@ struct StatsPage {
             if (this.stats!.sourceDistribution.length > 0) {
               this.SectionTitle('🔗 来源网站 Top 10')
               Column() {
-                const topSources = this.stats!.sourceDistribution.slice(0, 10);
-                ForEach(topSources, (item: DistributionItem) => {
-                  this.BarRowSource(item, this.maxCount(topSources))
-                })
+                ForEach(this.stats!.sourceDistribution.slice(0, 10), (item: DistributionItem, idx: number) => {
+                  this.BarRowSource(item, this.maxCount(this.stats!.sourceDistribution))
+                }, (item: DistributionItem, idx: number) => 'sdist_' + idx.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
               .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
@@ -133,7 +153,7 @@ struct StatsPage {
               Column() {
                 ForEach(this.stats!.topResources, (item: TopResourceItem, index: number) => {
                   this.TopRow(item, index + 1)
-                })
+                }, (item: TopResourceItem, index: number) => 'top_' + item.id.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
               .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
@@ -142,10 +162,20 @@ struct StatsPage {
             Column().height(40)
           }
         }
-        .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+        .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
       }
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 
   @Builder
@@ -209,7 +239,7 @@ struct StatsPage {
         .width(Math.max(4, (item.count / maxCount) * 120)).height(16)
         .borderRadius(8)
         .linearGradient({ direction: GradientDirection.Right,
-          colors: [[ColorTokens.WARNING_LIGHT, 0], [ColorTokens.ERROR_LIGHT, 1]] })
+          colors: [[ColorTokens.warning(this.isDarkMode), 0], [ColorTokens.error(this.isDarkMode), 1]] })
       Text(item.count.toString()).fontSize(12).fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
     }
@@ -221,7 +251,7 @@ struct StatsPage {
     Row() {
       Text(rank.toString())
         .fontSize(16).fontWeight(FontWeight.Bold)
-        .fontColor(rank <= 3 ? (rank === 1 ? ColorTokens.WARNING_LIGHT : rank === 2 ? ColorTokens.textHint(this.isDarkMode) : ColorTokens.WARNING_LIGHT) : ColorTokens.textHint(this.isDarkMode))
+        .fontColor(rank <= 3 ? (rank === 1 ? ColorTokens.warning(this.isDarkMode) : rank === 2 ? ColorTokens.textHint(this.isDarkMode) : ColorTokens.warning(this.isDarkMode)) : ColorTokens.textHint(this.isDarkMode))
         .width(24).textAlign(TextAlign.Center)
       Column() {
         Text(item.title).fontSize(14).fontWeight(FontWeight.Medium)

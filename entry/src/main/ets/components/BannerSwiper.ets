@@ -66,61 +66,56 @@ export struct BannerSwiper {
   /** 轮播高度：电脑端显著加高，深色模式更高 */
   private bannerHeight(): number {
     const base = new BpType<number>({
-      sm: this.isDarkMode ? 220 : 180,
-      md: this.isDarkMode ? 240 : 200,
-      lg: this.isDarkMode ? 400 : 320,
-      xl: this.isDarkMode ? 440 : 360
-    }).getValue(this.currentBreakpoint) ?? 180;
+      sm: this.isDarkMode ? 260 : 220,
+      md: this.isDarkMode ? 280 : 240,
+      lg: this.isDarkMode ? 480 : 420,
+      xl: this.isDarkMode ? 560 : 480
+    }).getValue(this.currentBreakpoint) ?? 220;
     return base;
   }
 
   /** 标题字号 */
   private bannerFontSize(): number {
-    return new BpType<number>({ 
-      sm: 18, 
-      md: 18, 
+    return new BpType<number>({
+      sm: 18,
+      md: 18,
       lg: 28,  // 电脑端大字号
-      xl: 32 
+      xl: 36
     }).getValue(this.currentBreakpoint) ?? 18;
   }
 
   /** 副标题字号 */
   private bannerSubtitleFontSize(): number {
-    return new BpType<number>({ 
-      sm: 13, 
-      md: 13, 
-      lg: 16, 
-      xl: 18 
+    return new BpType<number>({
+      sm: 13,
+      md: 13,
+      lg: 16,
+      xl: 20
     }).getValue(this.currentBreakpoint) ?? 13;
   }
 
   /** Emoji装饰大小 */
   private bannerEmojiSize(): number {
-    return new BpType<number>({ 
-      sm: 48, 
-      md: 52, 
+    return new BpType<number>({
+      sm: 48,
+      md: 52,
       lg: 80,  // 电脑端大装饰
-      xl: 90 
+      xl: 100
     }).getValue(this.currentBreakpoint) ?? 48;
   }
 
   /** 圆角大小 */
   private bannerBorderRadius(): number {
-    return new BpType<number>({ 
-      sm: 16, 
-      md: 18, 
-      lg: 24, 
-      xl: 28 
-    }).getValue(this.currentBreakpoint) ?? 16;
+    return 0;
   }
 
   /** 内容区域内边距 */
   private contentPadding(): number {
-    return new BpType<number>({ 
-      sm: 20, 
-      md: 24, 
+    return new BpType<number>({
+      sm: 20,
+      md: 24,
       lg: 48,  // 电脑端更宽松
-      xl: 56 
+      xl: 64
     }).getValue(this.currentBreakpoint) ?? 20;
   }
 
@@ -193,10 +188,11 @@ export struct BannerSwiper {
     }
     .width('100%')
     .margin({ top: this.isDesktop() ? 16 : 8 })
-    .padding({ 
-      left: this.isDesktop() ? 24 : 0, 
-      right: this.isDesktop() ? 24 : 0 
+    .padding({
+      left: 0,
+      right: 0
     })
+    .transition(TransitionEffect.OPACITY.animation({ curve: Curve.EaseOut, duration: 300 }))
   }
 
   // ── 单个Banner构建器 ───────────────────────────────────
@@ -421,6 +417,6 @@ export struct BannerSwiper {
       offsetY: this.isDesktop() ? 8 : 4
     })
     .scale({ x: 1, y: 1 })
-    .animation({ curve: Curve.FastOutSlowIn, duration: 200 })
+    .animation({ curve: Curve.EaseOut, duration: 200 })
   }
 }

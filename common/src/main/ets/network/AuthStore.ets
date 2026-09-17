@@ -65,20 +65,32 @@ export class AuthStore {
     await this.store.set(USER_KEY, JSON.stringify(user));
   }
 
+  private validatedLogin: boolean = false;
+  private validating: boolean = false;
+
   async isLoggedIn(): Promise<boolean> {
     const token = await this.getToken();
-    return token.length > 0;
+    if (token.length === 0) return false;
+    // 启动后首次调用验证 token，防止用过期的 token 调 API 导致反复 401
+    if (!this.validatedLogin && !this.validating) {
+      this.validating = true;
+      this.validatedLogin = await this.validateToken();
+      this.validating = false;
+    }
+    return this.validatedLogin || (token.length > 0 && !this.validating);
   }
 
   async saveLogin(token: string, user: Object): Promise<void> {
     await this.setToken(token);
     await this.store.set(USER_KEY, JSON.stringify(user));
     this.userValue = user as Record<string, Object>;
+    this.validatedLogin = true;  // 刚刚登录， token 一定有效
   }
 
   async logout(): Promise<void> {
     this.tokenValue = '';
     this.userValue = null;
+    this.validatedLogin = false;
     await this.store.set(TOKEN_KEY, '');
     await this.store.set(USER_KEY, '');
   }

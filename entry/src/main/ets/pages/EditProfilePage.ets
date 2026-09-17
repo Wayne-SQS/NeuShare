@@ -14,6 +14,7 @@ struct EditProfilePage {
   @State grade: number = 1;
   @State isLoading: boolean = false;
   @State message: string = '';
+  @State appearOpacity: number = 0;
   private authApi: AuthApi = new AuthApi();
   private authStore: AuthStore = AuthStore.getInstance();
   private grades: string[] = ['大一', '大二', '大三', '大四'];
@@ -33,6 +34,7 @@ struct EditProfilePage {
     } catch (e) {
       this.message = '加载用户信息失败';
     }
+    animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
   }
 
   async saveProfile(): Promise<void> {
@@ -61,7 +63,7 @@ struct EditProfilePage {
           .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
         Blank()
         Text('保存').fontSize(15).fontWeight(FontWeight.Bold)
-          .fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.primary(this.isDarkMode))
+          .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
           .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(16)
           .onClick(() => { this.saveProfile(); })
@@ -74,7 +76,7 @@ struct EditProfilePage {
           // Avatar preview
           Row() {
             Stack({ alignContent: Alignment.Center }) {
-              Column().width(80).height(80).borderRadius(40).backgroundColor(ColorTokens.BG_AVATAR)
+              Column().width(80).height(80).borderRadius(40).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
               if (this.avatarUrl) {
                 Image(this.avatarUrl).width(80).height(80).borderRadius(40).objectFit(ImageFit.Cover)
               } else {
@@ -122,7 +124,7 @@ struct EditProfilePage {
                   isSelected: this.grade === (idx + 1),
                   onTap: () => { this.grade = idx + 1; }
                 }).margin({ right: 8 })
-              })
+              }, (label: string, idx: number) => 'grd_' + idx.toString())
             }.width('100%')
           }
           .width('100%').padding(20)
@@ -133,15 +135,25 @@ struct EditProfilePage {
           if (this.message) {
             Text(this.message)
               .fontSize(13)
-              .fontColor(this.message.includes('成功') ? ColorTokens.GREEN : ColorTokens.RED)
+              .fontColor(this.message.includes('成功') ? ColorTokens.success(this.isDarkMode) : ColorTokens.error(this.isDarkMode))
               .margin({ top: 12 })
           }
 
           Column().height(60)
         }
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }

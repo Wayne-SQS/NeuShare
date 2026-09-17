@@ -1,13 +1,8 @@
 import router from '@ohos.router';
-import webview from '@ohos.web.webview';
+import { webview } from '@kit.ArkWeb';
 import { ColorTokens } from '@neushare/common';
 import common from '@ohos.app.ability.common';
 import Want from '@ohos.app.ability.Want';
-
-interface PageEvent { url: string; }
-interface ProgressEvent { newProgress: number; }
-interface ErrorInfo { getErrorInfo(): string; }
-interface WebError { error: ErrorInfo; }
 
 @Entry
 @Component
@@ -15,10 +10,6 @@ struct WebViewPage {
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State pageTitle: string = '加载中...';
   @State loadProgress: number = 0;
-  @State canGoBack: boolean = false;
-  @State canGoForward: boolean = false;
-  @State isError: boolean = false;
-  @State errorMsg: string = '';
   private url: string = '';
   private webController: webview.WebviewController = new webview.WebviewController();
 
@@ -30,9 +21,6 @@ struct WebViewPage {
     }
   }
 
-  /**
-   * 在系统浏览器中打开（降级方案）
-   */
   openInBrowser(url: string): void {
     if (!url) return;
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -48,16 +36,10 @@ struct WebViewPage {
 
   build() {
     Column() {
-      // ── 顶部导航栏 ──
+      // 顶部导航栏
       Row() {
         Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-          .onClick(() => {
-            if (this.canGoBack && this.webController.accessBackward()) {
-              this.webController.backward();
-            } else {
-              router.back();
-            }
-          })
+          .onClick(() => { router.back(); })
 
         Column() {
           Text(this.pageTitle)
@@ -66,18 +48,6 @@ struct WebViewPage {
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }.layoutWeight(1).margin({ left: 12, right: 12 })
 
-        // 前进按钮
-        if (this.canGoForward) {
-          Text('→').fontSize(20).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-            .margin({ right: 12 })
-            .onClick(() => {
-              if (this.webController.accessForward()) {
-                this.webController.forward();
-              }
-            })
-        }
-
-        // 在浏览器中打开
         Text('⋮').fontSize(22).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { this.openInBrowser(this.url); })
       }
@@ -85,81 +55,47 @@ struct WebViewPage {
       .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
       .alignItems(VerticalAlign.Center)
 
-      // ── 加载进度条 ──
+      // 加载进度条
       if (this.loadProgress > 0 && this.loadProgress < 100) {
         Progress({ value: this.loadProgress, total: 100, type: ProgressType.Linear })
           .width('100%').color(ColorTokens.primary(this.isDarkMode)).height(2)
       }
 
-      // ── WebView 内容区 ──
-      if (this.isError) {
-        // 错误页面
-        Column() {
-          Text('⚠️').fontSize(48).margin({ top: 80 })
-          Text('页面加载失败').fontSize(18).fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 16 })
-          Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 8 })
-          Row() {
-            Button('重试')
-              .fontSize(14).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
-              .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(20)
-              .height(36).padding({ left: 24, right: 24 })
-              .onClick(() => {
-                this.isError = false;
-                this.webController.loadUrl(this.url);
-              })
-            Button('在浏览器中打开')
-              .fontSize(14).fontColor(ColorTokens.primary(this.isDarkMode))
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(20)
-              .height(36).padding({ left: 24, right: 24 })
-              .margin({ left: 12 })
-              .onClick(() => { this.openInBrowser(this.url); })
-          }.margin({ top: 20 })
-        }
-        .width('100%').layoutWeight(1).justifyContent(FlexAlign.Start)
-        .alignItems(HorizontalAlign.Center)
-      } else {
-        Web({ src: this.url, controller: this.webController })
-          .layoutWeight(1)
-          .width('100%')
-          .darkMode(WebDarkMode.Auto)
-          .domStorageAccess(true)
-          .javaScriptAccess(true)
-          .onlineImageAccess(true)
-          .mixedMode(MixedMode.All)
-          .mediaPlayGestureAccess(true)
-          .allowWindowOpenMethod(false)
-          .onPageBegin((event: PageEvent) => {
-            if (event) {
-              this.loadProgress = 10;
-            }
-          })
-          .onPageEnd((event: PageEvent) => {
-            if (event) {
-              this.loadProgress = 100;
-              this.canGoBack = this.webController.accessBackward();
-              this.canGoForward = this.webController.accessForward();
-              try {
-                const title = this.webController.getTitle();
-                if (title && title.length > 0) {
-                  this.pageTitle = title;
-                }
-              } catch (e) {}
-            }
-          })
-          .onProgressChange((event: ProgressEvent) => {
-            if (event) {
-              this.loadProgress = event.newProgress;
-            }
-          })
-          .onErrorReceive((event: WebError) => {
-            if (event) {
-              this.isError = true;
-              this.errorMsg = event.error.getErrorInfo() || '未知错误';
-            }
-          })
-      }
+      // WebView — 对齐 QuickStart: 极简配置
+      Web({ src: this.url, controller: this.webController })
+        .domStorageAccess(true)
+        .javaScriptAccess(true)
+        .mixedMode(MixedMode.All)
+        .darkMode(WebDarkMode.Auto)
+        .width('100%')
+        .layoutWeight(1)
+        .onPageBegin(() => { this.loadProgress = 10; })
+        .onPageEnd(() => {
+          this.loadProgress = 100;
+          try {
+            const title = this.webController.getTitle();
+            if (title && title.length > 0) { this.pageTitle = title; }
+          } catch (e) {}
+        })
+        .onProgressChange((event) => {
+          if (event) { this.loadProgress = event.newProgress; }
+        })
+        .onErrorReceive((event) => {
+          if (event) {
+            console.error('WebView error: ' + JSON.stringify(event));
+          }
+        })
     }
     .width('100%').height('100%')
     .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }

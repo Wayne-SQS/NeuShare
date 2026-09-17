@@ -56,6 +56,11 @@ public class ResourceVO {
     private String source;
 
     /**
+     * 标签（JSON数组字符串）
+     */
+    private String tags;
+
+    /**
      * 上传用户ID
      */
     private Long uploadUserId;
@@ -104,4 +109,9 @@ public class ResourceVO {
      * 上传者头像
      */
     private String uploadAvatar;
+
+    /**
+     * 收藏时间（仅在收藏列表中返回）
+     */
+    private LocalDateTime favoriteTime;
 }

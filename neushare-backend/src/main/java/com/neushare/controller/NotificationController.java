@@ -3,8 +3,8 @@ package com.neushare.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.neushare.common.PageResult;
 import com.neushare.common.Result;
-import com.neushare.entity.Notification;
 import com.neushare.service.NotificationService;
+import com.neushare.vo.NotificationVO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,13 +18,14 @@ public class NotificationController {
 
     /** 获取当前用户通知列表 */
     @GetMapping("/list")
-    public Result<PageResult<Notification>> getNotifications(
+    public Result<PageResult<NotificationVO>> getNotifications(
             HttpServletRequest request,
             @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String type) {
         Long userId = (Long) request.getAttribute("userId");
-        IPage<Notification> page = notificationService.getUserNotifications(pageNum, pageSize, userId);
-        PageResult<Notification> pageResult = new PageResult<>(page.getCurrent(), page.getSize(), page.getTotal(), page.getRecords());
+        IPage<NotificationVO> page = notificationService.getUserNotifications(pageNum, pageSize, userId, type);
+        PageResult<NotificationVO> pageResult = new PageResult<>(page.getCurrent(), page.getSize(), page.getTotal(), page.getRecords());
         return Result.success(pageResult);
     }
 
@@ -50,5 +51,13 @@ public class NotificationController {
         Long userId = (Long) request.getAttribute("userId");
         notificationService.markAllAsRead(userId);
         return Result.success("全部已读");
+    }
+
+    /** 删除单条通知 */
+    @DeleteMapping("/delete/{id}")
+    public Result<Void> deleteNotification(HttpServletRequest request, @PathVariable Long id) {
+        Long userId = (Long) request.getAttribute("userId");
+        notificationService.deleteNotification(id, userId);
+        return Result.success("删除成功");
     }
 }

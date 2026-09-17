@@ -17,26 +17,74 @@
     { "phase": "调剂", "period": "次年3月-5月", "emoji": "🔄",
       "description": "未进入一志愿复试或复试未通过的考生可参加调剂系统" }
   ],
+  "notice": "推荐资料为学习参考，请按需购买，不必贪多。部分黑皮书有一定难度，建议结合课程进度选择最需要的1-2本入手。",
   "subjects": {
     "政治": {
       "sections": ["马原(24%)", "毛中特(30%)", "史纲(14%)", "思修法基(16%)", "时政(16%)"],
-      "materials": ["肖秀荣《精讲精练》+《1000题》", "肖四肖八(冲刺必背)", "徐涛《核心考案》+网课", "腿姐《冲刺背诵手册》"],
+      "materials": [
+        { "name": "肖秀荣《精讲精练》+《1000题》全家桶", "purchaseUrl": "https://item.jd.com/10137457615227.html" },
+        { "name": "肖秀荣肖四肖八", "purchaseUrl": "https://item.jd.com/10204474779125.html" },
+        { "name": "徐涛《核心考案》", "purchaseUrl": "https://item.jd.com/10202277165495.html" },
+        { "name": "腿姐《冲刺背诵手册》", "purchaseUrl": "" }
+      ],
       "tip": "选择题反复刷，大题背肖四+腿姐时政"
     },
     "英语": {
       "sections": ["完形填空(10分)", "阅读理解(40分)", "新题型(10分)", "翻译(10-15分)", "写作(25-30分)"],
-      "materials": ["张剑黄皮书(真题)", "红宝书/墨墨背单词", "唐迟/田静阅读语法课", "石雷鹏/王江涛作文"],
+      "materials": [
+        { "name": "张剑黄皮书英语一", "purchaseUrl": "https://item.jd.com/10170864451592.html" },
+        { "name": "红宝书/墨墨背单词", "purchaseUrl": "" },
+        { "name": "唐迟/田静阅读语法课", "purchaseUrl": "" },
+        { "name": "石雷鹏/王江涛作文", "purchaseUrl": "" }
+      ],
       "tip": "单词天天背，阅读精做真题，作文整理自己的模板"
     },
     "数学一": {
       "sections": ["高等数学(56%)", "线性代数(22%)", "概率论与数理统计(22%)"],
-      "materials": ["武忠祥高数+李永乐线代+王式安概率(黄金组合)", "660题+880题+真题", "李林6+4套卷(模拟)", "张宇36讲(强化)"],
+      "materials": [
+        { "name": "汤家凤1800题", "purchaseUrl": "https://item.jd.com/10121454094496.html" },
+        { "name": "金榜时代 李永乐考研数学复习全书（基础篇）", "purchaseUrl": "https://item.jd.com/10172525944498.html" },
+        { "name": "金榜时代 武忠祥高数辅导讲义+660题", "purchaseUrl": "https://item.jd.com/10089275916145.html" },
+        { "name": "张宇考研数学强化36讲+1000题", "purchaseUrl": "https://item.jd.com/10164040934509.html" }
+      ],
       "tip": "基础→强化→真题→模拟，四个阶段不能跳，错题反复复盘"
     },
     "408计算机专业基础综合": {
       "sections": ["数据结构(45分)", "计算机组成原理(45分)", "操作系统(35分)", "计算机网络(25分)"],
-      "materials": ["王道考研全套(4本)", "天勤高分笔记", "历年408真题(至少刷2遍)", "教材：严蔚敏DS+唐朔飞组成+汤小丹OS+谢希仁计网"],
+      "materials": [
+        { "name": "王道考研408全套4本", "purchaseUrl": "https://item.jd.com/10193694993382.html" },
+        { "name": "天勤高分笔记", "purchaseUrl": "" },
+        { "name": "历年408真题(至少刷2遍)", "purchaseUrl": "" },
+        { "name": "教材：严蔚敏DS+唐朔飞组成+汤小丹OS+谢希仁计网", "purchaseUrl": "" }
+      ],
       "tip": "统考408，换学校无需重学；复习顺序：DS→组成→OS→计网"
+    },
+    "计算机经典教材（黑皮书系列）": {
+      "sections": [],
+      "materials": [
+        { "name": "深入理解计算机系统（原书第3版）CSAPP", "purchaseUrl": "https://item.jd.com/10078563063577.html" },
+        { "name": "算法导论（原书第3版）", "purchaseUrl": "https://item.jd.com/10076437410988.html" },
+        { "name": "计算机网络：自顶向下方法（原书第8版）", "purchaseUrl": "https://item.jd.com/10200310904377.html" },
+        { "name": "现代操作系统（原书第4版）", "purchaseUrl": "https://item.jd.com/12139635.html" },
+        { "name": "编译原理（原书第2版）龙书", "purchaseUrl": "https://item.jd.com/10058776.html" },
+        { "name": "数据库系统概念（原书第7版）", "purchaseUrl": "https://item.jd.com/10076591311745.html" },
+        { "name": "C程序设计语言（原书第2版·典藏版）K&R", "purchaseUrl": "https://item.jd.com/12746692.html" },
+        { "name": "TCP/IP详解 卷1：协议（原书第2版）", "purchaseUrl": "https://item.jd.com/10081041511785.html" },
+        { "name": "数据结构与算法分析：C语言描述（原书第2版·典藏版）", "purchaseUrl": "https://item.jd.com/10067405732581.html" },
+        { "name": "设计模式：可复用面向对象软件的基础", "purchaseUrl": "https://item.jd.com/10069503507264.html" },
+        { "name": "计算机组成与设计：硬件/软件接口 RISC-V版（原书第2版）", "purchaseUrl": "https://item.jd.com/10096464089081.html" }
+      ],
+      "tip": "黑皮书为计算机科学经典教材，难度较高，建议结合课程进度选择最需要的1-2本入手"
+    },
+    "编程入门教材": {
+      "sections": [],
+      "materials": [
+        { "name": "Python编程从入门到实践（第3版）", "purchaseUrl": "https://item.jd.com/10079191566716.html" },
+        { "name": "Hello算法（全彩印刷）", "purchaseUrl": "https://3.cn/1X-qmTD3" },
+        { "name": "Java核心技术 卷I（原书第12版）", "purchaseUrl": "https://item.jd.com/13178495.html" },
+        { "name": "Java核心技术 卷II（原书第12版）", "purchaseUrl": "https://item.jd.com/13871148.html" }
+      ],
+      "tip": "入门教材选择一门语言深入学习即可，不必贪多"
     }
   },
   "infoSources": [
@@ -46,23 +94,13 @@
       "desc": "官方唯一报名、查分、调剂平台，一切信息以研招网为准"
     },
     {
-      "name": "目标院校研究生院官网",
-      "url": "",
-      "desc": "招生简章、专业目录、历年复试线、拟录取名单最权威来源"
-    },
-    {
-      "name": "目标院校学院官网",
-      "url": "",
-      "desc": "导师介绍、研究方向、实验室信息，复试选导师必看"
-    },
-    {
       "name": "王道论坛 / 考研论坛",
-      "url": "http://www.cskaoyan.com",
+      "url": "https://www.cskaoyan.com",
       "desc": "计算机考研经验帖、院校信息、专业课资料最集中平台"
     },
     {
       "name": "B站 / 知乎",
-      "url": "",
+      "url": "https://www.bilibili.com",
       "desc": "各科备考方法、刷题技巧、院校分析，大量免费优质内容"
     }
   ],
@@ -84,7 +122,13 @@
         "cons": ["换校成本高", "信息不对称", "调剂受限"]
       }
     ],
-    "suggestion": "建议优先准备408统考：1)可选择院校最多 2)初试后根据估分灵活调整目标 3)含金量高利于复试。如果已明确非自命题院校不考，则尽早获取目标院校历年真题。"
+    "suggestion": "建议优先准备408统考：1)可选择院校最多 2)初试后根据估分灵活调整目标 3)含金量高利于复试。如果已明确非自命题院校不考，则尽早获取目标院校历年真题。",
+    "neuLinks": [
+      { "name": "东北大学研究生招生信息网", "url": "http://yz.neu.edu.cn", "desc": "招生简章、专业目录、复试分数线等官方信息" },
+      { "name": "东北大学软件学院", "url": "http://sc.neu.edu.cn", "desc": "导师介绍、研究方向、实验室信息" },
+      { "name": "东北大学计算机科学与工程学院", "url": "http://www.cse.neu.edu.cn", "desc": "导师介绍、研究方向、实验室信息" },
+      { "name": "东北大学信息科学与工程学院", "url": "https://www.ise.neu.edu.cn", "desc": "导师介绍、研究方向、招生信息" }
+    ]
   },
   "studySchedule": [
     {

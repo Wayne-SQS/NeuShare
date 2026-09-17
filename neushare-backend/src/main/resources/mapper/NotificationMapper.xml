@@ -2,10 +2,36 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.neushare.mapper.NotificationMapper">
 
+    <resultMap id="NotificationVOMap" type="com.neushare.vo.NotificationVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="from_user_id" property="fromUserId"/>
+        <result column="type" property="type"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="resource_id" property="resourceId"/>
+        <result column="is_read" property="isRead"/>
+        <result column="create_time" property="createTime"/>
+        <result column="from_username" property="fromUsername"/>
+        <result column="from_nickname" property="fromNickname"/>
+        <result column="from_avatar_url" property="fromAvatarUrl"/>
+    </resultMap>
+
     <select id="selectByUserId" resultType="com.neushare.entity.Notification">
         SELECT * FROM notification
         WHERE user_id = #{userId}
         ORDER BY create_time DESC
+    </select>
+
+    <select id="selectNotificationPageWithSender" resultMap="NotificationVOMap">
+        SELECT n.*, u.username as from_username, u.nickname as from_nickname, u.avatar_url as from_avatar_url
+        FROM notification n
+        LEFT JOIN user u ON n.from_user_id = u.id
+        WHERE n.user_id = #{userId}
+        <if test="type != null and type != ''">
+            AND n.type = #{type}
+        </if>
+        ORDER BY n.create_time DESC
     </select>
 
     <select id="countUnread" resultType="int">

@@ -16,7 +16,7 @@ public interface ResourceService extends IService<Resource> {
     /**
      * 分页查询资源列表
      */
-    IPage<ResourceVO> getResourcePage(Integer pageNum, Integer pageSize, Integer status, Long categoryId, String keyword);
+    IPage<ResourceVO> getResourcePage(Integer pageNum, Integer pageSize, Integer status, Long categoryId, String keyword, String sortBy);
 
     /**
      * 获取资源详情
@@ -92,4 +92,9 @@ public interface ResourceService extends IService<Resource> {
      * 搜索资源（支持排序）
      */
     IPage<ResourceVO> searchResources(Integer pageNum, Integer pageSize, String keyword, String sortBy);
+
+    /**
+     * 获取用户收到的总点赞数
+     */
+    Long getTotalLikesReceived(Long userId);
 }

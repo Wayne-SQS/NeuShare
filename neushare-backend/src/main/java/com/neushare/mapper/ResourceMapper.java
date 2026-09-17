@@ -19,7 +19,7 @@ public interface ResourceMapper extends BaseMapper<Resource> {
     /**
      * 分页查询资源列表（包含上传者信息）
      */
-    IPage<ResourceVO> selectResourcePage(Page<ResourceVO> page, @Param("status") Integer status, @Param("categoryId") Long categoryId, @Param("keyword") String keyword);
+    IPage<ResourceVO> selectResourcePage(Page<ResourceVO> page, @Param("status") Integer status, @Param("categoryId") Long categoryId, @Param("keyword") String keyword, @Param("sortBy") String sortBy);
 
     /**
      * 根据ID查询资源详情（包含上传者信息）
@@ -45,4 +45,9 @@ public interface ResourceMapper extends BaseMapper<Resource> {
      * 搜索资源（支持排序：hot/new）
      */
     IPage<ResourceVO> searchResources(Page<ResourceVO> page, @Param("keyword") String keyword, @Param("sortBy") String sortBy);
+
+    /**
+     * 查询用户已发布资源的总获赞数（SQL SUM 聚合，避免 Java 循环）
+     */
+    Long selectTotalLikesReceived(@Param("userId") Long userId);
 }

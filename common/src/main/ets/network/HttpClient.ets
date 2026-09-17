@@ -13,7 +13,6 @@ export interface ApiResponse<T> {
 export class HttpClient {
   private static instance: HttpClient;
   private authStore: AuthStore = AuthStore.getInstance();
-  private isHandling401: boolean = false;
 
   private constructor() {}
 
@@ -26,17 +25,29 @@ export class HttpClient {
 
   /**
    * 处理 401 未授权响应：清除 token 并跳转登录页
+   * 使用 Promise 锁防止并发 401 多次跳转
    */
+  private static handling401Promise: Promise<void> | null = null;
+
   private async handleUnauthorized(): Promise<void> {
-    if (this.isHandling401) return;
-    this.isHandling401 = true;
-    await this.authStore.logout();
-    try {
-      router.replaceUrl({ url: 'pages/LoginPage' });
-    } catch (e) {
-      console.error('handleUnauthorized redirect failed: ' + JSON.stringify(e));
+    if (HttpClient.handling401Promise) {
+      // 已有 401 处理进行中，等待其完成即可
+      await HttpClient.handling401Promise;
+      return;
     }
-    this.isHandling401 = false;
+    HttpClient.handling401Promise = (async () => {
+      await this.authStore.logout();
+      try {
+        router.replaceUrl({ url: 'pages/LoginPage' });
+      } catch (e) {
+        console.error('handleUnauthorized redirect failed: ' + JSON.stringify(e));
+      }
+    })();
+    try {
+      await HttpClient.handling401Promise;
+    } finally {
+      HttpClient.handling401Promise = null;
+    }
   }
 
   /**
@@ -98,7 +109,7 @@ export class HttpClient {
       return this.checkAuth(body);
     } catch (e) {
       httpRequest.destroy();
-      throw new Error('HTTP GET failed: ' + path);
+      throw new Error('HTTP GET failed: ' + path + ' — ' + JSON.stringify(e));
     }
   }
 
@@ -118,7 +129,7 @@ export class HttpClient {
       return this.checkAuth(body);
     } catch (e) {
       httpRequest.destroy();
-      throw new Error('HTTP POST failed: ' + path);
+      throw new Error('HTTP POST failed: ' + path + ' — ' + JSON.stringify(e));
     }
   }
 
@@ -141,7 +152,7 @@ export class HttpClient {
       return this.checkAuth(body);
     } catch (e) {
       httpRequest.destroy();
-      throw new Error('HTTP POST failed: ' + path);
+      throw new Error('HTTP POST failed: ' + path + ' — ' + JSON.stringify(e));
     }
   }
 
@@ -164,7 +175,49 @@ export class HttpClient {
       return this.checkAuth(body);
     } catch (e) {
       httpRequest.destroy();
-      throw new Error('HTTP PUT failed: ' + path);
+      throw new Error('HTTP PUT failed: ' + path + ' — ' + JSON.stringify(e));
+    }
+  }
+
+  /**
+   * POST multipart/form-data 上传（文件 + 字段）
+   * 对应后端 @RequestParam 字段 + MultipartFile file
+   */
+  async postFormData<T>(path: string, fields: Record<string, string>, fileUri?: string, fileKey: string = 'file'): Promise<ApiResponse<T>> {
+    const httpRequest = http.createHttp();
+    try {
+      const token = await this.authStore.getToken();
+      const headers: Record<string, string> = {};
+      // 注意：不要手动设置 Content-Type: multipart/form-data
+      // ArkTS HTTP 库在传 multiFormDataList 时会自动加上正确的 Content-Type + boundary
+      if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+      }
+
+      const formData: Array<http.MultiFormData> = [];
+      // 文本字段
+      const fieldKeys = Object.keys(fields);
+      for (let i = 0; i < fieldKeys.length; i++) {
+        formData.push({ name: fieldKeys[i], data: fields[fieldKeys[i]], contentType: '' });
+      }
+      // 文件字段（可选）
+      if (fileUri && fileUri.length > 0) {
+        formData.push({ name: fileKey, filePath: fileUri, contentType: '' });
+      }
+
+      const resp = await httpRequest.request(BASE_URL + path, {
+        method: http.RequestMethod.POST,
+        header: headers,
+        multiFormDataList: formData,
+        connectTimeout: 30000,
+        readTimeout: 30000
+      });
+      const body = JSON.parse(resp.result as string) as ApiResponse<T>;
+      httpRequest.destroy();
+      return this.checkAuth(body);
+    } catch (e) {
+      httpRequest.destroy();
+      throw new Error('HTTP POST FormData failed: ' + path + ' — ' + JSON.stringify(e));
     }
   }
 
@@ -184,7 +237,30 @@ export class HttpClient {
       return this.checkAuth(body);
     } catch (e) {
       httpRequest.destroy();
-      throw new Error('HTTP PUT failed: ' + path);
+      throw new Error('HTTP PUT failed: ' + path + ' — ' + JSON.stringify(e));
+    }
+  }
+
+  /**
+   * DELETE 请求，参数通过 URL 查询字符串传递（后端 @RequestParam）
+   */
+  async deleteWithParams<T>(path: string, params: Object): Promise<ApiResponse<T>> {
+    const httpRequest = http.createHttp();
+    try {
+      const headers = await this.getHeaders(true);
+      const url = BASE_URL + path + this.buildQueryString(params);
+      const resp = await httpRequest.request(url, {
+        method: http.RequestMethod.DELETE,
+        header: headers,
+        connectTimeout: 5000,
+        readTimeout: 5000
+      });
+      const body = JSON.parse(resp.result as string) as ApiResponse<T>;
+      httpRequest.destroy();
+      return this.checkAuth(body);
+    } catch (e) {
+      httpRequest.destroy();
+      throw new Error('HTTP DELETE failed: ' + path + ' — ' + JSON.stringify(e));
     }
   }
 
@@ -203,7 +279,7 @@ export class HttpClient {
       return this.checkAuth(body);
     } catch (e) {
       httpRequest.destroy();
-      throw new Error('HTTP DELETE failed: ' + path);
+      throw new Error('HTTP DELETE failed: ' + path + ' — ' + JSON.stringify(e));
     }
   }
 }

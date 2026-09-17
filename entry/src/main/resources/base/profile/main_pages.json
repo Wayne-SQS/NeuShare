@@ -17,6 +17,10 @@
     "pages/ModelComparePage",
     "pages/UploadPage",
     "pages/MyResourcesPage",
-    "pages/WebViewPage"
+    "pages/FollowListPage",
+    "pages/WebViewPage",
+    "pages/SchoolGuidePage",
+    "pages/PostDetailPage",
+    "pages/StatsPage"
   ]
 }

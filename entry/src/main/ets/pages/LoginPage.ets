@@ -98,7 +98,7 @@ struct LoginPage {
           // Logo
           Stack({ alignContent: Alignment.Center }) {
             Column().width(72).height(72).borderRadius(36).backgroundColor(ColorTokens.primary(this.isDarkMode))
-            Text('N').fontSize(36).fontWeight(FontWeight.Bolder).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+            Text('N').fontSize(36).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           }
           .margin({ top: 80 })
 
@@ -130,7 +130,7 @@ struct LoginPage {
             // 记住密码
             Row() {
               Text(this.rememberPwd ? '☑' : '☐')
-                .fontSize(16).fontColor(this.rememberPwd ? ColorTokens.primary(this.isDarkMode) : ColorTokens.TEXT_DISABLED)
+                .fontSize(16).fontColor(this.rememberPwd ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textDisabled(this.isDarkMode))
                 .onClick(() => { this.rememberPwd = !this.rememberPwd; })
               Text(' 记住密码')
                 .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode))
@@ -140,17 +140,17 @@ struct LoginPage {
             .width('100%').margin({ top: 10 })
 
             if (this.errorMsg) {
-              Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.RED).margin({ top: 10 })
+              Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.error(this.isDarkMode)).margin({ top: 10 })
             }
 
             Button(this.isLoading ? '登录中...' : '登 录')
               .width('100%').height(52)
-              .fontSize(16).fontWeight(FontWeight.Bolder).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+              .fontSize(16).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
               .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
               .margin({ top: 24 })
               .enabled(!this.isLoading)
               .scale({ x: this.btnPressed ? 0.96 : 1, y: this.btnPressed ? 0.96 : 1 })
-              .animation({ curve: Curve.FastOutSlowIn, duration: 120 })
+              .animation({ curve: Curve.EaseOut, duration: 200 })
               .onTouch((event: TouchEvent) => {
                 if (event.type === TouchType.Down) { this.btnPressed = true; }
                 else if (event.type === TouchType.Up || event.type === TouchType.Cancel) { this.btnPressed = false; }
@@ -163,7 +163,7 @@ struct LoginPage {
               .onClick(() => { router.pushUrl({ url: 'pages/RegisterPage' }); })
 
             Text('跳过登录，离线使用')
-              .fontSize(13).fontWeight(FontWeight.Medium).fontColor(ColorTokens.TEXT_DISABLED)
+              .fontSize(13).fontWeight(FontWeight.Medium).fontColor(ColorTokens.textDisabled(this.isDarkMode))
               .margin({ top: 16 })
               .onClick(() => { router.replaceUrl({ url: 'pages/Index' }); })
           }
@@ -174,9 +174,18 @@ struct LoginPage {
         }
         .width('100%').alignItems(HorizontalAlign.Center)
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
     .opacity(this.cardOpacity).translate({ y: this.cardY })
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }

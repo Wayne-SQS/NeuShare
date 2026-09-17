@@ -3,10 +3,12 @@ package com.neushare.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.neushare.entity.Follow;
 import com.neushare.entity.User;
 import com.neushare.exception.BusinessException;
 import com.neushare.mapper.FollowMapper;
+import com.neushare.mapper.UserMapper;
 import com.neushare.service.FollowService;
 import com.neushare.service.NotificationService;
 import com.neushare.service.UserService;
@@ -29,6 +31,9 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
     @Transactional
     public void followUser(Long followerId, Long followedId) {
@@ -48,6 +53,13 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         follow.setFollowedId(followedId);
         follow.setCreateTime(LocalDateTime.now());
         save(follow);
+        // 实时更新冗余计数器
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, followerId)
+                .setSql("following_count = following_count + 1"));
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, followedId)
+                .setSql("follower_count = follower_count + 1"));
         // 通知被关注者
         User followerUser = userService.getById(followerId);
         String followerName = followerUser != null ? followerUser.getNickname() : "有人";
@@ -63,6 +75,15 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             throw new BusinessException("未关注该用户");
         }
         removeById(follow.getId());
+        // 实时更新冗余计数器
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, followerId)
+                .gt(User::getFollowingCount, 0)
+                .setSql("following_count = following_count - 1"));
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, followedId)
+                .gt(User::getFollowerCount, 0)
+                .setSql("follower_count = follower_count - 1"));
     }
 
     @Override

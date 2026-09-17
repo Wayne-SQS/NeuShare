@@ -103,6 +103,12 @@ export class ColorTokens {
     return isDark ? darkColor : lightColor;
   }
 
+  // ── 品牌色背景上的文字色 ────────────────────
+  // 亮色：白字 / 深色：深色字（因为深色品牌色是纯白）
+  static textOnPrimary(isDark: boolean): string {
+    return isDark ? ColorTokens.BG_PAGE_DARK : ColorTokens.TEXT_WHITE;
+  }
+
   // ── 品牌色 ──────────────────────────────────
   static primary(isDark: boolean): string {
     return isDark ? ColorTokens.PRIMARY_DARK : ColorTokens.PRIMARY_LIGHT;

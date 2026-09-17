@@ -1,8 +1,10 @@
 import router from '@ohos.router';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, AuthStore } from '@neushare/common';
 import { GradeService } from '../services/GradeService';
 import { GradePill } from '../components/GradePill';
+import { AuthApi } from '../api/AuthApi';
 import { Context } from '@ohos.abilityAccessCtrl';
+import promptAction from '@ohos.promptAction';
 
 @Entry
 @Component
@@ -19,6 +21,8 @@ struct IdentityCardPage {
   @State titleY: number = 20;
   @State showPassword: boolean = false;
   private gradeService: GradeService = GradeService.getInstance();
+  private authApi: AuthApi = new AuthApi();
+  private authStore: AuthStore = AuthStore.getInstance();
   private grades: string[] = ['大一', '大二', '大三', '大四'];
 
   aboutToAppear(): void {
@@ -53,6 +57,28 @@ struct IdentityCardPage {
       await this.gradeService.markOnboardingComplete();
     } catch (e) {
       console.error('IdentityCardPage save failed: ' + JSON.stringify(e));
+      promptAction.showToast({ message: '保存失败，请重试' });
+    }
+
+    // 同步年级到后端
+    try {
+      const loggedIn = await this.authStore.isLoggedIn();
+      if (loggedIn) {
+        const gradeMap: Record<string, number> = { '大一': 1, '大二': 2, '大三': 3, '大四': 4 };
+        const gradeNum = gradeMap[this.selectedGrade] || 0;
+        const infoResp = await this.authApi.getInfo();
+        if (infoResp.code === 200 && infoResp.data) {
+          await this.authApi.updateInfo(
+            infoResp.data.nickname || '',
+            infoResp.data.avatarUrl || '',
+            infoResp.data.college || '',
+            gradeNum
+          );
+        }
+      }
+    } catch (e) {
+      console.error('IdentityCardPage sync grade to backend failed: ' + JSON.stringify(e));
+      promptAction.showToast({ message: '同步年级信息失败' });
     }
 
     try {
@@ -98,10 +124,10 @@ struct IdentityCardPage {
               }
               Blank()
               Row() {
-                Text('NEU').fontSize(11).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
+                Text('NEU').fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                   .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                   .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(8)
-                Text(' ✓ 已认证').fontSize(11).fontColor(ColorTokens.GREEN).margin({ left: 6 })
+                Text(' ✓ 已认证').fontSize(11).fontColor(ColorTokens.success(this.isDarkMode)).margin({ left: 6 })
               }
             }.width('100%')
 
@@ -161,7 +187,7 @@ struct IdentityCardPage {
                   .onChange((value: string) => { this.confirmPassword = value; })
 
                 if (this.confirmPassword.length > 0 && this.password !== this.confirmPassword) {
-                  Text('⚠ 两次密码不一致').fontSize(11).fontColor(ColorTokens.RED).margin({ top: 6 })
+                  Text('⚠ 两次密码不一致').fontSize(11).fontColor(ColorTokens.error(this.isDarkMode)).margin({ top: 6 })
                 }
               }
             }
@@ -176,8 +202,8 @@ struct IdentityCardPage {
           // Confirm button
           Button(this.selectedGrade ? '✓ 完成注册，开始探索' : '请先选择年级')
             .width('100%').height(54)
-            .fontSize(16).fontWeight(FontWeight.Bold).fontColor(this.isDarkMode ? '#0E0E10' : ColorTokens.TEXT_WHITE)
-            .backgroundColor(this.selectedGrade ? ColorTokens.primary(this.isDarkMode) : ColorTokens.TEXT_DISABLED)
+            .fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+            .backgroundColor(this.selectedGrade ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textDisabled(this.isDarkMode))
             .borderRadius(16)
             .shadow(this.selectedGrade ? {
               radius: 12, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), offsetX: 0, offsetY: 6
@@ -193,14 +219,23 @@ struct IdentityCardPage {
             .onClick(() => { this.skipRegistration(); })
 
           Text('年级信息仅用于课程推荐，随时可在设置中修改')
-            .fontSize(11).fontColor(ColorTokens.TEXT_DISABLED)
+            .fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode))
             .margin({ top: 12, bottom: 40 }).textAlign(TextAlign.Center)
 
           Column().height(40)
         }
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+      .opacity(0.9)
+    PageTransitionExit({ duration: 250, curve: Curve.EaseIn })
+      .slide(SlideEffect.Left)
+      .opacity(0.9)
   }
 }
