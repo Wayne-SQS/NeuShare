@@ -1,10 +1,10 @@
 import { PreferencesStore } from '../services/PreferencesStore';
 import { Context } from '@ohos.abilityAccessCtrl';
 import http from '@ohos.net.http';
+import { BASE_URL } from '../config/AppConfig';
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
-const BASE_URL: string = 'http://10.0.2.2:8080';
 
 export class AuthStore {
   private static instance: AuthStore;

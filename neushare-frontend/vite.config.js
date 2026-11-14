@@ -16,6 +16,11 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
+      },
+      // 上传目录静态映射 /files/**，开发环境需代理到后端，否则 Vite 会回退到 index.html（SPA）
+      '/files': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
       }
     }
   }

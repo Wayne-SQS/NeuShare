@@ -63,9 +63,62 @@
         <section class="content-card">
           <h3 class="card-label">资料描述</h3>
           <p class="description">{{ resource.description || '暂无描述' }}</p>
-          <div v-if="resource.contentUrl" class="file-info">
-            <el-icon><Document /></el-icon>
-            <span>{{ resource.contentUrl }}</span>
+
+          <div v-if="resource.contentUrl" class="file-block">
+            <div class="file-block__head">
+              <h3 class="card-label">资料文件</h3>
+              <span v-if="isExternal" class="file-badge file-badge--link">外部链接</span>
+              <span v-else-if="!fileExists" class="file-badge file-badge--missing">文件已丢失</span>
+              <span v-else class="file-badge file-badge--ok">可下载</span>
+            </div>
+
+            <!-- 外链资源 -->
+            <template v-if="isExternal">
+              <div class="file-info">
+                <el-icon><Link /></el-icon>
+                <span class="file-name">{{ resource.contentUrl }}</span>
+              </div>
+              <div class="file-actions">
+                <el-button type="primary" @click="openExternal">
+                  <el-icon><Promotion /></el-icon>
+                  <span>访问原链接</span>
+                </el-button>
+              </div>
+            </template>
+
+            <!-- 物理文件丢失 -->
+            <template v-else-if="!fileExists">
+              <div class="file-missing">
+                <el-icon class="file-missing__icon"><WarningFilled /></el-icon>
+                <div class="file-missing__text">
+                  <p class="file-missing__title">文件不存在或已丢失</p>
+                  <p class="file-missing__desc">该资源关联的文件已被移除，请联系上传者或等待重新上传。</p>
+                </div>
+              </div>
+            </template>
+
+            <!-- 本地文件：可预览 / 可下载 -->
+            <template v-else>
+              <div class="file-info">
+                <el-icon><Document /></el-icon>
+                <span class="file-name">{{ displayFilename }}</span>
+              </div>
+              <div class="file-actions">
+                <el-button
+                  v-if="canPreview"
+                  type="primary"
+                  plain
+                  @click="handlePreview"
+                >
+                  <el-icon><View /></el-icon>
+                  <span>在线预览</span>
+                </el-button>
+                <el-button type="primary" :loading="downloading" @click="handleDownload">
+                  <el-icon><Download /></el-icon>
+                  <span>下载资料</span>
+                </el-button>
+              </div>
+            </template>
           </div>
         </section>
 
@@ -155,10 +208,11 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
 import SkeletonCard from '@/components/SkeletonCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { getResourceDetail, likeResource, unlikeResource, checkLiked } from '@/api/resource'
+import { getResourceDetail, likeResource, unlikeResource, checkLiked, downloadResource } from '@/api/resource'
 import { getComments, addComment } from '@/api/comment'
 import { addFavorite, removeFavorite, checkFavorite } from '@/api/favorite'
 import { formatTime, getInitial } from '@/utils/format'
+import { buildFullUrl, isExternalUrl, isPreviewable } from '@/utils/url'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -170,12 +224,27 @@ const isLiked = ref(false)
 const isFavorited = ref(false)
 const submitting = ref(false)
 const replyingTo = ref(null)
+const downloading = ref(false)
 
 const commentForm = reactive({
   content: ''
 })
 
 const resourceId = computed(() => route.params.id)
+
+// 是否为外链资源（外链视为文件存在，走"访问原链接"）
+const isExternal = computed(() => isExternalUrl(resource.value?.contentUrl))
+// 物理文件是否存在：外链视为存在；本地以后端返回的 fileExists 为准
+const fileExists = computed(() => (isExternal.value ? true : resource.value?.fileExists === true))
+// 是否可在浏览器内联预览（仅本地存在且为可预览类型）
+const canPreview = computed(() => !isExternal.value && fileExists.value && isPreviewable(resource.value?.contentUrl))
+// 预览地址（/files/xxx 或外链）
+const previewUrl = computed(() => buildFullUrl(resource.value?.contentUrl))
+// 展示用文件名（取路径最后一段）
+const displayFilename = computed(() => {
+  const c = resource.value?.contentUrl || ''
+  return c.split('/').pop() || c
+})
 
 const totalComments = computed(() => {
   let count = 0
@@ -304,6 +373,32 @@ const submitComment = async () => {
     console.error('Failed to submit comment:', error)
   } finally {
     submitting.value = false
+  }
+}
+
+const handleDownload = async () => {
+  if (!resource.value) return
+  downloading.value = true
+  try {
+    // 后端已通过 Content-Disposition 指定中文文件名，这里传入标题作为浏览器兜底
+    await downloadResource(resource.value.id, resource.value.title)
+  } catch (e) {
+    // 网络错误等已由 request 拦截器提示
+    console.error('download failed', e)
+  } finally {
+    downloading.value = false
+  }
+}
+
+const handlePreview = () => {
+  if (previewUrl.value) {
+    window.open(previewUrl.value, '_blank')
+  }
+}
+
+const openExternal = () => {
+  if (resource.value?.contentUrl) {
+    window.open(resource.value.contentUrl, '_blank')
   }
 }
 
@@ -455,6 +550,93 @@ onMounted(async () => {
   font-size: var(--text-sm);
   border: 1px solid var(--border-subtle);
   word-break: break-all;
+}
+
+/* 文件区块：标签 + 文件名 + 操作按钮 */
+.file-block {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.file-block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.file-block__head .card-label {
+  margin-bottom: 0;
+}
+
+.file-badge {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.file-badge--ok {
+  color: var(--success, #16a34a);
+  background: var(--success-bg, #dcfce7);
+}
+
+.file-badge--missing {
+  color: var(--danger, #dc2626);
+  background: var(--danger-bg, #fee2e2);
+}
+
+.file-badge--link {
+  color: var(--accent);
+  background: var(--info-bg);
+}
+
+.file-name {
+  word-break: break-all;
+}
+
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* 文件丢失提示 */
+.file-missing {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--danger-bg, #fef2f2);
+  border: 1px solid var(--danger-border, #fecaca);
+  border-radius: var(--radius-sm);
+}
+
+.file-missing__icon {
+  font-size: var(--text-xl);
+  color: var(--danger, #dc2626);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.file-missing__text {
+  min-width: 0;
+}
+
+.file-missing__title {
+  font-weight: var(--font-semibold);
+  color: var(--danger, #dc2626);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
+}
+
+.file-missing__desc {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
 }
 
 .comment-head {

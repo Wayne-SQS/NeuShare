@@ -41,6 +41,13 @@ public class ResourceVO {
     private String contentUrl;
 
     /**
+     * 物理文件是否存在（瞬态字段，不入库）。
+     * 外链（http/https）默认视为存在；本地裸文件名为空或 uploads 下缺失时为 false，
+     * 前端据此渲染"文件已丢失"状态并禁用下载/预览。
+     */
+    private Boolean fileExists;
+
+    /**
      * 资源描述
      */
     private String description;

@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointTypeEnum, AuthStore, FontScale, Radii, Spacing, ControlSize, EmptyState, StateView, ViewState } from '@neushare/common';
+import { ColorTokens, BreakpointTypeEnum, AuthStore, FontScale, Radii, Spacing, ControlSize, EmptyState, StateView, ViewState, BASE_URL } from '@neushare/common';
 import { CommunityService } from '../services/CommunityService';
 import { Post, PostComment, PostFile, formatFileSize, fileIcon, toComment } from '../models/PostModel';
 import { PostApi, PostCommentVO } from '../api/PostApi';
@@ -9,8 +9,6 @@ import { request } from '@kit.BasicServicesKit';
 import { fileIo } from '@kit.CoreFileKit';
 import common from '@ohos.app.ability.common';
 import Want from '@ohos.app.ability.Want';
-
-const BASE_URL: string = 'http://10.0.2.2:8080';
 
 @Entry
 @Component

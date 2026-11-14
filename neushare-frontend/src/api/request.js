@@ -22,6 +22,12 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   (response) => {
+    // 二进制响应（下载）直接返回完整 response，便于读取 headers 与 blob 数据。
+    // 后端业务异常统一返回 HTTP 200 + JSON body，下载失败时会拿到一个 JSON 内容的 blob，
+    // 由调用方按 content-type 自行区分，不在此处弹错。
+    if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {
+      return response
+    }
     const res = response.data
     if (res.code === 200 || res.code === 0) {
       return res

@@ -496,6 +496,15 @@ httpClient.del<T>('/api/resource/delete/' + id);
 - 种子数据 `content_url` 是 `test-math-notes.pdf` 等裸文件名，物理文件不在 `uploads/`（该目录原本不存在），链路通了也是 404。
 修复方向（参考历史经验 506552 / 487672）：后端加鉴权下载接口（返回 `Content-Disposition: attachment`）；前端收敛成单一 `downloadFile` 封装（axios blob + `createObjectURL` + `a[download]`，响应拦截器对 blob/arraybuffer 分流保留完整 response）；`vite.config.js` 把 `/files` 纳入代理；统一 `buildFullUrl(path)` 工具，页面内禁止硬编码 host/port。
 
+✅ 已修复（gh-fix / fix/phase2-audit）：
+- 后端新增 `GET /api/resource/download/{id}`：本地文件以 `Content-Disposition: attachment; filename*=UTF-8''<标题+扩展名>` 流式输出；外链 302 跳转不占带宽；未发布仅本人/管理员可下（`WebMvcConfig` 已将该路径加入可选鉴权 `OPTIONAL_AUTH_PATHS`）。
+- `ResourceVO` 增加瞬态 `fileExists`，`ResourceServiceImpl` 在分页/详情/搜索/热门/用户资源接口统一回填（外链视为存在，本地查 `uploads/` 物理文件，含路径穿越防御）。
+- 前端 `request.js` 响应拦截器对 `blob`/`arraybuffer` 保留完整 response；新增 `src/utils/url.js`（`buildFullUrl`/`isPreviewable` 等）与 `src/api/resource.js` 的 `downloadResource`（按 `content-type` 区分 JSON 错误与真实文件，错误时提示而非下载 JSON blob）。
+- `vite.config.js` 增加 `/files` 代理（修掉经 3000 命中 SPA 回退返回 index.html 的 bug）。
+- `ResourceDetail.vue` 增加「在线预览 / 下载资料」按钮、外链「访问原链接」、`fileExists===false` 时渲染「文件已丢失」空态。
+- 启动时 `com.neushare.bootstrap.ResourceFileSeeder` 自动为种子资源补齐 `uploads/` 占位文件，开箱即可下载/预览（幂等，不覆盖已存在文件）。
+- 验证：后端 `mvn test` 通过；`detail/1` 返回 `fileExists=true`；`download/1` 返回 attachment 中文文件名 477 字节；上传→下载 e2e 内容一致；经 3000 代理 `/api`、`/files`、`/download` 均通。
+
 ### P0-2 空资源 / 垃圾资源
 证据：
 - 种子数据 115 条资源**全部 `cover_url` 为空**；3 条 `status!=1`；`content_url` 指向不存在的演示文件名 → 列表里点进去是空壳。
@@ -503,12 +512,16 @@ httpClient.del<T>('/api/resource/delete/' + id);
 - 无"文件是否真实存在"校验；删除资源不删物理文件，可能留孤儿文件。
 修复方向：DTO 加 `@NotBlank`（创建时）/ 上传必填校验；审核态拒绝空文件；列表/详情对缺失文件给出明确"文件已丢失"态而非空壳；删除资源级联删物理文件；清理种子数据里指向不存在文件的记录或补齐真实文件。
 
+✅ 已修复：`ResourceServiceImpl.createResource` 拒绝 `contentUrl` 为空（无文件且无外链 → 400「请上传资源文件或填写资源链接」）；`auditResource` 通过审核前校验物理文件存在，缺失则拒绝；`deleteResource` 级联删除本地物理文件（外链跳过，失败不阻断 DB 删除）；`fileExists` 回填 + 前端「文件已丢失」空态；`ResourceFileSeeder` 补齐种子占位文件。验证：无文件创建返回 400；仅外链创建成功（验证"或链接"分支）；删除测试资源级联成功。
+
 ### P1-3 Web 与鸿蒙端数据不互通
 证据：
 - 鸿蒙端后端地址**硬编码** `http://10.0.2.2:8080`：`common/.../network/HttpClient.ets:5`、`AuthStore.ets:7`、`DetailPage.ets:18`（`FILE_BASE_URL`）、`PostDetailPage.ets:13`。
 - `10.0.2.2` 是模拟器访问宿主机的别名，**真机 / DevEco PC 预览连不上** → 表现为"数据不互通"。这不是数据模型分裂（两端 API 路径一致，地址通了就能共享），是地址不可配置。
 - Web 端写死 `localhost`，鸿蒙写死 `10.0.2.2`，两套都不可在运行时切换。
 修复方向：后端地址改为运行时可配置（`BuildProfile` 环境变量 / 设置页 / `common` 常量集中管理 + 一处切换）；DevEco 预览与真机分别指向宿主机局域网 IP；明确文档说明三种运行场景（模拟器 / 真机 / 本地 Web）的地址配置。
+
+✅ 已修复：新增 `common/src/main/ets/config/AppConfig.ets` 集中导出 `BASE_URL` / `FILE_BASE_URL`（含模拟器 `10.0.2.2` / 真机局域网 IP / 线上域名三种场景的切换说明），并从 `common/Index.ets` 导出；`HttpClient.ets`、`AuthStore.ets`、`DetailPage.ets`、`PostDetailPage.ets` 改为引用该常量，删除各自硬编码；`ResourceService` 离线兜底 banner 图地址归一化为当前 `BASE_URL`；`LoginPage` 错误提示去掉硬编码地址。全仓库 `10.0.2.2` 仅剩 `AppConfig.ets` 中作为文档化默认值。注：本地无 DevEco，未构建 HAP，改动为静态源码级。
 
 ### P2-4 不够便捷（需与用户进一步确认具体痛点）
 已关联：无下载/预览入口（并入 P0-1）。其余如搜索直达、批量操作、上传后即时可见等，待用户补充具体场景后再拆。

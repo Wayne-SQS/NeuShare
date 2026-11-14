@@ -6,6 +6,7 @@ import com.neushare.dto.ResourceDTO;
 import com.neushare.entity.Resource;
 import com.neushare.vo.ResourceVO;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -22,6 +23,17 @@ public interface ResourceService extends IService<Resource> {
      * 获取资源详情
      */
     ResourceVO getResourceDetail(Long id);
+
+    /**
+     * contentUrl 是否为外部链接（http/https）
+     */
+    boolean isExternalUrl(String contentUrl);
+
+    /**
+     * 解析资源对应的本地物理文件（用于下载流式输出）。
+     * 资源不存在 / 未关联文件 / 外链 / 物理文件缺失 时抛业务异常。
+     */
+    File resolveDownloadFile(Long id);
 
     /**
      * 创建资源

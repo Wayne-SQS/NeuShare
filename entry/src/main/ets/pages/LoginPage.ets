@@ -86,7 +86,7 @@ struct LoginPage {
         this.errorMsg = resp.message || '登录失败';
       }
     } catch (e) {
-      this.errorMsg = '无法连接服务器 (10.0.2.2:8080)，确认后端和MySQL都在运行';
+      this.errorMsg = '无法连接服务器，请确认后端和 MySQL 都在运行（后端地址配置：common/src/main/ets/config/AppConfig.ets）';
     }
     this.isLoading = false;
   }

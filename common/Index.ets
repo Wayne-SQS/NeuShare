@@ -1,5 +1,8 @@
 // NEUShare Common HAR - 公共能力层
 
+// Config（后端地址等全局配置，单一数据源）
+export { BASE_URL, FILE_BASE_URL } from './src/main/ets/config/AppConfig';
+
 // Theme
 export { ColorTokens } from './src/main/ets/theme/ColorTokens';
 export { AppTheme, ThemeMode } from './src/main/ets/theme/AppTheme';

@@ -3,6 +3,7 @@ import { ResourceApi, ResourceListParams } from '../api/ResourceApi';
 import { BannerApi } from '../api/BannerApi';
 import { FavoriteApi } from '../api/FavoriteApi';
 import promptAction from '@ohos.promptAction';
+import { BASE_URL } from '@neushare/common';
 import categoriesData from '../data/categories.json';
 import resourcesData from '../data/resources.json';
 import bannersData from '../data/banners.json';
@@ -34,6 +35,14 @@ export class ResourceService {
     this.localCategories = categoriesData as CategoryItem[];
     this.localResources = resourcesData as ResourceItem[];
     this.localBanners = bannersData as BannerItem[];
+    // 离线兜底 banner 图地址写死了模拟器主机 10.0.2.2，统一归一化为当前 BASE_URL，
+    // 保证真机 / 切换后端地址后离线兜底图也能正确加载
+    for (let i = 0; i < this.localBanners.length; i++) {
+      const img = this.localBanners[i].imageUrl;
+      if (img && img.indexOf('http://10.0.2.2:8080') === 0) {
+        this.localBanners[i].imageUrl = BASE_URL + img.substring('http://10.0.2.2:8080'.length);
+      }
+    }
   }
 
   static getInstance(): ResourceService {

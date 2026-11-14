@@ -1,8 +1,7 @@
 import http from '@ohos.net.http';
 import { AuthStore } from './AuthStore';
 import router from '@ohos.router';
-
-const BASE_URL: string = 'http://10.0.2.2:8080';
+import { BASE_URL } from '../config/AppConfig';
 
 export interface ApiResponse<T> {
   code: number;

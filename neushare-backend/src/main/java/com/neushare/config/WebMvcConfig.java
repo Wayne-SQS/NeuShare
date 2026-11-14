@@ -40,6 +40,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private static final String[] OPTIONAL_AUTH_PATHS = {
             "/api/resource/list",
             "/api/resource/detail/**",
+            "/api/resource/download/**",
             "/api/resource/search",
             "/api/post/list",
             "/api/post/detail/**",

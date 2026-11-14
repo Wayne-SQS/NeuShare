@@ -1,6 +1,6 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import router from '@ohos.router';
 import curves from '@ohos.curves';
-import { ColorTokens, ResourceTypeUtils, BreakpointType as BpType, BreakpointTypeEnum, AuthStore, FontScale, Radii, Spacing, ControlSize, StateView, ViewState } from '@neushare/common';
+import { ColorTokens, ResourceTypeUtils, BreakpointType as BpType, BreakpointTypeEnum, AuthStore, FontScale, Radii, Spacing, ControlSize, StateView, ViewState, FILE_BASE_URL } from '@neushare/common';
 import { ResourceService } from '../services/ResourceService';
 import { FavoriteService } from '../services/FavoriteService';
 import { RecommendService } from '../services/RecommendService';
@@ -14,8 +14,6 @@ import Want from '@ohos.app.ability.Want';
 import promptAction from '@ohos.promptAction';
 import { request } from '@kit.BasicServicesKit';
 import { fileIo } from '@kit.CoreFileKit';
-
-const FILE_BASE_URL: string = 'http://10.0.2.2:8080/files/';
 
 @Entry
 @Component
