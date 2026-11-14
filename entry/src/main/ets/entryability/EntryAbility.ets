@@ -1,5 +1,6 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
+import display from '@ohos.display';
 import Want from '@ohos.app.ability.Want';
 import AbilityConstant from '@ohos.app.ability.AbilityConstant';
 import ConfigurationConstant from '@ohos.app.ability.ConfigurationConstant';
@@ -87,7 +88,13 @@ export default class EntryAbility extends UIAbility {
       });
 
       mainWindow.on('windowSizeChange', (size: window.Size) => {
-        BreakpointSystem.getInstance().updateFromVpWidth(size.width);
+        BreakpointSystem.getInstance().updateFromVpWidth(size.width, size.height);
+      });
+
+      // 记录状态栏高度（vp），供 PageScaffold 统一处理安全区
+      this.updateSafeArea(mainWindow);
+      mainWindow.on('avoidAreaChange', () => {
+        this.updateSafeArea(mainWindow);
       });
     } catch (e) {
       console.warn('[EntryAbility] windowSizeChange registration failed: ' + JSON.stringify(e));
@@ -107,6 +114,33 @@ export default class EntryAbility extends UIAbility {
       }
       console.info('Succeeded in loading content');
     });
+  }
+
+  /**
+   * 读取系统状态栏避让高度并转为 vp 存入 AppStorage。
+   * AvoidArea 的 Rect 以 px 为单位，这里用屏幕密度换算；仅做单位换算，
+   * 断点判定仍走 window/mediaQuery（display 的尺寸接口在模拟器上不可靠）。
+   * 注意：只有窗口处于沉浸式（内容延伸到状态栏下）时才需要额外留白，
+   * 非沉浸式下窗口内容本就在状态栏之下，再加 padding 会出现双倍留白，
+   * 因此这里先用 getWindowLayoutFullScreen() 判断，避免重复留白。
+   */
+  private async updateSafeArea(mainWindow: window.Window): Promise<void> {
+    try {
+      const isFullScreen: boolean = await mainWindow.getWindowLayoutFullScreen();
+      if (!isFullScreen) {
+        AppStorage.setOrCreate<number>('topSafeAreaVp', 0);
+        AppStorage.setOrCreate<number>('bottomSafeAreaVp', 0);
+        return;
+      }
+      const avoid: window.AvoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+      const density: number = display.getDefaultDisplaySync().densityPixels || 1;
+      const topVp: number = Math.round(avoid.topRect.height / density);
+      AppStorage.setOrCreate<number>('topSafeAreaVp', topVp);
+      const bottomVp: number = Math.round(avoid.bottomRect.height / density);
+      AppStorage.setOrCreate<number>('bottomSafeAreaVp', bottomVp);
+    } catch (e) {
+      console.warn('[EntryAbility] updateSafeArea failed: ' + JSON.stringify(e));
+    }
   }
 
   onWindowStageDestroy(): void {

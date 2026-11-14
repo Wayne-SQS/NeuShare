@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, AuthStore, BreakpointTypeEnum, BlurPerformance, BreakpointSystem } from '@neushare/common';
+import { ColorTokens, AuthStore, BreakpointTypeEnum, BlurPerformance, BreakpointSystem, FontScale, Radii, Spacing, ControlSize, Elevation, ZIndex } from '@neushare/common';
 import { ResourceService } from '../services/ResourceService';
 import { FavoriteService } from '../services/FavoriteService';
 import { CommunityService } from '../services/CommunityService';
@@ -28,6 +28,8 @@ struct Index {
   @State allBanners: BannerItem[] = [];
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
+  @StorageLink('topSafeAreaVp') topSafeArea: number = 0;
+  @StorageLink('bottomSafeAreaVp') bottomSafeArea: number = 0;
   private tabsController: TabsController = new TabsController();
   private resourceService: ResourceService = ResourceService.getInstance();
   private curriculumService: CurriculumService = CurriculumService.getInstance();
@@ -127,8 +129,15 @@ struct Index {
            this.currentBreakpoint === BreakpointTypeEnum.XL;
   }
 
+  /** 沉浸式窗口下的安全区留白（非沉浸式时 AppStorage 值为 0） */
+  private rootPadding(): Padding {
+    return this.isVerticalMode()
+      ? { top: this.topSafeArea }
+      : { top: this.topSafeArea, bottom: this.bottomSafeArea };
+  }
+
   build() {
-    Stack() {
+    Stack({ alignContent: Alignment.BottomEnd }) {
       Tabs({
         barPosition: this.isVerticalMode() ? BarPosition.Start : BarPosition.End,
         controller: this.tabsController
@@ -142,71 +151,79 @@ struct Index {
             })
           }
           .width('100%').height('100%')
-        }.tabBar(this.tabBarBuilder('首页', 0, '🏠'))
+        }.tabBar(this.tabBarBuilder('首页', 0))
 
         TabContent() {
           Column() {
             CategoryTab({ categories: this.categories })
           }
           .width('100%').height('100%')
-        }.tabBar(this.tabBarBuilder('分类', 1, '📂'))
+        }.tabBar(this.tabBarBuilder('分类', 1))
 
         TabContent() {
           Column() {
             SearchTab()
           }
           .width('100%').height('100%')
-        }.tabBar(this.tabBarBuilder('搜索', 2, '🔍'))
+        }.tabBar(this.tabBarBuilder('搜索', 2))
 
         TabContent() {
           Column() {
             ProfileTab({ favoriteCount: this.favoriteCount, historyCount: this.historyCount })
           }
           .width('100%').height('100%')
-        }.tabBar(this.tabBarBuilder('我的', 3, '👤'))
+        }.tabBar(this.tabBarBuilder('我的', 3))
       }
       .vertical(this.isVerticalMode())
-      .barWidth(this.isVerticalMode() ? 64 : undefined)
-      .barHeight(this.isVerticalMode() ? undefined : 56)
-      .barMode(this.isVerticalMode() ? BarMode.Fixed : BarMode.Fixed)
+      .barWidth(this.isVerticalMode() ? 72 : '100%')
+      .barHeight(this.isVerticalMode() ? '100%' : ControlSize.TAB_BAR)
+      .barMode(BarMode.Fixed)
+      .barBackgroundColor(ColorTokens.surface(this.isDarkMode))
       .scrollable(false)
       .onChange((index: number) => { this.currentTab = index; })
       .width('100%').height('100%')
+      .padding(this.rootPadding())
       .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
 
       // ── 悬浮上传按钮（所有模式） ──
       Column() {
-        Text('+').fontSize(28).fontColor(ColorTokens.TEXT_WHITE).fontWeight(FontWeight.Bold)
+        Text('+')
+          .fontSize(FontScale.HERO_LG)
+          .fontColor(ColorTokens.TEXT_WHITE)
+          .fontWeight(FontWeight.Medium)
       }
-      .width(52).height(52).borderRadius(26)
+      .width(ControlSize.ICON_LG)
+      .height(ControlSize.ICON_LG)
+      .borderRadius(Radii.PILL)
       .backgroundColor(ColorTokens.primary(this.isDarkMode))
       .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center)
-      .shadow({ radius: 8, color: ColorTokens.SHADOW_MEDIUM, offsetY: 4 })
-      .position({ x: this.isVerticalMode() ? '92%' : '80%', y: '85%' })
+      .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowHero(this.isDarkMode), offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+      .margin({
+        right: Spacing.XL,
+        bottom: this.isVerticalMode() ? Spacing.XXL : ControlSize.TAB_BAR + this.bottomSafeArea + Spacing.LG
+      })
+      .zIndex(ZIndex.FAB)
       .onClick(() => { router.pushUrl({ url: 'pages/UploadPage' }); })
     }
     .width('100%').height('100%')
+    .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 
   @Builder
-  tabBarBuilder(label: string, index: number, icon: string) {
+  tabBarBuilder(label: string, index: number) {
     Column() {
-      Text(icon).fontSize(22)
-      if (this.isVerticalMode()) {
-        Text(label).fontSize(10)
-          .fontWeight(this.currentTab === index ? FontWeight.Bold : FontWeight.Regular)
-          .fontColor(this.currentTab === index ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
-          .margin({ top: 4 })
-      } else {
-        Text(label).fontSize(12)
-          .fontWeight(this.currentTab === index ? FontWeight.Bold : FontWeight.Regular)
-          .fontColor(this.currentTab === index ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
-          .margin({ top: 2 })
-        if (this.currentTab === index) {
-          Row().width(16).height(3).borderRadius(2)
-            .backgroundColor(ColorTokens.primary(this.isDarkMode)).margin({ top: 3 })
-        }
+      if (!this.isVerticalMode() && this.currentTab === index) {
+        Row()
+          .width(Spacing.LG)
+          .height(3)
+          .borderRadius(Radii.XXS)
+          .backgroundColor(ColorTokens.primary(this.isDarkMode))
       }
+      Text(label)
+        .fontSize(this.isVerticalMode() ? FontScale.CAPTION : FontScale.LABEL)
+        .fontWeight(this.currentTab === index ? FontWeight.Bold : FontWeight.Regular)
+        .fontColor(this.currentTab === index ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
+        .margin({ top: this.isVerticalMode() ? Spacing.SM : Spacing.XXS })
     }
     .width('100%').height('100%')
     .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center)

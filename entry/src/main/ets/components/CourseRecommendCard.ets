@@ -1,10 +1,9 @@
 import router from '@ohos.router';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale, Radii, Spacing, ControlSize, Elevation } from '@neushare/common';
 
 @Component
 export struct CourseRecommendCard {
   @Prop courseName: string = '';
-  @Prop courseEmoji: string = '📖';
   @Prop courseDesc: string = '';
   @Prop searchKeyword: string = '';
   @State pressed: boolean = false;
@@ -14,28 +13,31 @@ export struct CourseRecommendCard {
     Row() {
       Stack({ alignContent: Alignment.Center }) {
         Column()
-          .width(44).height(44).borderRadius(14)
+          .width(ControlSize.INPUT).height(ControlSize.INPUT).borderRadius(Radii.CARD)
           .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '18'))
-        Text(this.courseEmoji).fontSize(22)
+        Text(this.courseName.substring(0, 1))
+          .fontSize(FontScale.SUBTITLE)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(ColorTokens.primary(this.isDarkMode))
       }
 
       Column() {
         Text(this.courseName)
-          .fontSize(15).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+          .fontSize(FontScale.BODY).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(this.courseDesc)
-          .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
+          .fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode))
           .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
-          .margin({ top: 2 })
+          .margin({ top: Spacing.XXS })
       }
-      .layoutWeight(1).margin({ left: 12 })
+      .layoutWeight(1).margin({ left: Spacing.MD })
 
-      Text('查看 ›').fontSize(12).fontColor(ColorTokens.primary(this.isDarkMode)).fontWeight(FontWeight.Bold)
+      Text('查看').fontSize(FontScale.LABEL).fontColor(ColorTokens.primary(this.isDarkMode)).fontWeight(FontWeight.Medium)
     }
-    .width('100%').padding(14).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-    .borderRadius(14).margin({ left: 4, right: 4, top: 4, bottom: 4 })
-    .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
-    .shadow({ radius: 4, color: ColorTokens.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
+    .width('100%').padding(Spacing.LG).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+    .borderRadius(Radii.CARD).margin({ left: Spacing.XS, right: Spacing.XS, top: Spacing.XS, bottom: Spacing.XS })
+    .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.border(this.isDarkMode), radius: Radii.CARD })
+    .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
     .scale({ x: this.pressed ? 0.97 : 1, y: this.pressed ? 0.97 : 1 })
     .animation({ curve: Curve.EaseOut, duration: 200 })
     .hoverEffect(HoverEffect.Auto)

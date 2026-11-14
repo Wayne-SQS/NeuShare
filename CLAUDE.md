@@ -108,6 +108,7 @@ NeuShare/
 // Theme
 export { ColorTokens }          // 双主题色板（LIGHT/DARK 两套完全独立的色彩系统）
 export { AppTheme, ThemeMode }  // 主题管理器（LIGHT/DARK/SYSTEM）
+export { DesignTokens, Spacing, Radii, FontScale, ControlSize, Elevation, ZIndex, GridLayout }  // 间距/圆角/字号/控件高/阴影/层级/栅格列数
 
 // Utils
 export { BreakpointSystem, BreakpointType, BreakpointTypeEnum, BreakpointTypeValue }  // 5 级断点: XS/SM/MD/LG/XL
@@ -124,9 +125,15 @@ export { AuthStore }                // JWT Token + 用户信息持久化
 
 // Types
 export { PageData<T> }          // 统一分页响应接口 { records, total, pageNum, pageSize }
+export { ViewState }            // 加载/空/失败三态枚举
 
 // Components
-export { EmptyState }           // 空状态占位组件（呼吸动画）
+export { EmptyState }           // 空状态占位组件（支持操作按钮）
+export { PageScaffold }         // 页面骨架：安全区 + 标题区 + 内容区
+export { PageHeader }           // 页面标题栏（返回/标题/操作）
+export { SectionHeader }        // 区块标题
+export { StateView }            // 加载中 / 空数据 / 失败重试三态视图
+export { AppButton }            // 统一 40 高主/次按钮
 
 // 注意：GlassCard、GlassNavBar、ColorDot、TypeTag 是 common 内部组件，未从 Index.ets 导出
 ```
@@ -378,13 +385,10 @@ httpClient.del<T>('/api/resource/delete/' + id);
 
 ### JWT 拦截器公开路径
 
-```
-/api/auth/login, /api/auth/register, /api/resource/list, /api/resource/hot,
-/api/resource/detail/**, /api/resource/search, /api/banner/list,
-/api/comment/list/**, /api/category/list, /api/form-card/current,
-/api/post/list, /api/post/detail/**, /api/post/hot, /api/post/comment/list/**,
-/api/stats/overview, /api/user/*, /api/user/*/resources
-```
+拦截器分两层（`WebMvcConfig`）：
+
+1. 完全公开、无需识别身份：`/api/auth/login`、`/api/auth/register`、`/api/banner/list`、`/api/category/list`、`/api/form-card/current`、`/api/stats/overview`、`/api/resource/hot`、`/api/post/hot`、`/files/**`、`/error`
+2. 公开但需要识别身份（`OptionalJwtInterceptor`，带有效 Token 时写入 `userId/username/role`，不带也放行）：`/api/resource/list`、`/api/resource/detail/**`、`/api/resource/search`、`/api/post/list`、`/api/post/detail/**`、`/api/comment/list/**`、`/api/post/comment/list/**`、`/api/user/*`、`/api/user/*/resources`
 
 其他所有 `/api/**` 需要登录。`/api/admin/**` 额外需要 `role="admin"`。
 
@@ -392,6 +396,8 @@ httpClient.del<T>('/api/resource/delete/' + id);
 
 - `GET /api/resource/list` 和 `GET /api/post/list` 允许传入 `status` 参数但非管理员强制覆盖为 `1`
 - `GET /api/user/{id}` 禁用用户返回错误
+- 资源/帖子详情只对已发布内容公开，未发布内容仅作者与管理员可见（依赖第 2 层拦截器写入的身份）
+- 普通用户编辑已通过审核的资源会重置为待审核（`status=0`）并清空驳回原因
 
 ---
 
@@ -470,8 +476,39 @@ httpClient.del<T>('/api/resource/delete/' + id);
 
 ## 已知问题 / 注意事项
 
-- Dashboard 的图表在无真实数据时使用硬编码演示数据
-- 文件上传目录在 `uploads/`，通过 `file.upload.path` 配置
+- Dashboard 图表在无真实数据时显示"暂无数据"提示（已移除早先的演示数据）
+- 文件上传目录在 `uploads/`，通过 `file.upload.path` 配置；上传扩展名走白名单（禁止 html/js/svg）
 - 鸿蒙端基于 `window` API 做响应式（`mediaQuery`），不能用 `display` API（模拟器不可靠）
 - 鸿蒙端离线缓存仍可改进（资源详情未缓存到本地 SQLite）
 - `banner.js` 是公开轮播图 API 模块，但 Web 端目前无组件使用（功能在 admin.js 中）
+
+---
+
+## 待处理问题清单（2026-11-14 联调反馈，已实测复核）
+
+> 来自用户实际使用反馈，根因在本地运行环境验证过，修复前不要再仅凭口头描述改动。
+
+### P0-1 资源无法下载 / 网页无法直接打开
+证据：
+- 后端无下载接口，只靠 `WebMvcConfig` 把 `uploads/` 映射为 `/files/**` 静态访问，无 `Content-Disposition`，浏览器默认内联而非下载。
+- 前端 [ResourceDetail.vue](file:///d:/temp_20261114_01/_audit/NeuShare/neushare-frontend/src/views/ResourceDetail.vue) 只把 `contentUrl` 当纯文本展示，**没有下载按钮、没有预览链接**，actions 区只有点赞/收藏。
+- `vite.config.js` 代理只配了 `/api`，**未代理 `/files`** → 经 3000 端口访问 `/files/xxx` 命中 Vite SPA 回退，返回 `index.html`（实测：`/files/probe.txt` 经 3000 返回 449 字节 = index.html；经 8080 直连返回 15 字节正确内容）。
+- 种子数据 `content_url` 是 `test-math-notes.pdf` 等裸文件名，物理文件不在 `uploads/`（该目录原本不存在），链路通了也是 404。
+修复方向（参考历史经验 506552 / 487672）：后端加鉴权下载接口（返回 `Content-Disposition: attachment`）；前端收敛成单一 `downloadFile` 封装（axios blob + `createObjectURL` + `a[download]`，响应拦截器对 blob/arraybuffer 分流保留完整 response）；`vite.config.js` 把 `/files` 纳入代理；统一 `buildFullUrl(path)` 工具，页面内禁止硬编码 host/port。
+
+### P0-2 空资源 / 垃圾资源
+证据：
+- 种子数据 115 条资源**全部 `cover_url` 为空**；3 条 `status!=1`；`content_url` 指向不存在的演示文件名 → 列表里点进去是空壳。
+- [ResourceController.createResource](file:///d:/temp_20261114_01/_audit/NeuShare/neushare-backend/src/main/java/com/neushare/controller/ResourceController.java#L71) 未携带文件时不拦截，`ResourceDTO` 未校验 `contentUrl`/`title` 非空 → 可产生无文件资源。
+- 无"文件是否真实存在"校验；删除资源不删物理文件，可能留孤儿文件。
+修复方向：DTO 加 `@NotBlank`（创建时）/ 上传必填校验；审核态拒绝空文件；列表/详情对缺失文件给出明确"文件已丢失"态而非空壳；删除资源级联删物理文件；清理种子数据里指向不存在文件的记录或补齐真实文件。
+
+### P1-3 Web 与鸿蒙端数据不互通
+证据：
+- 鸿蒙端后端地址**硬编码** `http://10.0.2.2:8080`：`common/.../network/HttpClient.ets:5`、`AuthStore.ets:7`、`DetailPage.ets:18`（`FILE_BASE_URL`）、`PostDetailPage.ets:13`。
+- `10.0.2.2` 是模拟器访问宿主机的别名，**真机 / DevEco PC 预览连不上** → 表现为"数据不互通"。这不是数据模型分裂（两端 API 路径一致，地址通了就能共享），是地址不可配置。
+- Web 端写死 `localhost`，鸿蒙写死 `10.0.2.2`，两套都不可在运行时切换。
+修复方向：后端地址改为运行时可配置（`BuildProfile` 环境变量 / 设置页 / `common` 常量集中管理 + 一处切换）；DevEco 预览与真机分别指向宿主机局域网 IP；明确文档说明三种运行场景（模拟器 / 真机 / 本地 Web）的地址配置。
+
+### P2-4 不够便捷（需与用户进一步确认具体痛点）
+已关联：无下载/预览入口（并入 P0-1）。其余如搜索直达、批量操作、上传后即时可见等，待用户补充具体场景后再拆。

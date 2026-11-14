@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { AuthStore, ColorTokens } from '@neushare/common';
+import { AuthStore, ColorTokens, FontScale, Radii, Spacing, ControlSize } from '@neushare/common';
 import { AuthApi } from '../api/AuthApi';
 import { FavoriteService } from '../services/FavoriteService';
 import { PreferencesStore } from '@neushare/common';
@@ -97,57 +97,58 @@ struct LoginPage {
         Column() {
           // Logo
           Stack({ alignContent: Alignment.Center }) {
-            Column().width(72).height(72).borderRadius(36).backgroundColor(ColorTokens.primary(this.isDarkMode))
-            Text('N').fontSize(36).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+            Column().width(72).height(72).borderRadius(Radii.PILL).backgroundColor(ColorTokens.primary(this.isDarkMode))
+            Text('N').fontSize(FontScale.BRAND).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           }
           .margin({ top: 80 })
 
           Text('NEU Share')
-            .fontSize(30).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textPrimary(this.isDarkMode)).letterSpacing(4)
+            .fontSize(FontScale.DISPLAY).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textPrimary(this.isDarkMode)).letterSpacing(4)
             .margin({ top: 24 })
 
           Text('东北大学软件学院')
-            .fontSize(14).fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode)).letterSpacing(6)
+            .fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode)).letterSpacing(6)
             .margin({ top: 10 })
 
           // Form
           Column() {
             TextInput({ text: this.username, placeholder: '用户名 / 学号' })
-              .fontSize(16).width('100%').height(52)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
-              .padding({ left: 16 })
-              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 12 })
+              .fontSize(FontScale.SUBTITLE).width('100%').height(ControlSize.INPUT)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
+              .padding({ left: Spacing.LG })
+              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
               .onChange((value: string) => { this.username = value; })
 
             TextInput({ text: this.password, placeholder: '密码' })
-              .fontSize(16).width('100%').height(52)
+              .fontSize(FontScale.SUBTITLE).width('100%').height(ControlSize.INPUT)
               .type(InputType.Password)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
-              .padding({ left: 16 }).margin({ top: 12 })
-              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 12 })
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
+              .padding({ left: Spacing.LG }).margin({ top: Spacing.MD })
+              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
               .onChange((value: string) => { this.password = value; })
 
             // 记住密码
             Row() {
-              Text(this.rememberPwd ? '☑' : '☐')
-                .fontSize(16).fontColor(this.rememberPwd ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textDisabled(this.isDarkMode))
-                .onClick(() => { this.rememberPwd = !this.rememberPwd; })
-              Text(' 记住密码')
-                .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode))
+              Text(this.rememberPwd ? '已记住' : '记住密码')
+                .fontSize(FontScale.CAPTION)
+                .fontColor(this.rememberPwd ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
+                .padding({ left: Spacing.SM, right: Spacing.SM, top: Spacing.XXS, bottom: Spacing.XXS })
+                .borderRadius(Radii.SM)
+                .backgroundColor(this.rememberPwd ? ColorTokens.bgInput(this.isDarkMode) : ColorTokens.TRANSPARENT)
                 .onClick(() => { this.rememberPwd = !this.rememberPwd; })
               Blank()
             }
-            .width('100%').margin({ top: 10 })
+            .width('100%').margin({ top: Spacing.SM })
 
             if (this.errorMsg) {
-              Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.error(this.isDarkMode)).margin({ top: 10 })
+              Text(this.errorMsg).fontSize(FontScale.CAPTION).fontColor(ColorTokens.error(this.isDarkMode)).margin({ top: Spacing.SM })
             }
 
             Button(this.isLoading ? '登录中...' : '登 录')
-              .width('100%').height(52)
-              .fontSize(16).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
-              .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
-              .margin({ top: 24 })
+              .width('100%').height(ControlSize.BUTTON)
+              .fontSize(FontScale.BODY).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+              .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(Radii.BUTTON)
+              .margin({ top: Spacing.XL })
               .enabled(!this.isLoading)
               .scale({ x: this.btnPressed ? 0.96 : 1, y: this.btnPressed ? 0.96 : 1 })
               .animation({ curve: Curve.EaseOut, duration: 200 })
@@ -157,14 +158,15 @@ struct LoginPage {
               })
               .onClick(() => { this.doLogin(); })
 
-            Text('还没有账号？立即注册 →')
-              .fontSize(14).fontWeight(FontWeight.Medium).fontColor(ColorTokens.primary(this.isDarkMode))
-              .margin({ top: 22 })
+            Text('还没有账号？立即注册')
+              .fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Medium).fontColor(ColorTokens.primary(this.isDarkMode))
+              .height(ControlSize.BUTTON)
+              .margin({ top: Spacing.MD })
               .onClick(() => { router.pushUrl({ url: 'pages/RegisterPage' }); })
 
             Text('跳过登录，离线使用')
-              .fontSize(13).fontWeight(FontWeight.Medium).fontColor(ColorTokens.textDisabled(this.isDarkMode))
-              .margin({ top: 16 })
+              .fontSize(FontScale.CAPTION).fontWeight(FontWeight.Medium).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+              .height(ControlSize.BUTTON)
               .onClick(() => { router.replaceUrl({ url: 'pages/Index' }); })
           }
           .width('100%').padding(24)

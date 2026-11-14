@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { AuthStore, ColorTokens } from '@neushare/common';
+import { AuthStore, ColorTokens, FontScale, Radii } from '@neushare/common';
 import { Context } from '@ohos.abilityAccessCtrl';
 
 @Entry
@@ -96,12 +96,12 @@ struct SplashPage {
         // 正在验证 token（通常 <1秒），显示极简 loading
         Column() {
           Stack({ alignContent: Alignment.Center }) {
-            Column().width(60).height(60).borderRadius(30)
+            Column().width(60).height(60).borderRadius(Radii.PILL)
               .backgroundColor(ColorTokens.primary(this.isDarkMode))
-            Text('N').fontSize(30).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+            Text('N').fontSize(FontScale.DISPLAY).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           }
           Text('加载中...')
-            .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16 })
+            .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16 })
         }
         .width('100%').height('100%')
         .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center)
@@ -109,27 +109,27 @@ struct SplashPage {
         // 未登录 → 播完整动画
         Column() {
           Stack({ alignContent: Alignment.Center }) {
-            Column().width(80).height(80).borderRadius(40)
+            Column().width(80).height(80).borderRadius(Radii.PILL)
               .backgroundColor(ColorTokens.primary(this.isDarkMode))
-            Text('N').fontSize(40).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+            Text('N').fontSize(FontScale.ICON_XL).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           }
           .scale({ x: this.logoScale, y: this.logoScale })
           .opacity(this.logoOpacity)
 
           Text('NEU Share')
-            .fontSize(34).fontWeight(FontWeight.Bolder)
+            .fontSize(FontScale.DISPLAY_LG).fontWeight(FontWeight.Bolder)
             .fontColor(ColorTokens.textPrimary(this.isDarkMode)).letterSpacing(4)
             .opacity(this.titleOpacity).translate({ y: this.titleY })
             .margin({ top: 28 })
 
           Text('东北大学 · 软件学院')
-            .fontSize(15).fontWeight(FontWeight.Bold)
+            .fontSize(FontScale.BODY).fontWeight(FontWeight.Bold)
             .fontColor(ColorTokens.primary(this.isDarkMode)).letterSpacing(8)
             .opacity(this.subOpacity).translate({ y: this.subY })
             .margin({ top: 14 })
 
           Text('学习资源 · 课程推荐 · 考研指南')
-            .fontSize(13).fontWeight(FontWeight.Medium)
+            .fontSize(FontScale.CAPTION).fontWeight(FontWeight.Medium)
             .fontColor(ColorTokens.textSecondary(this.isDarkMode)).letterSpacing(2)
             .opacity(this.tagOpacity)
             .margin({ top: 36 })
@@ -139,7 +139,7 @@ struct SplashPage {
         .opacity(this.pageOpacity)
 
         Text('NEU · Software College')
-          .fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode)).letterSpacing(3)
+          .fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).letterSpacing(3)
           .position({ x: '50%', y: '93%' }).translate({ x: '-50%', y: 0 })
           .opacity(this.subOpacity)
       }

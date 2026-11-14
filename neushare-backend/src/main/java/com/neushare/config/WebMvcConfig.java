@@ -1,6 +1,7 @@
 package com.neushare.config;
 
 import com.neushare.interceptor.JwtInterceptor;
+import com.neushare.interceptor.OptionalJwtInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +17,43 @@ import java.io.File;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    /**
+     * 完全公开、无需识别访问者身份的路径
+     */
+    private static final String[] PUBLIC_PATHS = {
+            "/api/auth/login",
+            "/api/auth/register",
+            "/api/banner/list",
+            "/api/category/list",
+            "/api/form-card/current",
+            "/api/stats/overview",
+            "/api/resource/hot",
+            "/api/post/hot",
+            "/files/**",
+            "/error"
+    };
+
+    /**
+     * 公开但需要识别访问者身份的路径：带了有效 Token 就解析出 userId/role，
+     * 没带也放行。资源/帖子的"所有者可查看未发布内容"依赖这里写入的属性。
+     */
+    private static final String[] OPTIONAL_AUTH_PATHS = {
+            "/api/resource/list",
+            "/api/resource/detail/**",
+            "/api/resource/search",
+            "/api/post/list",
+            "/api/post/detail/**",
+            "/api/comment/list/**",
+            "/api/post/comment/list/**",
+            "/api/user/*",
+            "/api/user/*/resources"
+    };
+
     @Autowired
     private JwtInterceptor jwtInterceptor;
+
+    @Autowired
+    private OptionalJwtInterceptor optionalJwtInterceptor;
 
     @Value("${file.upload.path:uploads}")
     private String uploadPath;
@@ -27,29 +63,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 可选登录：先于强制登录执行，只做身份解析，不做拦截
+        registry.addInterceptor(optionalJwtInterceptor)
+                .addPathPatterns(OPTIONAL_AUTH_PATHS)
+                .order(0);
+
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns(
-                        "/api/auth/login",
-                        "/api/auth/register",
-                        "/api/resource/list",
-                        "/api/resource/hot",
-                        "/api/resource/detail/**",
-                        "/api/resource/search",
-                        "/api/banner/list",
-                        "/api/comment/list/**",
-                        "/api/category/list",
-                        "/api/form-card/current",
-                        "/api/stats/overview",
-                        "/api/user/*/resources",
-                        "/api/user/*",
-                        "/api/post/list",
-                        "/api/post/hot",
-                        "/api/post/detail/**",
-                        "/api/post/comment/list/**",
-                        "/files/**",
-                        "/error"
-                );
+                .excludePathPatterns(PUBLIC_PATHS)
+                .excludePathPatterns(OPTIONAL_AUTH_PATHS)
+                .order(1);
     }
 
     /**

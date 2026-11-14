@@ -1,34 +1,40 @@
 <template>
-  <div class="login-page">
-    <div class="login-left">
-      <div class="left-content">
-        <div class="brand">
-          <div class="brand-icon">
-            <el-icon :size="22"><Reading /></el-icon>
+  <div class="auth-page">
+    <aside class="auth-aside">
+      <div class="auth-aside__inner">
+        <div class="auth-brand">
+          <div class="auth-brand__mark">
+            <el-icon :size="18"><Reading /></el-icon>
           </div>
-          <span class="brand-text">NeuShare</span>
+          <span class="auth-brand__text">NeuShare</span>
         </div>
-        <h1 class="left-title">校园资料<br>共享平台</h1>
-        <p class="left-desc">发现、分享、交流——让学习更高效</p>
+        <h1 class="auth-title">校园资料<br>共享平台</h1>
+        <p class="auth-desc">发现、分享、交流，让每一次复习都有据可依。</p>
+        <ul class="auth-points">
+          <li>覆盖各年级各学期课程资料</li>
+          <li>分类检索，快速定位所需内容</li>
+          <li>评论、收藏，与同学一起完善笔记</li>
+        </ul>
       </div>
-    </div>
-    <div class="login-right">
-      <div class="login-container">
-        <h2>欢迎回来</h2>
-        <p class="login-subtitle">请输入您的账号信息</p>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <h2 class="auth-card__title">欢迎回来</h2>
+        <p class="auth-card__subtitle">请输入您的账号信息</p>
 
         <el-form
           ref="loginFormRef"
           :model="loginForm"
           :rules="loginRules"
-          class="login-form"
+          class="auth-form"
+          label-position="top"
           @submit.prevent="handleLogin"
         >
           <el-form-item prop="username">
             <el-input
               v-model="loginForm.username"
               placeholder="请输入学号"
-              size="large"
               prefix-icon="User"
             />
           </el-form-item>
@@ -38,7 +44,6 @@
               v-model="loginForm.password"
               type="password"
               placeholder="请输入密码"
-              size="large"
               prefix-icon="Lock"
               show-password
             />
@@ -53,7 +58,7 @@
               type="primary"
               size="large"
               :loading="loading"
-              class="login-btn"
+              class="auth-submit"
               @click="handleLogin"
             >
               登录
@@ -61,12 +66,12 @@
           </el-form-item>
         </el-form>
 
-        <div class="login-footer">
+        <div class="auth-footer">
           <span>还没有账号？</span>
           <router-link to="/register">立即注册</router-link>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -118,119 +123,173 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-page {
-  min-height: calc(100vh - 64px);
+.auth-page {
+  min-height: calc(100vh - var(--header-height));
   display: flex;
+  background: var(--bg-base);
 }
 
-.login-left {
-  flex: 1;
-  background:
-    radial-gradient(ellipse at 30% 50%, rgba(200, 164, 78, 0.06) 0%, transparent 60%),
-    var(--bg-base);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  border-right: 1px solid var(--border-subtle);
-}
-
-.left-content {
-  max-width: 380px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 40px;
-}
-
-.brand-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-}
-
-.brand-text {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.left-title {
-  font-size: 44px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-  line-height: 1.15;
-  letter-spacing: -0.04em;
-}
-
-.left-desc {
-  font-size: 16px;
-  color: var(--text-muted);
-}
-
-.login-right {
+.auth-aside {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: var(--space-10) var(--space-8);
   background: var(--bg-deep);
+  border-right: 1px solid var(--border-default);
 }
 
-.login-container {
-  width: 100%;
+.auth-aside__inner {
   max-width: 380px;
 }
 
-.login-container h2 {
-  font-size: 26px;
-  font-weight: 700;
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+}
+
+.auth-brand__mark {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverse);
+}
+
+.auth-brand__text {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
-  margin-bottom: 6px;
   letter-spacing: -0.02em;
 }
 
-.login-subtitle {
-  color: var(--text-muted);
-  font-size: 15px;
-  margin-bottom: 36px;
+.auth-title {
+  font-size: var(--text-display);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
 }
 
-.login-btn {
+.auth-desc {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-7);
+}
+
+.auth-points {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.auth-points li {
+  position: relative;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.auth-points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-8);
+  background: var(--bg-base);
+}
+
+.auth-card {
   width: 100%;
-  font-weight: 600;
+  max-width: 380px;
 }
 
-.login-footer {
+.auth-card__title {
+  font-size: var(--heading-2);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.auth-card__subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-7);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-form :deep(.el-form-item) {
+  margin-bottom: var(--space-5);
+}
+
+.auth-submit {
+  width: 100%;
+  font-weight: var(--font-semibold);
+}
+
+.auth-footer {
   text-align: center;
-  margin-top: 28px;
-  color: var(--text-muted);
-  font-size: 14px;
+  margin-top: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
-.login-footer a {
+.auth-footer a {
   color: var(--accent);
-  text-decoration: none;
-  margin-left: 4px;
-  font-weight: 500;
+  margin-left: var(--space-1);
+  font-weight: var(--font-medium);
 }
 
-.login-footer a:hover {
-  color: var(--accent-light);
+.auth-footer a:hover {
+  color: var(--accent-dim);
 }
 
-@media (max-width: 768px) {
-  .login-left {
+@media (max-width: 900px) {
+  .auth-aside {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .auth-title {
+    font-size: var(--text-3xl);
+  }
+}
+
+@media (max-width: 767px) {
+  .auth-page {
+    min-height: calc(100vh - var(--header-height));
+  }
+
+  .auth-aside {
     display: none;
+  }
+
+  .auth-main {
+    padding: var(--space-8) var(--space-4);
+    align-items: flex-start;
   }
 }
 </style>

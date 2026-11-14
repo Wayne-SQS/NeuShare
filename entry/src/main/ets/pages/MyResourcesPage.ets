@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale, Radii, Spacing, ControlSize, Elevation, GridLayout, PageScaffold, StateView, ViewState } from '@neushare/common';
 import { ResourceApi } from '../api/ResourceApi';
 import { ResourceVO, adaptResource, ResourceItem } from '../models/ResourceModel';
 import promptAction from '@ohos.promptAction';
@@ -10,6 +10,7 @@ struct MyResourcesPage {
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
   @State resources: ResourceItem[] = [];
   @State isLoading: boolean = false;
+  @State loadFailed: boolean = false;
   @State showDeleteDialog: boolean = false;
   @State deleteTargetId: number = 0;
   @State deleteTargetTitle: string = '';
@@ -21,15 +22,18 @@ struct MyResourcesPage {
 
   async loadResources(): Promise<void> {
     this.isLoading = true;
+    this.loadFailed = false;
     try {
       const resp = await this.resourceApi.getUserResources();
       if (resp.code === 200 && resp.data) {
         this.resources = (resp.data.records || []).map(vo => adaptResource(vo));
       } else {
         promptAction.showToast({ message: '加载失败: ' + (resp.message || '') });
+        this.loadFailed = true;
       }
     } catch (e) {
       promptAction.showToast({ message: '无法连接服务器' });
+      this.loadFailed = true;
     }
     this.isLoading = false;
   }
@@ -65,115 +69,124 @@ struct MyResourcesPage {
 
   getStatusColor(status: number): string {
     switch (status) {
-      case 1: return '#4CAF50';
-      case 2: return '#F44336';
-      default: return '#FF9800';
+      case 1: return ColorTokens.STATUS_SUCCESS_LIGHT;
+      case 2: return ColorTokens.ERROR_LIGHT;
+      default: return ColorTokens.STATUS_WARNING_LIGHT;
     }
   }
 
   build() {
     Stack() {
-      Column() {
-        // Header
+      PageScaffold({ title: '我的资源' }) {
+        Column() {
+        // 操作行
         Row() {
-          Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-            .onClick(() => { router.back(); })
-          Text('我的资源').fontSize(18).fontWeight(FontWeight.Bolder)
-            .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
+          Text('共 ' + this.resources.length.toString() + ' 个资源')
+            .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode))
           Blank()
-          Text('+ 上传').fontSize(14).fontWeight(FontWeight.Bold)
-            .fontColor(ColorTokens.primary(this.isDarkMode))
+          Text('上传资源')
+            .fontSize(FontScale.CAPTION).fontColor(ColorTokens.primary(this.isDarkMode))
+            .height(ControlSize.TOUCH).padding({ left: Spacing.MD, right: Spacing.MD })
+            .textAlign(TextAlign.Center)
             .onClick(() => { router.pushUrl({ url: 'pages/UploadPage' }); })
         }
-        .width('100%').height(52).padding({ left: 24, right: 24 }).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+        .width('100%').padding({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM })
 
         if (this.isLoading) {
-          Column() { Text('加载中...').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)) }
-            .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
+          StateView({ state: ViewState.LOADING, message: '正在加载我的资源' })
+        } else if (this.loadFailed) {
+          StateView({
+            state: ViewState.ERROR,
+            message: '加载失败',
+            hint: '请检查网络后重试',
+            onRetry: () => { this.loadResources(); }
+          })
         } else if (this.resources.length === 0) {
-          Column() {
-            Text('📦').fontSize(48).margin({ bottom: 16 })
-            Text('还没有上传过资源').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode))
-            Text('点击右上角上传你的第一个资源').fontSize(13).fontColor(ColorTokens.textDisabled(this.isDarkMode))
-              .margin({ top: 8 })
-          }
-          .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
+          StateView({
+            state: ViewState.EMPTY,
+            message: '还没有上传过资源',
+            hint: '点击上方「上传资源」开始分享'
+          })
         } else {
-          List() {
+          GridRow({
+            columns: { xs: 1, sm: 1, md: 2, lg: 3, xl: 4 },
+            gutter: { x: Spacing.SM, y: Spacing.SM },
+            breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+          }) {
             ForEach(this.resources, (item: ResourceItem) => {
-              ListItem() {
-                Row() {
-                  Column() {
-                    Row() {
-                      Text(item.title).fontSize(15).fontWeight(FontWeight.Bold)
-                        .fontColor(ColorTokens.textPrimary(this.isDarkMode)).maxLines(1)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
-                      Text(this.getStatusLabel(item.status))
-                        .fontSize(10).fontColor('#FFFFFF')
-                        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                        .backgroundColor(this.getStatusColor(item.status)).borderRadius(4)
-                        .margin({ left: 8 })
-                    }.width('100%')
-                    Text(item.description || '暂无描述').fontSize(12)
-                      .fontColor(ColorTokens.textSecondary(this.isDarkMode)).maxLines(2)
-                      .textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%')
-                      .margin({ top: 6 })
-                    Row() {
-                      Text(item.publishDate || '').fontSize(11)
-                        .fontColor(ColorTokens.textDisabled(this.isDarkMode))
-                      if (item.likeCount > 0) {
-                        Text(' 👍 ' + item.likeCount).fontSize(11)
-                          .fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 8 })
-                      }
-                    }.margin({ top: 6 })
-                  }.layoutWeight(1)
-
-                  Text('删除').fontSize(13).fontColor(ColorTokens.TEXT_WHITE)
-                    .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                    .backgroundColor('#F44336').borderRadius(8)
-                    .onClick(() => { this.confirmDelete(item.id, item.title); })
+              GridCol({ span: 1 }) {
+                Column() {
+                  Row() {
+                    Text(item.title).fontSize(FontScale.BODY).fontWeight(FontWeight.Bold)
+                      .fontColor(ColorTokens.textPrimary(this.isDarkMode)).maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
+                    Text(this.getStatusLabel(item.status))
+                      .fontSize(FontScale.TINY).fontColor(ColorTokens.TEXT_WHITE)
+                      .padding({ left: Spacing.XS, right: Spacing.XS, top: Spacing.XXS, bottom: Spacing.XXS })
+                      .backgroundColor(this.getStatusColor(item.status)).borderRadius(Radii.XS)
+                      .margin({ left: Spacing.SM })
+                  }.width('100%')
+                  Text(item.description || '暂无描述').fontSize(FontScale.LABEL)
+                    .fontColor(ColorTokens.textSecondary(this.isDarkMode)).maxLines(2)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%')
+                    .margin({ top: Spacing.XS })
+                  Row() {
+                    Text(item.publishDate || '').fontSize(FontScale.MICRO)
+                      .fontColor(ColorTokens.textDisabled(this.isDarkMode))
+                    if (item.likeCount > 0) {
+                      Text('赞 ' + item.likeCount).fontSize(FontScale.MICRO)
+                        .fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: Spacing.SM })
+                    }
+                    Blank()
+                    Text('删除').fontSize(FontScale.CAPTION).fontColor(ColorTokens.error(this.isDarkMode))
+                      .height(ControlSize.BUTTON).padding({ left: Spacing.MD, right: Spacing.MD })
+                      .textAlign(TextAlign.Center)
+                      .onClick(() => { this.confirmDelete(item.id, item.title); })
+                  }.width('100%').margin({ top: Spacing.XS })
                 }
-                .width('100%').padding(16)
-                .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-                .margin({ left: 24, right: 24, top: 8 })
+                .width('100%').padding(Spacing.CARD)
+                .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
+                .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
+                .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
                 .onClick(() => {
                   router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } });
                 })
               }
             }, (item: ResourceItem) => item.id.toString())
           }
-          .width('100%').layoutWeight(1).margin({ top: 8 })
-          .divider({ strokeWidth: 0 })
+          .width('100%')
+          .padding({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM, bottom: Spacing.HUGE })
         }
+        }
+        .width('100%')
       }
-      .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
 
       // Delete confirmation dialog
       if (this.showDeleteDialog) {
         Column() {
           Column() {
-            Text('确认删除').fontSize(18).fontWeight(FontWeight.Bold)
+            Text('确认删除').fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold)
               .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ bottom: 12 })
             Text('确定要删除「' + this.deleteTargetTitle + '」吗？')
-              .fontSize(14).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ bottom: 8 })
-            Text('删除后无法恢复').fontSize(12).fontColor(ColorTokens.error(this.isDarkMode)).margin({ bottom: 20 })
+              .fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ bottom: 8 })
+            Text('删除后无法恢复').fontSize(FontScale.LABEL).fontColor(ColorTokens.error(this.isDarkMode)).margin({ bottom: 20 })
             Row() {
-              Text('取消').fontSize(14).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('取消').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                 .layoutWeight(1).height(40).textAlign(TextAlign.Center)
-                .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+                .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
                 .onClick(() => { this.showDeleteDialog = false; })
-              Text('删除').fontSize(14).fontColor(ColorTokens.TEXT_WHITE)
+              Text('删除').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.TEXT_WHITE)
                 .layoutWeight(1).height(40).textAlign(TextAlign.Center)
-                .backgroundColor('#F44336').borderRadius(10)
+                .backgroundColor(ColorTokens.ERROR_LIGHT).borderRadius(Radii.LG)
                 .margin({ left: 12 })
                 .onClick(() => { this.deleteResource(); })
             }.width('100%')
           }
           .width('80%').padding(24)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(16)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.XXL)
         }
         .width('100%').height('100%')
-        .backgroundColor('#66000000')
+        .backgroundColor(ColorTokens.OVERLAY)
         .justifyContent(FlexAlign.Center)
         .onClick(() => { this.showDeleteDialog = false; })
       }

@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, FontScale, Spacing, EmptyState } from '@neushare/common';
 import { SearchBar } from '../../components/SearchBar';
 
 @Component
@@ -16,34 +16,20 @@ export struct SearchTab {
     return new BpType<number>({ sm: 9999, md: 576, lg: 656, xl: 900 }).getValue(this.currentBreakpoint) ?? 9999;
   }
 
-  private contentPadding(): number {
-    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 44 }).getValue(this.currentBreakpoint) ?? 24;
-  }
-
-  private hintIconSize(): number {
-    return new BpType<number>({ sm: 48, md: 56, lg: 68, xl: 88 }).getValue(this.currentBreakpoint) ?? 48;
-  }
-
-  private hintTitleSize(): number {
-    return new BpType<number>({ sm: 16, md: 18, lg: 22, xl: 30 }).getValue(this.currentBreakpoint) ?? 16;
-  }
-
-  private hintDescSize(): number {
-    return new BpType<number>({ sm: 13, md: 14, lg: 16, xl: 20 }).getValue(this.currentBreakpoint) ?? 13;
-  }
-
   build() {
     Column() {
       Column() {
         SearchBar({
           placeholder: '搜索资源、标签、作者...',
           onSearch: (keyword: string) => { router.pushUrl({ url: 'pages/SearchPage', params: { keyword: keyword } }); }
-        }).margin({ top: 8, left: this.contentPadding(), right: this.contentPadding() })
+        }).margin({ top: Spacing.SM, left: Spacing.PAGE, right: Spacing.PAGE })
 
         Column() {
-          Text('🔍').fontSize(this.hintIconSize())
-          Text('输入关键词搜索').fontSize(this.hintTitleSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
-          Text('支持搜索标题、标签、描述、作者').fontSize(this.hintDescSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
+          EmptyState({
+            icon: '',
+            message: '输入关键词搜索',
+            hint: '支持搜索标题、标签、描述、作者'
+          })
         }
         .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       }

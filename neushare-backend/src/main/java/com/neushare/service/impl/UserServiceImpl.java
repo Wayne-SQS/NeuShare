@@ -49,13 +49,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private ResourceMapper resourceMapper;
 
+    @Autowired
+    private PostMapper postMapper;
+
+    @Autowired
+    private PostCommentMapper postCommentMapper;
+
+    @Autowired
+    private PostCommentLikeMapper postCommentLikeMapper;
+
+    @Autowired
+    private PostLikeMapper postLikeMapper;
+
+    @Autowired
+    private PostFavoriteMapper postFavoriteMapper;
+
+    @Autowired
+    private NotificationMapper notificationMapper;
+
     @Override
     public User login(LoginDTO loginDTO) {
         User user = getByUsername(loginDTO.getUsername());
         if (user == null || !BCryptUtil.verify(loginDTO.getPassword(), user.getPassword())) {
             throw new BusinessException("用户名或密码错误");
         }
-        if (user.getStatus() == 0) {
+        if (user.getStatus() != null && user.getStatus() == 0) {
             throw new BusinessException("账号已被禁用");
         }
         return user;
@@ -128,16 +146,44 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             resourceLikeMapper.delete(new LambdaQueryWrapper<ResourceLike>().eq(ResourceLike::getResourceId, resource.getId()));
             resourceMapper.deleteById(resource.getId());
         }
-        // 2. 删除用户的所有评论
+        // 2. 删除用户发布的帖子及其评论、评论点赞、点赞、收藏
+        List<Post> posts = postMapper.selectList(
+                new LambdaQueryWrapper<Post>().eq(Post::getUserId, id));
+        for (Post post : posts) {
+            List<PostComment> postComments = postCommentMapper.selectList(
+                    new LambdaQueryWrapper<PostComment>().eq(PostComment::getPostId, post.getId()));
+            for (PostComment pc : postComments) {
+                postCommentLikeMapper.delete(
+                        new LambdaQueryWrapper<PostCommentLike>().eq(PostCommentLike::getCommentId, pc.getId()));
+            }
+            postCommentMapper.delete(new LambdaQueryWrapper<PostComment>().eq(PostComment::getPostId, post.getId()));
+            postLikeMapper.delete(new LambdaQueryWrapper<PostLike>().eq(PostLike::getPostId, post.getId()));
+            postFavoriteMapper.delete(new LambdaQueryWrapper<PostFavorite>().eq(PostFavorite::getPostId, post.getId()));
+            postMapper.deleteById(post.getId());
+        }
+        // 3. 删除用户在他人内容下留下的评论、点赞、收藏
+        List<PostComment> ownPostComments = postCommentMapper.selectList(
+                new LambdaQueryWrapper<PostComment>().eq(PostComment::getUserId, id));
+        for (PostComment pc : ownPostComments) {
+            postCommentLikeMapper.delete(
+                    new LambdaQueryWrapper<PostCommentLike>().eq(PostCommentLike::getCommentId, pc.getId()));
+        }
+        postCommentMapper.delete(new LambdaQueryWrapper<PostComment>().eq(PostComment::getUserId, id));
+        postCommentLikeMapper.delete(new LambdaQueryWrapper<PostCommentLike>().eq(PostCommentLike::getUserId, id));
+        postLikeMapper.delete(new LambdaQueryWrapper<PostLike>().eq(PostLike::getUserId, id));
+        postFavoriteMapper.delete(new LambdaQueryWrapper<PostFavorite>().eq(PostFavorite::getUserId, id));
+        // 4. 删除用户的所有评论、收藏
         commentMapper.delete(new LambdaQueryWrapper<Comment>().eq(Comment::getUserId, id));
-        // 3. 删除用户的所有收藏
         favoriteMapper.delete(new LambdaQueryWrapper<Favorite>().eq(Favorite::getUserId, id));
-        // 4. 删除用户的所有关注关系
+        // 5. 删除用户的所有关注关系
         followMapper.delete(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowerId, id)
                 .or().eq(Follow::getFollowedId, id));
-        // 5. 删除用户的所有点赞
+        // 6. 删除用户的所有资源点赞
         resourceLikeMapper.delete(new LambdaQueryWrapper<ResourceLike>().eq(ResourceLike::getUserId, id));
-        // 6. 删除用户
+        // 7. 删除与用户相关的通知（收到的和触发的）
+        notificationMapper.delete(new LambdaQueryWrapper<Notification>().eq(Notification::getUserId, id)
+                .or().eq(Notification::getFromUserId, id));
+        // 8. 删除用户
         removeById(id);
     }
 }

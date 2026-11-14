@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale } from '@neushare/common';
 import { ModelCompare } from '../components/ModelCompare';
 
 @Entry
@@ -15,10 +15,10 @@ struct ModelComparePage {
   build() {
     Column() {
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Text('AI 模型价格对比')
-          .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+          .fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .layoutWeight(1).textAlign(TextAlign.Center).margin({ right: 24 })
       }
       .width('100%').height(52).padding({ left: 24, right: 24 })

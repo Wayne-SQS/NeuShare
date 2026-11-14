@@ -1,4 +1,4 @@
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale, Radii, Spacing, ControlSize } from '@neushare/common';
 
 @Component
 export struct SearchBar {
@@ -10,28 +10,27 @@ export struct SearchBar {
 
   build() {
     Row() {
-      Text('🔍').fontSize(17).margin({ left: 16 })
-
       TextInput({ placeholder: this.placeholder, text: this.inputValue })
-        .fontSize(16).fontWeight(FontWeight.Medium).layoutWeight(1).height(52)
-        .backgroundColor(Color.Transparent).borderRadius(0)
+        .fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Medium).layoutWeight(1).height(ControlSize.BUTTON_LG)
+        .backgroundColor(Color.Transparent).borderRadius(Radii.NONE)
+        .padding({ left: Spacing.LG, right: Spacing.LG })
         .onSubmit(() => { this.onSearch(this.inputValue); })
         .onChange((value: string) => { this.inputValue = value; })
         .onFocus(() => { this.focused = true; })
         .onBlur(() => { this.focused = false; })
 
       if (this.inputValue.length > 0) {
-        Text('✕')
-          .fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode))
-          .margin({ right: 14 })
+        Text('清除')
+          .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode))
+          .margin({ right: Spacing.MD })
           .onClick(() => { this.inputValue = ''; this.onSearch(''); })
       }
     }
-    .width('100%').height(52)
+    .width('100%').height(ControlSize.BUTTON_LG)
     .backgroundColor(ColorTokens.bgInput(this.isDarkMode))
-    .borderRadius(26)
-    .border({ width: this.focused ? 1.5 : 0, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30'), radius: 26 })
-    .shadow({ radius: this.focused ? 8 : 3, color: this.focused ? '#12000000' : '#06000000', offsetX: 0, offsetY: 1 })
+    .borderRadius(Radii.PILL)
+    .border({ width: this.focused ? 1 : 0, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30'), radius: Radii.PILL })
+    .shadow({ radius: this.focused ? 8 : 3, color: this.focused ? ColorTokens.SHADOW_CARD_LIGHT : ColorTokens.SHADOW_SOFT_LIGHT, offsetX: 0, offsetY: 1 })
     .animation({ curve: Curve.EaseOut, duration: 150 })
   }
 }

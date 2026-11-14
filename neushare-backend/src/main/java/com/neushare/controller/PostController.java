@@ -39,10 +39,19 @@ public class PostController {
     }
 
     @GetMapping("/detail/{id}")
-    public Result<PostVO> getPostDetail(@PathVariable Long id) {
+    public Result<PostVO> getPostDetail(@PathVariable Long id, HttpServletRequest request) {
         PostVO postVO = postService.getPostDetail(id);
         if (postVO == null) {
             return Result.error(404, "帖子不存在");
+        }
+        // 公开接口：未发布帖子仅作者和管理员可查看
+        if (postVO.getStatus() != null && postVO.getStatus() != 1) {
+            Long currentUserId = (Long) request.getAttribute("userId");
+            String role = (String) request.getAttribute("role");
+            boolean isOwner = currentUserId != null && currentUserId.equals(postVO.getUserId());
+            if (!isOwner && !"admin".equals(role)) {
+                return Result.error(404, "帖子不存在");
+            }
         }
         postService.incrementViewCount(id);
         return Result.success(postVO);

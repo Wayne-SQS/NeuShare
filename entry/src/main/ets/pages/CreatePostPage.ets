@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale, Radii } from '@neushare/common';
 import { CommunityService } from '../services/CommunityService';
 import { PostFile, formatFileSize, fileIcon } from '../models/PostModel';
 import { PostApi } from '../api/PostApi';
@@ -181,16 +181,16 @@ struct CreatePostPage {
     Column() {
       // Header
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Blank()
-        Text(this.isEditing ? '编辑帖子' : '发布帖子').fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text(this.isEditing ? '编辑帖子' : '发布帖子').fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
         Blank()
         Text(this.isEditing ? '保存' : '发布')
-          .fontSize(15).fontWeight(FontWeight.Bold)
+          .fontSize(FontScale.BODY).fontWeight(FontWeight.Bold)
           .fontColor(this.title.trim() && this.content.trim() ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textDisabled(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-          .borderRadius(16)
+          .borderRadius(Radii.XXL)
           .backgroundColor(this.title.trim() && this.content.trim() ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
           .onClick(() => { this.submitPost(); })
       }
@@ -201,7 +201,7 @@ struct CreatePostPage {
         Column() {
           // Title
           TextInput({ text: this.title, placeholder: '帖子标题...' })
-            .fontSize(17).fontWeight(FontWeight.Bold)
+            .fontSize(FontScale.SUBTITLE_MD).fontWeight(FontWeight.Bold)
             .width('100%').height(52)
             .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
             .padding({ left: 24, right: 24 })
@@ -211,7 +211,7 @@ struct CreatePostPage {
 
           // Content
           TextArea({ text: this.content, placeholder: '分享你的学习心得、问题、资源...' })
-            .fontSize(15).lineHeight(22)
+            .fontSize(FontScale.BODY).lineHeight(22)
             .width('100%').height(200)
             .backgroundColor(ColorTokens.bgPage(this.isDarkMode))
             .padding(16)
@@ -222,41 +222,41 @@ struct CreatePostPage {
           // File picker
           Column() {
             Row() {
-              Text('📂').fontSize(16)
-              Text('添加附件').fontSize(14).fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
+              Text('附件').fontSize(FontScale.CAPTION)
+              Text('添加附件').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
               Blank()
-              Text('＋ 选择文件').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+              Text('＋ 选择文件').fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                 .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-                .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(16)
+                .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(Radii.XXL)
                 .onClick(() => { this.pickFiles(); })
             }
             .width('100%').padding({ left: 24, right: 12 })
 
             Text('支持 zip · png · svg · md · docx · xlsx · ppt · pptx · pdf · txt 等')
-              .fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+              .fontSize(FontScale.MICRO).fontColor(ColorTokens.textDisabled(this.isDarkMode))
               .padding({ left: 24 }).margin({ top: 6 })
 
             if (this.files.length > 0) {
               Column() {
                 ForEach(this.files, (file: PostFile, idx: number) => {
                   Row() {
-                    Text(fileIcon(file.type)).fontSize(18)
+                    Text(fileIcon(file.type)).fontSize(FontScale.SECTION)
                     Column() {
                       Text(file.name)
-                        .fontSize(13).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+                        .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                         .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                       Text(file.type.toUpperCase().replace('.', '') + (file.size > 0 ? ' · ' + formatFileSize(file.size) : ''))
-                        .fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 2 })
+                        .fontSize(FontScale.MICRO).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 2 })
                     }
                     .margin({ left: 10 }).layoutWeight(1)
 
-                    Text('✕').fontSize(12).fontColor(ColorTokens.error(this.isDarkMode))
-                      .width(22).height(22).borderRadius(11)
+                    Text('移除').fontSize(FontScale.LABEL).fontColor(ColorTokens.error(this.isDarkMode))
+                      .width(22).height(22).borderRadius(Radii.LG)
                       .backgroundColor(ColorTokens.withAlpha(ColorTokens.error(this.isDarkMode), '15')).textAlign(TextAlign.Center)
                       .onClick(() => { this.removeFile(idx); })
                   }
                   .width('100%').padding(12)
-                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
                   .margin({ top: 6 })
                   .scale({ x: this.fileAnimIds.has(idx) ? 1 : 0.8, y: this.fileAnimIds.has(idx) ? 1 : 0.8 })
                   .opacity(this.fileAnimIds.has(idx) ? 1 : 0)
@@ -274,11 +274,11 @@ struct CreatePostPage {
           // Tags
           Column() {
             Row() {
-              Text('🏷️').fontSize(15)
-              Text('选择标签').fontSize(14).fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 6 })
+              Text('标签').fontSize(FontScale.LABEL)
+              Text('选择标签').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 6 })
               if (this.selectedTags.length > 0) {
                 Text('（已选' + this.selectedTags.length.toString() + '个）')
-                  .fontSize(12).fontColor(ColorTokens.primary(this.isDarkMode)).margin({ left: 4 })
+                  .fontSize(FontScale.LABEL).fontColor(ColorTokens.primary(this.isDarkMode)).margin({ left: 4 })
               }
             }
             .width('100%').padding({ left: 24, right: 24 }).margin({ top: 10 })
@@ -288,9 +288,9 @@ struct CreatePostPage {
               Flex({ wrap: FlexWrap.Wrap }) {
                 ForEach(this.selectedTags, (tag: string) => {
                   Text(tag)
-                    .fontSize(12).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                    .fontSize(FontScale.LABEL).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                     .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                    .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
+                    .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(Radii.XL)
                     .margin({ right: 6, top: 6 })
                     .onClick(() => { this.toggleTag(tag); })
                 })
@@ -302,11 +302,11 @@ struct CreatePostPage {
             Flex({ wrap: FlexWrap.Wrap }) {
               ForEach(PRESET_TAGS, (tag: string) => {
                 Text(tag)
-                  .fontSize(12)
+                  .fontSize(FontScale.LABEL)
                   .fontColor(this.isTagSelected(tag) ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
                   .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                   .backgroundColor(this.isTagSelected(tag) ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
-                  .border({ width: 1, color: this.isTagSelected(tag) ? ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30') : '#00000000', radius: 14 })
+                  .border({ width: 1, color: this.isTagSelected(tag) ? ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30') : ColorTokens.TRANSPARENT, radius: Radii.XL })
                   .margin({ right: 6, top: 6 })
                   .scale({ x: this.tagPulse === tag ? 1.12 : 1, y: this.tagPulse === tag ? 1.12 : 1 })
                   .animation({ curve: Curve.EaseOut, duration: 200 })

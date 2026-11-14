@@ -58,7 +58,7 @@ const BP_THRESHOLDS: [string, number][] = [
   ['sm', 320],
   ['md', 600],
   ['lg', 840],
-  ['xl', 1440]
+  ['xl', 1200]
 ];
 
 /**
@@ -81,7 +81,7 @@ export class BreakpointSystem {
     new BreakpointItem('sm', 320),
     new BreakpointItem('md', 600),
     new BreakpointItem('lg', 840),
-    new BreakpointItem('xl', 1440)
+    new BreakpointItem('xl', 1200)
   ];
   private isRegistered: boolean = false;
 
@@ -111,10 +111,13 @@ export class BreakpointSystem {
     try {
       const mainWindow = await windowStage.getMainWindow();
       // windowRect.width 在 API 22 中是 vp，不调用 display.getDefaultDisplaySync()
-      const w = mainWindow.getWindowProperties().windowRect.width;
+      const rect = mainWindow.getWindowProperties().windowRect;
+      const w = rect.width;
+      const h = rect.height;
       const bp = widthToBreakpoint(w);
       console.info('[BreakpointSystem] detectFromWindow: width=' + w + 'vp → ' + bp);
       AppStorage.setOrCreate<number>('windowVpWidth', w);
+      AppStorage.setOrCreate<number>('windowVpHeight', h);
       this.updateCurrentBreakpoint(bp);
     } catch (e) {
       console.warn('[BreakpointSystem] detectFromWindow failed, will fall back to mediaQuery: ' + JSON.stringify(e));
@@ -126,10 +129,30 @@ export class BreakpointSystem {
    * windowSizeChange 回调的 size.width 自动为 vp 单位，无需转换
    * 同时将原始宽度存入 AppStorage，供侧边栏自适应等组件使用
    */
-  updateFromVpWidth(vpWidth: number): void {
+  updateFromVpWidth(vpWidth: number, vpHeight?: number): void {
     AppStorage.setOrCreate<number>('windowVpWidth', vpWidth);
+    if (vpHeight !== undefined && vpHeight > 0) {
+      AppStorage.setOrCreate<number>('windowVpHeight', vpHeight);
+    }
     const bp = widthToBreakpoint(vpWidth);
     this.updateCurrentBreakpoint(bp);
+  }
+
+  /**
+   * 首屏 hero / 轮播的最大高度（不超过屏幕高度的 1/3）
+   * 高度来源：EntryAbility 的 windowSizeChange 或 detectFromWindow
+   */
+  static heroMaxHeight(fallback: number = 220): number {
+    const h = AppStorage.get<number>('windowVpHeight');
+    if (h === undefined || h <= 0) {
+      return fallback;
+    }
+    return Math.max(120, Math.floor(h / 3));
+  }
+
+  /** 当前断点（大屏判断等场景使用） */
+  static current(): string {
+    return AppStorage.get<string>('currentBreakpoint') ?? BreakpointTypeEnum.SM;
   }
 
   register(): void {

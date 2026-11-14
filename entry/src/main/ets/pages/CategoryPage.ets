@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, BreakpointTypeEnum, FontScale, Radii, Spacing, ControlSize, Elevation, GridLayout, PageHeader, EmptyState, StateView, ViewState } from '@neushare/common';
 import { ResourceService } from '../services/ResourceService';
 import { ResourceItem as ResourceItemModel } from '../models/ResourceModel';
 import { ResourceCard } from '../components/ResourceCard';
@@ -18,10 +18,12 @@ struct CategoryPage {
   @State searchKeyword: string = '';
   @State sortMode: SortMode = 'default';
   @State isLoading: boolean = false;
+  @State loadFailed: boolean = false;
   @State totalCount: number = 0;
   @State appearOpacity: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
+  @StorageLink('topSafeAreaVp') topSafeArea: number = 0;
   private categoryId: number = 1;
   private resourceService: ResourceService = ResourceService.getInstance();
 
@@ -45,6 +47,7 @@ struct CategoryPage {
 
   async loadFromApi(): Promise<void> {
     this.isLoading = true;
+    this.loadFailed = false;
     try {
       const result = await this.resourceService.fetchResourcesByCategory(this.categoryId, 1, 100);
       this.resources = result.items;
@@ -52,6 +55,8 @@ struct CategoryPage {
       this.checkFilters();
     } catch (e) {
       console.error('loadFromApi failed: ' + JSON.stringify(e));
+      // 已有本地兜底数据时不打断浏览，仅标记失败以便重试
+      this.loadFailed = this.resources.length === 0;
     }
     this.isLoading = false;
   }
@@ -111,119 +116,106 @@ struct CategoryPage {
 
   build() {
     Column() {
-      // Header
-      Row() {
-        Text('←')
-          .fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-          .onClick(() => { router.back(); })
-        Column() {
-          Text(this.categoryTitle)
-            .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-          if (this.categoryDesc) {
-            Text(this.categoryDesc)
-              .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-          }
-        }.layoutWeight(1).margin({ left: 12, right: 8 }).alignItems(HorizontalAlign.Start)
-        Text(this.getFilteredResources().length.toString() + '个')
-          .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode))
-      }
-      .width('100%').height(52).padding({ left: 24, right: 24 })
-      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+      PageHeader({
+        title: this.categoryTitle,
+        subtitle: this.categoryDesc,
+        actionText: this.getFilteredResources().length.toString() + ' 个'
+      })
 
       // Search bar
       Row() {
-        Text('🔍').fontSize(14)
         TextInput({ text: this.searchKeyword, placeholder: '搜索' + this.categoryTitle + '资源...' })
-          .fontSize(13).layoutWeight(1).height(36)
-          .backgroundColor('#00000000')
-          .padding({ left: 8 })
+          .fontSize(FontScale.CAPTION).layoutWeight(1).height(ControlSize.BUTTON)
+          .backgroundColor(ColorTokens.TRANSPARENT)
+          .padding({ left: Spacing.SM })
           .onChange((value: string) => { this.searchKeyword = value; })
         if (this.searchKeyword) {
-          Text('✕').fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode))
+          Text('清除').fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode))
+            .height(ControlSize.TOUCH).padding({ left: Spacing.SM, right: Spacing.SM })
+            .textAlign(TextAlign.Center)
             .onClick(() => { this.searchKeyword = ''; })
         }
       }
-      .width('100%').height(44).padding({ left: 24, right: 24 })
+      .width('100%').height(ControlSize.INPUT).padding({ left: Spacing.MD, right: Spacing.MD })
       .backgroundColor(ColorTokens.bgInput(this.isDarkMode))
-      .borderRadius(22)
-      .margin({ left: 24, right: 24, top: 10 })
+      .borderRadius(Radii.INPUT)
+      .margin({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM })
 
-      // Sort + filter row
-      Row() {
-        // Sort chips
-        Scroll() {
-          Row() {
-            SortChip({ label: '默认', active: this.sortMode === 'default',
-              onSort: () => { this.sortMode = 'default'; } })
-            SortChip({ label: '按名称', active: this.sortMode === 'name',
-              onSort: () => { this.sortMode = 'name'; } })
-            SortChip({ label: '按评分', active: this.sortMode === 'rating',
-              onSort: () => { this.sortMode = 'rating'; } })
-            SortChip({ label: '按时间', active: this.sortMode === 'date',
-              onSort: () => { this.sortMode = 'date'; } })
-          }
-        }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).layoutWeight(1)
+      // Sort + tag filters
+      Scroll() {
+        Row() {
+          SortChip({ label: '默认', active: this.sortMode === 'default', onSort: () => { this.sortMode = 'default'; } })
+          SortChip({ label: '按名称', active: this.sortMode === 'name', onSort: () => { this.sortMode = 'name'; } })
+          SortChip({ label: '按评分', active: this.sortMode === 'rating', onSort: () => { this.sortMode = 'rating'; } })
+          SortChip({ label: '按时间', active: this.sortMode === 'date', onSort: () => { this.sortMode = 'date'; } })
 
-        // Tag filter pills — only show if category has tagged resources
-        if (this.showFilters && this.filterTags.length > 0) {
-          Row() {
+          if (this.showFilters && this.filterTags.length > 0) {
             ForEach(this.filterTags, (tag: string, idx: number) => {
               Text(tag)
-                .fontSize(11).fontWeight(this.filterTag === tag ? FontWeight.Bold : FontWeight.Regular)
+                .fontSize(FontScale.MICRO).fontWeight(this.filterTag === tag ? FontWeight.Bold : FontWeight.Regular)
                 .fontColor(this.filterTag === tag ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textPrimary(this.isDarkMode))
-                .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                .padding({ left: Spacing.MD, right: Spacing.MD, top: Spacing.XS, bottom: Spacing.XS })
                 .backgroundColor(this.filterTag === tag ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
-                .borderRadius(16)
-                .margin({ left: 6 })
+                .borderRadius(Radii.SM)
+                .margin({ right: Spacing.SM })
                 .onClick(() => { this.filterTag = tag; })
             }, (tag: string, idx: number) => 'ftag_' + idx.toString())
             if (this.filterTag) {
               Text('全部')
-                .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
-                .padding({ left: 8, right: 8, top: 5, bottom: 5 })
-                .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
-                .margin({ left: 6 })
+                .fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode))
+                .padding({ left: Spacing.MD, right: Spacing.MD, top: Spacing.XS, bottom: Spacing.XS })
+                .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.SM })
+                .margin({ right: Spacing.SM })
                 .onClick(() => { this.filterTag = ''; })
             }
           }
         }
       }
-      .width('100%').padding({ left: 24, right: 24, top: 10, bottom: 6 })
+      .scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off)
+      .width('100%').padding({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM, bottom: Spacing.SM })
 
       // Content
-      if (this.getFilteredResources().length === 0) {
-        Column() {
-          Text(this.searchKeyword ? '🔍' : '📭').fontSize(48).margin({ top: 80 })
-          Text(this.searchKeyword ? '未找到「' + this.searchKeyword + '」相关资源' :
-            (this.filterTag ? '该分类下暂无匹配资源' : '暂无资源'))
-            .fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
-          Text(this.searchKeyword ? '试试其他关键词' :
-            (this.filterTag ? '试试切换其他筛选条件' : '该分类下暂无资源，敬请期待'))
-            .fontSize(13).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
-        }
-        .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
+      if (this.isLoading && this.resources.length === 0) {
+        StateView({ state: ViewState.LOADING, message: '正在加载资源' }).layoutWeight(1)
+      } else if (this.loadFailed) {
+        StateView({
+          state: ViewState.ERROR,
+          message: '资源加载失败',
+          hint: '请检查网络后重试',
+          onRetry: () => { this.loadFromApi(); }
+        }).layoutWeight(1)
+      } else if (this.getFilteredResources().length === 0) {
+        EmptyState({
+          message: this.searchKeyword ? '未找到「' + this.searchKeyword + '」相关资源' :
+            (this.filterTag ? '该分类下暂无匹配资源' : '暂无资源'),
+          hint: this.searchKeyword ? '试试其他关键词' :
+            (this.filterTag ? '试试切换其他筛选条件' : '该分类下暂无资源，敬请期待')
+        }).layoutWeight(1)
       } else {
-        Grid() {
-          ForEach(this.getFilteredResources(), (item: ResourceItemModel) => {
-            GridItem() {
-              ResourceCard({
-                resource: item,
-                onTap: () => {
-                  router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } });
-                }
-              })
-            }
-          }, (item: ResourceItemModel) => item.id.toString())
+        Scroll() {
+          GridRow({
+            columns: { xs: 1, sm: 1, md: 2, lg: 3, xl: 4 },
+            gutter: { x: Spacing.MD, y: Spacing.MD },
+            breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+          }) {
+            ForEach(this.getFilteredResources(), (item: ResourceItemModel) => {
+              GridCol({ span: 1 }) {
+                ResourceCard({
+                  resource: item,
+                  onTap: () => {
+                    router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } });
+                  }
+                })
+              }
+            }, (item: ResourceItemModel) => item.id.toString())
+          }
+          .width('100%').padding({ left: Spacing.PAGE, right: Spacing.PAGE, bottom: Spacing.HUGE })
         }
-        .columnsTemplate(new BpType<string>({ sm: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr')
-        .rowsGap(12)
-        .columnsGap(12)
-        .layoutWeight(1)
-        .margin({ top: 4 })
+        .width('100%').layoutWeight(1).align(Alignment.Top)
       }
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .padding({ top: this.topSafeArea })
     .opacity(this.appearOpacity).animation({ curve: Curve.EaseOut, duration: 200 })
   }
 
@@ -246,12 +238,12 @@ struct SortChip {
 
   build() {
     Text(this.label)
-      .fontSize(12)
+      .fontSize(FontScale.LABEL)
       .fontWeight(this.active ? FontWeight.Bold : FontWeight.Regular)
       .fontColor(this.active ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.active ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
-      .borderRadius(16)
+      .borderRadius(Radii.SM)
       .margin({ right: 8 })
       .onClick(() => { this.onSort(); })
   }

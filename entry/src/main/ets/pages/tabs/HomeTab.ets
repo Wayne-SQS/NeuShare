@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, BlurPerformance } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, BlurPerformance, FontScale, Radii, Spacing, ControlSize, SectionHeader, StateView, ViewState, GridLayout, Elevation } from '@neushare/common';
 import { ResourceService } from '../../services/ResourceService';
 import { CommunityService } from '../../services/CommunityService';
 import { Post } from '../../models/PostModel';
@@ -21,6 +21,7 @@ export struct HomeTab {
   @Prop historyCount: number = 0;
   @State hotResources: ResourceItem[] = [];
   @State hotResourcesLoading: boolean = true;
+  @State hotResourcesFailed: boolean = false;
   @State appearOpacity: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
@@ -36,10 +37,12 @@ export struct HomeTab {
 
   async loadHotResources(): Promise<void> {
     this.hotResourcesLoading = true;
+    this.hotResourcesFailed = false;
     try {
       this.hotResources = await this.resourceService.fetchHotResources(8);
     } catch (e) {
       console.error('loadHotResources failed: ' + JSON.stringify(e));
+      this.hotResourcesFailed = true;
     }
     this.hotResourcesLoading = false;
   }
@@ -73,62 +76,66 @@ export struct HomeTab {
         if (this.recommendedPost) {
           Row() {
             Row() {
-              Text('⚡').fontSize(22)
+              Text('推荐')
+                .fontSize(FontScale.MICRO)
+                .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                .padding({ left: Spacing.SM, right: Spacing.SM, top: Spacing.XXS, bottom: Spacing.XXS })
+                .backgroundColor(ColorTokens.withAlpha(ColorTokens.textOnPrimary(this.isDarkMode), '26'))
+                .borderRadius(Radii.SM)
               Column() {
                 Text(this.recommendedPost.title)
-                  .fontSize(15).fontWeight(FontWeight.Bold)
+                  .fontSize(FontScale.BODY).fontWeight(FontWeight.Bold)
                   .fontColor(ColorTokens.textOnPrimary(this.isDarkMode)).maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                 Text(this.recommendedPost.authorNickname + ' · ' + this.recommendedPost.createTime)
-                  .fontSize(11).fontColor(ColorTokens.withAlpha(ColorTokens.textOnPrimary(this.isDarkMode), 'BB')).margin({ top: 3 })
-              }.layoutWeight(1).margin({ left: 10 })
-              Text('查看 ›').fontSize(12).fontColor(ColorTokens.withAlpha(ColorTokens.textOnPrimary(this.isDarkMode), 'CC')).fontWeight(FontWeight.Medium)
-            }.width('100%').padding(14)
+                  .fontSize(FontScale.MICRO).fontColor(ColorTokens.withAlpha(ColorTokens.textOnPrimary(this.isDarkMode), 'BB')).margin({ top: Spacing.XXS })
+              }.layoutWeight(1).margin({ left: Spacing.MD }).alignItems(HorizontalAlign.Start)
+              Text('查看').fontSize(FontScale.LABEL).fontColor(ColorTokens.withAlpha(ColorTokens.textOnPrimary(this.isDarkMode), 'CC')).fontWeight(FontWeight.Medium)
+            }.width('100%').padding(Spacing.LG)
           }
           .width('100%')
-          .margin({ left: 16, right: 16, top: 8 })
+          .margin({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM })
           .linearGradient({ direction: GradientDirection.Right, colors: [[ColorTokens.primary(this.isDarkMode), 0], [ColorTokens.ACCENT_TEAL_LIGHT, 1]] })
-          .borderRadius(14)
-          .shadow({ radius: 8, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30'), offsetX: 0, offsetY: 3 })
+          .borderRadius(Radii.CARD)
+          .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '30'), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
           .onClick(() => { router.pushUrl({ url: 'pages/CommunityPage' }); })
         }
 
         // Community entry
         Row() {
           Row() {
-            Text('💬').fontSize(22)
+            Row().width(3).height(ControlSize.ICON).borderRadius(Radii.XXS).backgroundColor(ColorTokens.primary(this.isDarkMode))
             Column() {
-              Text('学习社区').fontSize(14).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('发帖 · 讨论 · 推荐').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
-            }.margin({ left: 10 })
+              Text('学习社区').fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('发帖 · 讨论 · 推荐').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: Spacing.XXS })
+            }.margin({ left: Spacing.MD }).alignItems(HorizontalAlign.Start)
             Blank()
-            Text('进入 ›').fontSize(12).fontColor(ColorTokens.primary(this.isDarkMode))
-          }.width('100%').padding(14)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
-          .shadow({ radius: 8, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 2 })
-          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
+            Text('进入').fontSize(FontScale.LABEL).fontColor(ColorTokens.primary(this.isDarkMode))
+          }.width('100%').padding(Spacing.LG)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
+          .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+          .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
           .onClick(() => { router.pushUrl({ url: 'pages/CommunityPage' }); })
         }
         .width('100%')
-        .margin({ left: 16, right: 16, top: 8 })
+        .margin({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM })
 
         // Course recommendations
         if (this.courseRecommendations.length > 0) {
           Row() {
             Text(this.userGrade ? `${this.userGrade} · 为你推荐` : '课程推荐')
-              .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              .fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
             Blank()
             Row() {
-              Text(this.userGrade || '').fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
-                .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(8)
+              Text(this.userGrade || '').fontSize(FontScale.MICRO).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                .padding({ left: Spacing.SM, right: Spacing.SM, top: Spacing.XXS, bottom: Spacing.XXS })
+                .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(Radii.SM)
             }
-          }.width('100%').padding({ left: 16, right: 16 }).margin({ top: 20 })
+          }.width('100%').padding({ left: Spacing.PAGE, right: Spacing.PAGE }).margin({ top: Spacing.XL })
 
           ForEach(this.courseRecommendations, (course: CurriculumCourse, idx: number) => {
             CourseRecommendCard({
               courseName: course.name,
-              courseEmoji: course.emoji,
               courseDesc: course.description,
               searchKeyword: course.name
             })
@@ -138,55 +145,66 @@ export struct HomeTab {
         // Postgrad entry（所有用户可见）
         Row() {
           Row() {
-            Text('🎓').fontSize(30)
+            Row().width(3).height(ControlSize.ICON_LG).borderRadius(Radii.XXS).backgroundColor(ColorTokens.primary(this.isDarkMode))
             Column() {
-              Text('考研指南').fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('报名流程 · 科目攻略 · 院校选择 · 备考规划').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
-            }.margin({ left: 14 })
-            Blank()
-            Text('查看 ›').fontSize(13).fontColor(ColorTokens.primary(this.isDarkMode))
-          }.width('100%').padding(18)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(16)
-          .shadow({ radius: 12, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 3 })
-          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 16 })
+              Text('考研指南').fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('报名流程 · 科目攻略 · 院校选择 · 备考规划').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: Spacing.XXS })
+            }.margin({ left: Spacing.MD }).layoutWeight(1).alignItems(HorizontalAlign.Start)
+            Text('查看').fontSize(FontScale.CAPTION).fontColor(ColorTokens.primary(this.isDarkMode))
+          }.width('100%').padding(Spacing.LG)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
+          .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+          .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
           .onClick(() => { router.pushUrl({ url: 'pages/PostgradGuidePage' }); })
         }
         .width('100%')
-        .margin({ left: 16, right: 16, top: 10 })
+        .margin({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM })
 
         // Model compare
         Row() {
           Row() {
-            Text('🤖').fontSize(30)
+            Row().width(3).height(ControlSize.ICON_LG).borderRadius(Radii.XXS).backgroundColor(ColorTokens.primary(this.isDarkMode))
             Column() {
-              Text('AI模型价格对比').fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('DeepSeek · Claude · GPT · 千问 · Kimi · 小米MiMo').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
-            }.margin({ left: 14 })
-            Blank()
-            Text('查看 ›').fontSize(13).fontColor(ColorTokens.primary(this.isDarkMode))
-          }.width('100%').padding(18)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(16)
-          .shadow({ radius: 12, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 3 })
-          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 16 })
+              Text('AI模型价格对比').fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('DeepSeek · Claude · GPT · 千问 · Kimi · 小米MiMo').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: Spacing.XXS })
+            }.margin({ left: Spacing.MD }).layoutWeight(1).alignItems(HorizontalAlign.Start)
+            Text('查看').fontSize(FontScale.CAPTION).fontColor(ColorTokens.primary(this.isDarkMode))
+          }.width('100%').padding(Spacing.LG)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
+          .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+          .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
           .onClick(() => { router.pushUrl({ url: 'pages/ModelComparePage' }); })
         }
         .width('100%')
-        .margin({ left: 16, right: 16, top: 10 })
+        .margin({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM })
 
         // Hot resources
-        if (this.hotResources.length > 0) {
-          Row() {
-            Text('🔥 热门资源')
-              .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-            Blank()
-            Text(this.hotResources.length.toString() + '个')
-              .fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
-          }
-          .width('100%').padding({ left: 16, right: 16 }).margin({ top: 20 })
+        Column() {
+          SectionHeader({
+            title: '热门资源',
+            actionText: this.hotResources.length > 0 ? this.hotResources.length.toString() + ' 个' : ''
+          })
+        }.width('100%').padding({ left: Spacing.PAGE, right: Spacing.PAGE })
 
-          Grid() {
+        if (this.hotResourcesLoading) {
+          StateView({ state: ViewState.LOADING, message: '正在加载资源' })
+        } else if (this.hotResourcesFailed) {
+          StateView({
+            state: ViewState.ERROR,
+            message: '资源加载失败',
+            hint: '请检查网络后重试',
+            onRetry: () => { this.loadHotResources(); }
+          })
+        } else if (this.hotResources.length === 0) {
+          StateView({ state: ViewState.EMPTY, message: '暂无热门资源', hint: '上传的资料会在这里展示' })
+        } else {
+          GridRow({
+            columns: { xs: 1, sm: 1, md: 2, lg: 3, xl: 4 },
+            gutter: { x: Spacing.MD, y: Spacing.MD },
+            breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+          }) {
             ForEach(this.hotResources, (item: ResourceItem) => {
-              GridItem() {
+              GridCol({ span: 1 }) {
                 ResourceCard({
                   resource: item,
                   onTap: () => {
@@ -196,16 +214,8 @@ export struct HomeTab {
               }
             }, (item: ResourceItem) => item.id.toString())
           }
-          .columnsTemplate(new BpType<string>({
-            sm: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr'
-          }).getValue(this.currentBreakpoint) ?? '1fr')
-          .rowsGap(8).columnsGap(8)
-          .width('100%').padding({ left: 20, right: 20 })
-        } else if (!this.hotResourcesLoading) {
-          Row() {
-            Text('暂无资源').fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode))
-          }
-          .width('100%').padding(20).justifyContent(FlexAlign.Center)
+          .width('100%')
+          .padding({ left: Spacing.PAGE, right: Spacing.PAGE })
         }
 
         Column().height(80)

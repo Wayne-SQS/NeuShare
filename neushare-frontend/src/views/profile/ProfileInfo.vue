@@ -1,22 +1,24 @@
 <template>
   <div class="profile-info-page">
-    <div class="info-card">
-      <div class="card-header">
-        <span>个人资料</span>
+    <section class="panel">
+      <div class="panel-head">
+        <h3 class="panel-title">个人资料</h3>
+        <p class="panel-subtitle">更新后立即生效，昵称将展示在资料与评论中</p>
       </div>
 
       <el-form
         ref="formRef"
         :model="profileForm"
         :rules="profileRules"
-        label-width="100px"
+        label-position="top"
         class="profile-form"
       >
         <el-form-item label="头像">
           <div class="avatar-upload">
-            <el-avatar :size="80" :src="profileForm.avatarUrl">
+            <el-avatar :size="72" :src="profileForm.avatarUrl">
               {{ getInitial(profileForm.nickname) }}
             </el-avatar>
+            <span class="avatar-hint">暂不支持在线更换头像</span>
           </div>
         </el-form-item>
 
@@ -28,43 +30,46 @@
           <el-input v-model="profileForm.nickname" placeholder="请输入昵称" />
         </el-form-item>
 
-        <el-form-item label="学院" prop="college">
-          <el-select v-model="profileForm.college" placeholder="请选择学院" style="width: 100%">
-            <el-option v-for="c in colleges" :key="c" :label="c" :value="c" />
-          </el-select>
-        </el-form-item>
+        <div class="form-row">
+          <el-form-item label="学院" prop="college" class="form-row__item">
+            <el-select v-model="profileForm.college" placeholder="请选择学院">
+              <el-option v-for="c in colleges" :key="c" :label="c" :value="c" />
+            </el-select>
+          </el-form-item>
 
-        <el-form-item label="年级" prop="grade">
-          <el-select v-model="profileForm.grade" placeholder="请选择年级" style="width: 100%">
-            <el-option label="大一" :value="1" />
-            <el-option label="大二" :value="2" />
-            <el-option label="大三" :value="3" />
-            <el-option label="大四" :value="4" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="年级" prop="grade" class="form-row__item">
+            <el-select v-model="profileForm.grade" placeholder="请选择年级">
+              <el-option label="大一" :value="1" />
+              <el-option label="大二" :value="2" />
+              <el-option label="大三" :value="3" />
+              <el-option label="大四" :value="4" />
+            </el-select>
+          </el-form-item>
+        </div>
 
         <el-form-item label="角色">
-          <el-tag>{{ getRoleText(profileForm.role) }}</el-tag>
+          <el-tag effect="plain">{{ getRoleText(profileForm.role) }}</el-tag>
         </el-form-item>
 
-        <el-form-item>
+        <div class="form-actions">
           <el-button type="primary" :loading="saving" @click="handleSave">
             保存修改
           </el-button>
-        </el-form-item>
+        </div>
       </el-form>
-    </div>
+    </section>
 
-    <div class="info-card password-card">
-      <div class="card-header">
-        <span>修改密码</span>
+    <section class="panel password-panel">
+      <div class="panel-head">
+        <h3 class="panel-title">修改密码</h3>
+        <p class="panel-subtitle">修改后需要使用新密码重新登录</p>
       </div>
 
       <el-form
         ref="passwordFormRef"
         :model="passwordForm"
         :rules="passwordRules"
-        label-width="100px"
+        label-position="top"
         class="profile-form"
       >
         <el-form-item label="原密码" prop="oldPassword">
@@ -94,13 +99,13 @@
           />
         </el-form-item>
 
-        <el-form-item>
+        <div class="form-actions">
           <el-button type="primary" :loading="changingPassword" @click="handleChangePassword">
             修改密码
           </el-button>
-        </el-form-item>
+        </div>
       </el-form>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -233,34 +238,72 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.info-card {
-  background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-}
-
-.card-header {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 24px;
-  padding-bottom: 14px;
+.panel-head {
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.panel-subtitle {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
 .profile-form {
-  max-width: 500px;
-  padding: 0;
+  max-width: 520px;
+}
+
+.profile-form :deep(.el-form-item) {
+  margin-bottom: var(--space-5);
 }
 
 .avatar-upload {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
-.password-card {
-  margin-top: 20px;
+.avatar-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.form-row__item {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-row__item :deep(.el-select) {
+  width: 100%;
+}
+
+.form-actions {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.password-panel {
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 767px) {
+  .profile-form {
+    max-width: none;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-actions .el-button {
+    width: 100%;
+  }
 }
 </style>

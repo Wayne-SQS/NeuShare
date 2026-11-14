@@ -1,6 +1,5 @@
 <template>
   <div class="resource-card" @click="handleClick">
-    <div class="card-accent"></div>
     <div class="card-body">
       <div class="card-header">
         <span class="category-tag">{{ resource.categoryName || '未分类' }}</span>
@@ -53,58 +52,43 @@ const handleClick = () => {
 .resource-card {
   position: relative;
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius);
   cursor: pointer;
   overflow: hidden;
-  transition: var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .resource-card:hover {
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.resource-card:hover .card-accent {
-  opacity: 1;
-}
-
-.card-accent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  opacity: 0;
-  transition: opacity var(--transition);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
 }
 
 .card-body {
-  padding: 20px;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .card-header {
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
 }
 
 .category-tag {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: rgba(37, 99, 235, 0.08);
-  padding: 3px 8px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-xs);
 }
 
 .title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -112,45 +96,55 @@ const handleClick = () => {
 }
 
 .description {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.55;
-  height: 40px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+  height: calc(var(--text-sm) * 1.65 * 2);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
 }
 
 .card-meta {
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+  min-width: 0;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
   color: var(--text-muted);
+  min-width: 0;
+}
+
+.meta-item:first-child {
+  flex: 1;
+  overflow: hidden;
 }
 
 .card-footer {
-  padding-top: 12px;
+  margin-top: auto;
+  padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
 }
 
 .time {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .uploader-link {
   color: var(--text-muted);
-  text-decoration: none;
-  font-size: 12px;
+  font-size: var(--text-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .uploader-link:hover {

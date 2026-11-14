@@ -1,175 +1,192 @@
 <template>
   <div class="home-page">
-    <!-- Banner Carousel -->
-    <section class="banner-section">
-      <el-carousel
-        :interval="5000"
-        arrow="hover"
-        height="620px"
-        trigger="click"
-      >
+    <section class="hero">
+      <el-carousel class="hero-carousel" :interval="5000" arrow="hover" trigger="click">
         <el-carousel-item v-for="(item, index) in localImages" :key="index">
-          <div class="banner-slide" :style="{ backgroundImage: `url(${item.imageUrl})` }" @click="item.link && $router.push(item.link)">
-            <div class="banner-overlay"></div>
-          </div>
+          <div
+            class="hero-slide"
+            :style="{ backgroundImage: `url(${item.imageUrl})` }"
+            @click="item.link && router.push(item.link)"
+          ></div>
         </el-carousel-item>
       </el-carousel>
 
-      <!-- Glass hero card overlaid on carousel -->
-      <div class="banner-hero-overlay">
-        <div class="hero-glass-card">
-          <div class="hero-badge">
-            <span class="badge-dot"></span>
-            东北大学专属
-          </div>
-          <h1 class="hero-title">发现优质<br>学习资料</h1>
-          <p class="hero-subtitle">与同学们一起，让学习更高效</p>
-          <div class="hero-actions">
-            <el-button class="hero-btn-primary" size="large" @click="$router.push('/resource')">
-              <el-icon><Search /></el-icon>浏览资源
-            </el-button>
-            <el-button class="hero-btn-outline" size="large" @click="$router.push('/upload')">
-              <el-icon><Upload /></el-icon>上传分享
-            </el-button>
+      <div class="hero-overlay">
+        <div class="container">
+          <div class="hero-card">
+            <span class="hero-badge">东北大学专属</span>
+            <h1 class="hero-title">发现优质学习资料</h1>
+            <p class="hero-subtitle">与同学一起整理课程笔记、真题与资料，让复习更高效。</p>
+            <div class="hero-actions">
+              <el-button type="primary" size="large" @click="router.push('/resource')">
+                <el-icon><Search /></el-icon>浏览资源
+              </el-button>
+              <el-button size="large" class="hero-btn-ghost" @click="router.push('/upload')">
+                <el-icon><Upload /></el-icon>上传分享
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section course-filter-section">
-      <div class="section-header">
-        <div class="section-title">
-          <span class="section-badge">快捷查找</span>
-          <h2>按年级学期查找课程资料</h2>
-          <p class="section-desc">选择对应的年级学期，快速查找课程相关学习资料</p>
-        </div>
-      </div>
-
-      <div class="filter-container">
-        <div class="grade-semester-grid">
-          <div
-            v-for="option in gradeSemesterOptions"
-            :key="option.key"
-            :class="['grade-btn', { 'grade-btn--active': selectedOption === option.key }]"
-            @click="selectOption(option.key)"
-          >
-            <div class="grade-btn__icon">
-              <el-icon><Reading /></el-icon>
-            </div>
-            <span class="grade-btn__label">{{ option.label }}</span>
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-badge">快捷查找</span>
+            <h2>按年级学期查找课程资料</h2>
+            <p class="section-desc">选择对应的年级学期，快速查找课程相关学习资料</p>
           </div>
         </div>
 
-        <transition name="slide-fade">
-          <div v-if="currentCourses.length > 0" class="courses-panel">
-            <div class="courses-header">
-              <div class="courses-header-left">
-                <el-icon class="courses-header-icon"><Collection /></el-icon>
-                <span class="courses-title">{{ currentLabel }} 课程</span>
+        <div class="filter-container">
+          <div class="grade-grid">
+            <button
+              v-for="option in gradeSemesterOptions"
+              :key="option.key"
+              type="button"
+              :class="['grade-btn', { 'grade-btn--active': selectedOption === option.key }]"
+              @click="selectOption(option.key)"
+            >
+              <el-icon class="grade-btn__icon"><Reading /></el-icon>
+              <span class="grade-btn__label">{{ option.label }}</span>
+            </button>
+          </div>
+
+          <transition name="slide-fade">
+            <div v-if="currentCourses.length > 0" class="courses-panel">
+              <div class="courses-header">
+                <div class="courses-header-left">
+                  <el-icon class="courses-header-icon"><Collection /></el-icon>
+                  <span class="courses-title">{{ currentLabel }} 课程</span>
+                </div>
+                <span class="courses-count">共 {{ currentCourses.length }} 门课程</span>
               </div>
-              <span class="courses-count">共 {{ currentCourses.length }} 门课程</span>
-            </div>
-            <div class="courses-grid">
-              <div
-                v-for="(course, index) in currentCourses"
-                :key="course.id"
-                class="course-card"
-                :style="{ animationDelay: `${index * 0.05}s` }"
-                @click="goToCourseResources(course)"
-              >
-                <div class="course-card__icon">
-                  <el-icon><Document /></el-icon>
-                </div>
-                <div class="course-card__content">
-                  <span class="course-card__name">{{ course.name }}</span>
-                  <span class="course-card__hint">点击查看资料</span>
-                </div>
-                <el-icon class="course-card__arrow"><ArrowRight /></el-icon>
+              <div class="courses-grid">
+                <button
+                  v-for="course in currentCourses"
+                  :key="course.id"
+                  type="button"
+                  class="course-card"
+                  @click="goToCourseResources(course)"
+                >
+                  <el-icon class="course-card__icon"><Document /></el-icon>
+                  <span class="course-card__content">
+                    <span class="course-card__name">{{ course.name }}</span>
+                    <span class="course-card__hint">点击查看资料</span>
+                  </span>
+                  <el-icon class="course-card__arrow"><ArrowRight /></el-icon>
+                </button>
               </div>
             </div>
+          </transition>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-badge">热门</span>
+            <h2>热门资料</h2>
           </div>
-        </transition>
+          <router-link to="/resource" class="view-more">
+            查看更多 <el-icon><ArrowRight /></el-icon>
+          </router-link>
+        </div>
+
+        <div v-if="hotLoading" class="grid-auto">
+          <SkeletonCard v-for="n in 3" :key="`hot-skeleton-${n}`" :rows="2" />
+        </div>
+        <div v-else-if="hotResources.length > 0" class="grid-auto">
+          <ResourceCard
+            v-for="resource in hotResources"
+            :key="resource.id"
+            :resource="resource"
+          />
+        </div>
+        <EmptyState
+          v-else
+          icon="Document"
+          title="暂无热门资料"
+          :description="loadFailed ? '数据加载失败，请稍后重试' : '还没有资料被浏览，先上传一份吧'"
+        >
+          <el-button type="primary" @click="router.push('/upload')">上传资料</el-button>
+        </EmptyState>
       </div>
     </section>
 
-    <section class="section hot-section">
-      <div class="section-header">
-        <div class="section-title">
-          <span class="section-badge section-badge--accent">热门</span>
-          <h2>热门资料</h2>
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-badge">最新</span>
+            <h2>最新资料</h2>
+          </div>
+          <router-link to="/resource" class="view-more">
+            查看更多 <el-icon><ArrowRight /></el-icon>
+          </router-link>
         </div>
-        <router-link to="/resource" class="view-more">
-          查看更多 <el-icon><ArrowRight /></el-icon>
-        </router-link>
-      </div>
-      <div class="resource-grid">
-        <ResourceCard
-          v-for="(resource, index) in hotResources"
-          :key="resource.id"
-          :resource="resource"
-          :style="{ animationDelay: `${index * 0.1}s` }"
-          class="animate-slide-up"
-        />
-      </div>
-    </section>
 
-    <section class="section latest-section">
-      <div class="section-header">
-        <div class="section-title">
-          <span class="section-badge section-badge--alt">最新</span>
-          <h2>最新资料</h2>
+        <div v-if="latestLoading" class="grid-auto">
+          <SkeletonCard v-for="n in 3" :key="`latest-skeleton-${n}`" :rows="2" />
         </div>
-        <router-link to="/resource" class="view-more">
-          查看更多 <el-icon><ArrowRight /></el-icon>
-        </router-link>
-      </div>
-      <div class="resource-grid">
-        <ResourceCard
-          v-for="(resource, index) in latestResources"
-          :key="resource.id"
-          :resource="resource"
-          :style="{ animationDelay: `${index * 0.1}s` }"
-          class="animate-slide-up"
+        <div v-else-if="latestResources.length > 0" class="grid-auto">
+          <ResourceCard
+            v-for="resource in latestResources"
+            :key="resource.id"
+            :resource="resource"
+          />
+        </div>
+        <EmptyState
+          v-else
+          icon="Clock"
+          title="暂无最新资料"
+          :description="loadFailed ? '数据加载失败，请稍后重试' : '等待第一位同学分享资料'"
         />
       </div>
     </section>
 
     <section class="features-section">
-      <div class="section-header centered">
-        <div class="section-title">
-          <span class="section-badge section-badge--muted">特色</span>
-          <h2>为什么选择 NeuShare</h2>
-          <p class="section-desc">为东北大学学子打造的专属学习平台</p>
-        </div>
-      </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-card__icon">
-            <el-icon><Upload /></el-icon>
+      <div class="container">
+        <div class="section-header section-header--centered">
+          <div class="section-title">
+            <span class="section-badge">特色</span>
+            <h2>为什么选择 NeuShare</h2>
+            <p class="section-desc">为东北大学学子打造的专属学习平台</p>
           </div>
-          <h3>便捷上传</h3>
-          <p>一键分享学习资料，支持多种文件格式</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-card__icon">
-            <el-icon><Search /></el-icon>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-card__icon">
+              <el-icon><Upload /></el-icon>
+            </div>
+            <h3>便捷上传</h3>
+            <p>一键分享学习资料，支持多种文件格式</p>
           </div>
-          <h3>智能搜索</h3>
-          <p>快速检索所需资料，支持分类筛选</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-card__icon">
-            <el-icon><ChatDotRound /></el-icon>
+          <div class="feature-card">
+            <div class="feature-card__icon">
+              <el-icon><Search /></el-icon>
+            </div>
+            <h3>智能搜索</h3>
+            <p>快速检索所需资料，支持分类筛选</p>
           </div>
-          <h3>互动交流</h3>
-          <p>评论点赞收藏，与同学交流学习心得</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-card__icon">
-            <el-icon><Medal /></el-icon>
+          <div class="feature-card">
+            <div class="feature-card__icon">
+              <el-icon><ChatDotRound /></el-icon>
+            </div>
+            <h3>互动交流</h3>
+            <p>评论点赞收藏，与同学交流学习心得</p>
           </div>
-          <h3>优质资源</h3>
-          <p>严格审核机制，确保资料质量</p>
+          <div class="feature-card">
+            <div class="feature-card__icon">
+              <el-icon><Medal /></el-icon>
+            </div>
+            <h3>优质资源</h3>
+            <p>严格审核机制，确保资料质量</p>
+          </div>
         </div>
       </div>
     </section>
@@ -180,6 +197,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ResourceCard from '@/components/ResourceCard.vue'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getHotResources, getResourceList } from '@/api/resource'
 import { coursesByGrade } from '@/utils/courseData'
 
@@ -187,6 +206,9 @@ const router = useRouter()
 
 const hotResources = ref([])
 const latestResources = ref([])
+const hotLoading = ref(true)
+const latestLoading = ref(true)
+const loadFailed = ref(false)
 
 const localImages = [
   { imageUrl: '/images/banner/南湖主楼.png', link: '/resource' },
@@ -232,21 +254,33 @@ const goToCourseResources = (course) => {
   router.push({ path: '/resource', query })
 }
 
-const fetchData = async () => {
+const fetchHot = async () => {
   try {
-    const [hotRes, latestRes] = await Promise.all([
-      getHotResources(4),
-      getResourceList({ pageNum: 1, pageSize: 4, status: 1 })
-    ])
-    hotResources.value = hotRes.data || []
-    latestResources.value = (latestRes.data?.records || []).slice(0, 4)
+    const res = await getHotResources(4)
+    hotResources.value = (res.data || []).slice(0, 3)
   } catch (error) {
-    console.error('Failed to fetch data:', error)
+    console.error('Failed to fetch hot resources:', error)
+    loadFailed.value = true
+  } finally {
+    hotLoading.value = false
+  }
+}
+
+const fetchLatest = async () => {
+  try {
+    const res = await getResourceList({ pageNum: 1, pageSize: 4, status: 1 })
+    latestResources.value = (res.data?.records || []).slice(0, 3)
+  } catch (error) {
+    console.error('Failed to fetch latest resources:', error)
+    loadFailed.value = true
+  } finally {
+    latestLoading.value = false
   }
 }
 
 onMounted(() => {
-  fetchData()
+  fetchHot()
+  fetchLatest()
 })
 </script>
 
@@ -255,196 +289,132 @@ onMounted(() => {
   min-height: 100%;
 }
 
-/* ========== Banner Carousel ========== */
-.banner-section {
+/* Hero */
+.hero {
   position: relative;
-  margin-top: -1px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-base);
 }
 
-.banner-slide {
+.hero-carousel :deep(.el-carousel__container) {
+  height: clamp(320px, 40vw, 440px);
+}
+
+.hero-slide {
   width: 100%;
-  height: 620px;
+  height: 100%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  cursor: pointer;
 }
 
-.banner-overlay {
+.hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.08) 0%,
-    transparent 40%,
-    transparent 70%,
-    rgba(0, 0, 0, 0.15) 100%
-  );
+  display: flex;
+  align-items: center;
+  pointer-events: none;
 }
 
-/* Glass hero card overlaid on carousel */
-.banner-hero-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-  max-width: 420px;
-  width: 88%;
-}
-
-/* Glass-morphism card */
-.hero-glass-card {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-xl);
-  padding: 40px 36px;
-  text-align: center;
-  aspect-ratio: 1 / 1;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.04),
-    0 2px 8px rgba(0, 0, 0, 0.02),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-  animation: cardShadowPulse 6s ease-in-out infinite;
-  transition: box-shadow var(--transition-slow);
-}
-
-.hero-glass-card:hover {
-  box-shadow:
-    0 16px 48px rgba(37, 99, 235, 0.12),
-    0 4px 16px rgba(0, 0, 0, 0.06),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-}
-
-@keyframes cardShadowPulse {
-  0%, 100% {
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.04),
-      0 2px 8px rgba(0, 0, 0, 0.02),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-  }
-  50% {
-    box-shadow:
-      0 12px 40px rgba(37, 99, 235, 0.08),
-      0 4px 12px rgba(0, 0, 0, 0.04),
-      inset 0 0 0 1px rgba(37, 99, 235, 0.12);
-  }
+.hero-card {
+  pointer-events: auto;
+  max-width: 460px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  padding: var(--space-7);
+  box-shadow: var(--shadow-sm);
 }
 
 .hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 14px;
-  background: rgba(37, 99, 235, 0.06);
-  border: 1px solid rgba(37, 99, 235, 0.12);
-  border-radius: var(--radius-full);
-  font-size: 12px;
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  background: var(--info-bg);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
   color: var(--accent);
-  font-weight: 500;
-  margin-bottom: 20px;
-}
-
-.badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: dotPulse 2s ease-in-out infinite;
-}
-
-@keyframes dotPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.3); }
+  font-weight: var(--font-medium);
+  margin-bottom: var(--space-4);
 }
 
 .hero-title {
-  font-size: 2.6rem;
-  font-weight: 800;
+  font-size: var(--heading-1);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  margin-bottom: 12px;
-  background: linear-gradient(135deg, #111827 0%, #2563eb 50%, #1d4ed8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
 }
 
 .hero-subtitle {
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
-  margin-bottom: 28px;
+  line-height: var(--leading-normal);
+  margin-bottom: var(--space-5);
 }
 
 .hero-actions {
   display: flex;
-  gap: 14px;
-  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
-.hero-btn-primary {
-  background: var(--accent) !important;
-  border-color: var(--accent) !important;
-  color: #fff !important;
-  font-weight: 600 !important;
-  padding: 14px 28px !important;
-  font-size: 15px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  border-radius: var(--radius) !important;
-  transition: all 0.3s ease !important;
+.hero-btn-ghost {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
 }
 
-.hero-btn-primary:hover {
-  background: var(--accent-dim) !important;
-  border-color: var(--accent-dim) !important;
-  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.3) !important;
-  transform: translateY(-2px);
+.hero-btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.hero-btn-outline {
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(8px) !important;
-  border: 1px solid var(--border-default) !important;
-  color: var(--text-primary) !important;
-  font-weight: 500 !important;
-  padding: 14px 28px !important;
-  font-size: 15px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  border-radius: var(--radius) !important;
-  transition: all 0.3s ease !important;
+.hero-carousel :deep(.el-carousel__indicator) {
+  padding: var(--space-2) var(--space-1);
 }
 
-.hero-btn-outline:hover {
-  border-color: var(--accent) !important;
-  color: var(--accent) !important;
-  background: rgba(255, 255, 255, 0.85) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+.hero-carousel :deep(.el-carousel__indicator .el-carousel__button) {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  opacity: 1;
+}
+
+.hero-carousel :deep(.el-carousel__indicator.is-active .el-carousel__button) {
+  width: 20px;
+  border-radius: var(--radius-xs);
+  background: var(--text-inverse);
+}
+
+.hero-carousel :deep(.el-carousel__arrow) {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
 }
 
 /* Sections */
 .section {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 72px 28px;
+  padding: var(--section-gap-lg) 0;
+}
+
+.section + .section {
+  padding-top: 0;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 36px;
-  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
-.section-header.centered {
+.section-header--centered {
   justify-content: center;
   text-align: center;
 }
@@ -452,57 +422,46 @@ onMounted(() => {
 .section-title {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .section-badge {
   display: inline-block;
-  padding: 4px 10px;
-  background: rgba(37, 99, 235, 0.08);
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--radius-xs);
   align-self: flex-start;
+  padding: var(--space-1) var(--space-2);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-xs);
 }
 
-.section-badge--accent {
-  background: rgba(37, 99, 235, 0.08);
-  color: var(--accent);
-}
-
-.section-badge--alt {
-  background: rgba(13, 148, 136, 0.08);
-  color: var(--accent-secondary);
-}
-
-.section-badge--muted {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--text-muted);
+.section-header--centered .section-badge {
+  align-self: center;
 }
 
 .section-header h2 {
-  font-size: 28px;
+  font-size: var(--heading-2);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.02em;
 }
 
 .section-desc {
-  font-size: 15px;
-  color: var(--text-muted);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .view-more {
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 8px 14px;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
 }
@@ -512,404 +471,276 @@ onMounted(() => {
   background: var(--bg-hover);
 }
 
-/* Course Filter */
+/* Course filter */
 .filter-container {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  border: 1px solid var(--border-subtle);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.03),
-    0 4px 12px rgba(0, 0, 0, 0.04);
+  background: var(--bg-surface);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+  border: 1px solid var(--border-default);
 }
 
-.grade-semester-grid {
+.grade-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
 .grade-btn {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 20px 14px;
-  border-radius: var(--radius);
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
-  color: #fff;
-  font-weight: 500;
-  overflow: hidden;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-/* Shine highlight at top */
-.grade-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 8px;
-  right: 8px;
-  height: 40%;
-  border-radius: 0 0 12px 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%);
-  pointer-events: none;
-  transition: opacity 0.35s ease;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
 }
 
 .grade-btn:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.15),
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
-
-.grade-btn:hover::before {
-  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%);
-}
-
-.grade-btn:active {
-  transform: translateY(-1px) scale(0.98);
-  transition: all 0.15s ease;
-}
-
-/* Color each grade row — richer 3-stop gradients */
-.grade-btn:nth-child(1) { background: linear-gradient(160deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%); }
-.grade-btn:nth-child(2) { background: linear-gradient(160deg, #4f46e5 0%, #3730a3 50%, #312e81 100%); }
-.grade-btn:nth-child(3) { background: linear-gradient(160deg, #2dd4bf 0%, #0d9488 50%, #0f766e 100%); }
-.grade-btn:nth-child(4) { background: linear-gradient(160deg, #14b8a6 0%, #0f766e 50%, #115e59 100%); }
-.grade-btn:nth-child(5) { background: linear-gradient(160deg, #fbbf24 0%, #d97706 50%, #b45309 100%); }
-.grade-btn:nth-child(6) { background: linear-gradient(160deg, #f59e0b 0%, #d97706 50%, #92400e 100%); }
-.grade-btn:nth-child(7) { background: linear-gradient(160deg, #a78bfa 0%, #7c3aed 50%, #6d28d9 100%); }
-.grade-btn:nth-child(8) { background: linear-gradient(160deg, #8b5cf6 0%, #7c3aed 50%, #5b21b6 100%); }
 
 .grade-btn--active {
-  transform: scale(1.06) translateY(-1px);
-  box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.22),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--accent);
+  background: var(--info-bg);
+  color: var(--accent);
 }
 
 .grade-btn__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 19px;
-  color: rgba(255, 255, 255, 0.9);
-  transition: all 0.35s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.grade-btn:hover .grade-btn__icon {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.grade-btn--active .grade-btn__icon {
-  background: rgba(255, 255, 255, 0.32);
-  color: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  font-size: var(--text-xl);
 }
 
 .grade-btn__label {
-  font-size: 15px;
-  font-weight: 650;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  letter-spacing: 0.02em;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
 }
 
 .courses-panel {
-  background: var(--bg-hover);
-  border-radius: var(--radius);
-  padding: 24px;
+  background: var(--bg-deep);
+  border-radius: var(--radius-sm);
+  padding: var(--space-5);
   border: 1px solid var(--border-subtle);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.02),
-    0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .courses-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .courses-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .courses-header-icon {
-  font-size: 18px;
   color: var(--accent);
 }
 
 .courses-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
 }
 
 .courses-count {
-  font-size: 12px;
-  color: var(--text-muted);
-  background: var(--bg-elevated);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .courses-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-2);
 }
 
 .course-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 15px 18px;
-  background: var(--bg-elevated);
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--border-subtle);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.02);
-  animation: fadeInUp 0.3s ease-out both;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
 }
 
 .course-card:hover {
-  border-color: rgba(37, 99, 235, 0.2);
-  box-shadow:
-    0 4px 16px rgba(37, 99, 235, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
-}
-
-.course-card:active {
-  transform: translateY(0) scale(0.98);
+  border-color: var(--border-strong);
 }
 
 .course-card__icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-  font-size: 18px;
+  color: var(--text-muted);
+  font-size: var(--text-lg);
   flex-shrink: 0;
-  transition: all 0.3s ease;
-  box-shadow: inset 0 1px 0 rgba(37, 99, 235, 0.08);
-}
-
-.course-card:hover .course-card__icon {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0.08));
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12), inset 0 1px 0 rgba(37, 99, 235, 0.12);
 }
 
 .course-card__content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .course-card__name {
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
-  font-weight: 550;
+  font-weight: var(--font-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .course-card__hint {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .course-card__arrow {
   color: var(--text-muted);
-  font-size: 15px;
-  transition: all 0.3s ease;
-}
-
-.course-card:hover .course-card__arrow {
-  color: var(--accent);
-  transform: translateX(4px);
-}
-
-/* Resource grids */
-.resource-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  font-size: var(--text-xs);
+  flex-shrink: 0;
 }
 
 /* Features */
 .features-section {
   background: var(--bg-base);
-  padding: 80px 28px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border-default);
+  padding: var(--section-gap-lg) 0;
 }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  max-width: 1280px;
-  margin: 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5);
 }
 
 .feature-card {
-  text-align: center;
-  padding: 40px 28px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.02);
+  padding: var(--space-7) var(--space-5);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  transition: border-color var(--transition-fast);
 }
 
 .feature-card:hover {
-  border-color: rgba(37, 99, 235, 0.15);
-  box-shadow:
-    0 8px 28px rgba(37, 99, 235, 0.07),
-    0 2px 8px rgba(0, 0, 0, 0.04);
-  transform: translateY(-4px);
-}
-
-.feature-card:active {
-  transform: translateY(-1px) scale(0.98);
+  border-color: var(--border-strong);
 }
 
 .feature-card__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0.04) 100%);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
-  font-size: 24px;
-  margin: 0 auto 18px;
-  transition: all 0.35s ease;
-  box-shadow: inset 0 1px 0 rgba(37, 99, 235, 0.1);
-}
-
-.feature-card:hover .feature-card__icon {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(37, 99, 235, 0.08) 100%);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15), inset 0 1px 0 rgba(37, 99, 235, 0.15);
-  transform: scale(1.06);
+  color: var(--text-secondary);
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-4);
 }
 
 .feature-card h3 {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: var(--heading-3);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  margin: 0 0 10px;
-  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-2);
 }
 
 .feature-card p {
-  font-size: 14px;
-  color: var(--text-muted);
-  line-height: 1.65;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
   margin: 0;
 }
 
-/* Slide-fade transition */
-.slide-fade-enter-active { transition: all 0.3s ease-out; }
-.slide-fade-leave-active { transition: all 0.2s ease-in; }
-.slide-fade-enter-from { transform: translateY(10px); opacity: 0; }
-.slide-fade-leave-to { transform: translateY(-10px); opacity: 0; }
+/* Transition */
+.slide-fade-enter-active { transition: opacity 0.2s ease-out, transform 0.2s ease-out; }
+.slide-fade-leave-active { transition: opacity 0.15s ease-in; }
+.slide-fade-enter-from { transform: translateY(8px); opacity: 0; }
+.slide-fade-leave-to { opacity: 0; }
 
-/* Element Plus Carousel overrides */
-:deep(.el-carousel__container) {
-  height: 620px;
+@media (max-width: 1279px) {
+  .grade-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-:deep(.el-carousel__indicator) {
-  padding: 8px 4px;
-}
+@media (max-width: 767px) {
+  .hero-carousel :deep(.el-carousel__container) {
+    height: 300px;
+  }
 
-:deep(.el-carousel__indicator .el-carousel__button) {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  opacity: 0.5;
-  background: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  transition: all 0.3s ease;
-}
+  .hero-overlay {
+    align-items: flex-end;
+  }
 
-:deep(.el-carousel__indicator.is-active .el-carousel__button) {
-  width: 24px;
-  border-radius: 4px;
-  background: #fff;
-  opacity: 1;
-}
+  .hero-overlay .container {
+    padding-bottom: var(--space-4);
+  }
 
-:deep(.el-carousel__arrow) {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  transition: all 0.3s ease;
-}
+  .hero-card {
+    max-width: none;
+    padding: var(--space-5);
+  }
 
-:deep(.el-carousel__arrow:hover) {
-  background: rgba(255, 255, 255, 0.85);
-}
+  .hero-title {
+    font-size: var(--text-xl);
+  }
 
-/* Responsive */
-@media (max-width: 1200px) {
-  .resource-grid { grid-template-columns: repeat(3, 1fr); }
-}
+  .hero-subtitle {
+    display: none;
+  }
 
-@media (max-width: 900px) {
-  .resource-grid { grid-template-columns: repeat(2, 1fr); }
-  .features-grid { grid-template-columns: repeat(2, 1fr); }
-}
+  .section {
+    padding: var(--section-gap-md) 0;
+  }
 
-@media (max-width: 768px) {
-  .grade-semester-grid { grid-template-columns: repeat(2, 1fr); }
-}
+  .section + .section {
+    padding-top: 0;
+  }
 
-@media (max-width: 600px) {
-  .resource-grid { grid-template-columns: 1fr; }
-  .features-grid { grid-template-columns: 1fr; }
-  .hero-title { font-size: 2.5rem; }
-  .hero-actions { flex-direction: column; }
+  .grade-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-container {
+    padding: var(--space-4);
+  }
+
+  .features-section {
+    padding: var(--section-gap-md) 0;
+  }
+
+  .features-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feature-card {
+    padding: var(--space-5);
+  }
 }
 </style>

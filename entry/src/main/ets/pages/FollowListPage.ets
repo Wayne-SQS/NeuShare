@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, PageData, ApiResponse } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, PageData, ApiResponse, FontScale, Radii } from '@neushare/common';
 import { FollowApi, FollowUser } from '../api/FollowApi';
 import promptAction from '@ohos.promptAction';
 
@@ -88,9 +88,9 @@ struct FollowListPage {
     Column() {
       // Header
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { router.back(); })
-        Text('关注与粉丝').fontSize(18).fontWeight(FontWeight.Bold)
+        Text('关注与粉丝').fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold)
           .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
       }
       .width('100%').height(52).padding({ left: 16 })
@@ -99,7 +99,7 @@ struct FollowListPage {
       // Tab switch
       Row() {
         Text('粉丝')
-          .fontSize(15).fontWeight(this.activeTab === 0 ? FontWeight.Bold : FontWeight.Regular)
+          .fontSize(FontScale.BODY).fontWeight(this.activeTab === 0 ? FontWeight.Bold : FontWeight.Regular)
           .fontColor(this.activeTab === 0 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
           .padding({ bottom: 8 })
           .border({ width: { bottom: this.activeTab === 0 ? 2 : 0 }, color: ColorTokens.primary(this.isDarkMode) })
@@ -107,7 +107,7 @@ struct FollowListPage {
           .onClick(() => { this.switchTab(0); })
 
         Text('关注')
-          .fontSize(15).fontWeight(this.activeTab === 1 ? FontWeight.Bold : FontWeight.Regular)
+          .fontSize(FontScale.BODY).fontWeight(this.activeTab === 1 ? FontWeight.Bold : FontWeight.Regular)
           .fontColor(this.activeTab === 1 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
           .padding({ bottom: 8 })
           .border({ width: { bottom: this.activeTab === 1 ? 2 : 0 }, color: ColorTokens.primary(this.isDarkMode) })
@@ -120,11 +120,13 @@ struct FollowListPage {
       // User list
       if (this.users.length === 0 && !this.loading) {
         Column() {
-          Text(this.activeTab === 0 ? '👤' : '👥').fontSize(48)
+          Column().width(48).height(48).borderRadius(Radii.PILL)
+            .backgroundColor(ColorTokens.surfaceSecondary(this.isDarkMode))
+            .border({ width: 1, color: ColorTokens.border(this.isDarkMode) })
             .scale({ x: this.breathScale, y: this.breathScale })
             .animation({ duration: 1500, curve: Curve.EaseInOut, iterations: -1 })
           Text(this.activeTab === 0 ? '暂无粉丝' : '暂未关注任何人')
-            .fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
+            .fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
         }.width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       } else {
         List() {
@@ -132,18 +134,20 @@ struct FollowListPage {
             ListItem() {
               Row() {
                 Stack({ alignContent: Alignment.Center }) {
-                  Column().width(44).height(44).borderRadius(22).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
+                  Column().width(44).height(44).borderRadius(Radii.HUGE).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
                   if (user.avatarUrl) {
-                    Image(user.avatarUrl).width(44).height(44).borderRadius(22).objectFit(ImageFit.Cover)
+                    Image(user.avatarUrl).width(44).height(44).borderRadius(Radii.HUGE).objectFit(ImageFit.Cover)
                   } else {
-                    Text('👤').fontSize(22)
+                    Text((user.nickname || user.username).substring(0, 1))
+                      .fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Bold)
+                      .fontColor(ColorTokens.primary(this.isDarkMode))
                   }
                 }
                 Column() {
-                  Text(user.nickname || user.username).fontSize(15).fontWeight(FontWeight.Medium)
+                  Text(user.nickname || user.username).fontSize(FontScale.BODY).fontWeight(FontWeight.Medium)
                     .fontColor(ColorTokens.textPrimary(this.isDarkMode))
                   if (user.college) {
-                    Text(user.college).fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+                    Text(user.college).fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
                   }
                 }.margin({ left: 12 }).layoutWeight(1)
               }
@@ -160,7 +164,7 @@ struct FollowListPage {
           if (this.hasMore && !this.loading) {
             ListItem() {
               Row() {
-                Text('加载更多...').fontSize(14).fontColor(ColorTokens.primary(this.isDarkMode))
+                Text('加载更多...').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.primary(this.isDarkMode))
               }
               .width('100%').height(44).justifyContent(FlexAlign.Center)
               .onClick(() => { this.loadMore(); })

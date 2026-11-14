@@ -18,7 +18,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/neushare?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:SQS626070}
+    # 必须通过环境变量提供，仓库内不留任何默认口令
+    password: ${DB_PASSWORD}
   servlet:
     multipart:
       max-file-size: 100MB
@@ -37,7 +38,8 @@ mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
 
 jwt:
-  secret: ${JWT_SECRET:neushare2024secretkeyforjwttoken123456789}
+  # 必须通过环境变量提供，且长度需 >= 32 字节（HS256 要求）
+  secret: ${JWT_SECRET}
   expiration: 86400000
 
 file:

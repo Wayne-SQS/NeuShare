@@ -1,17 +1,20 @@
 <template>
   <div class="my-favorites-page">
-    <div class="favorites-card">
-      <div class="card-header">
-        <span>我的收藏</span>
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3 class="panel-title">我的收藏</h3>
+          <p class="panel-subtitle">收藏过的资料会出现在这里</p>
+        </div>
       </div>
 
-      <div class="favorite-list" v-loading="loading">
-        <template v-if="favorites.length > 0">
-          <div
-            v-for="item in favorites"
-            :key="item.id"
-            class="favorite-item"
-          >
+      <div v-if="loading" class="skeleton-list">
+        <SkeletonCard v-for="n in 4" :key="`skeleton-${n}`" variant="list" :rows="2" />
+      </div>
+
+      <template v-else-if="favorites.length > 0">
+        <div class="favorite-list">
+          <div v-for="item in favorites" :key="item.id" class="favorite-item">
             <div class="item-info" @click="goToDetail(item.id)">
               <h3 class="title">{{ item.title }}</h3>
               <p class="description">{{ item.description || '暂无描述' }}</p>
@@ -29,11 +32,19 @@
               </el-button>
             </div>
           </div>
-        </template>
-        <el-empty v-else description="暂无收藏" />
-      </div>
+        </div>
+      </template>
 
-      <div class="pagination" v-if="pagination.total > 0">
+      <EmptyState
+        v-else
+        icon="Star"
+        title="暂无收藏"
+        description="浏览资源时点击收藏，方便之后回看"
+      >
+        <el-button type="primary" @click="router.push('/resource')">去资源广场</el-button>
+      </EmptyState>
+
+      <div v-if="!loading && pagination.total > 0" class="pagination">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
@@ -50,10 +61,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getFavorites, removeFavorite } from '@/api/favorite'
 
 const router = useRouter()
-const loading = ref(false)
+const loading = ref(true)
 const favorites = ref([])
 
 const pagination = reactive({
@@ -103,31 +116,35 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.favorites-card {
-  background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-}
-
-.card-header {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  padding-bottom: 14px;
+.panel-head {
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.panel-subtitle {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .favorite-list {
-  min-height: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 .favorite-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 18px 0;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -141,32 +158,34 @@ onMounted(() => {
   min-width: 0;
 }
 
+.title {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  transition: var(--transition-fast);
+}
+
 .item-info:hover .title {
   color: var(--accent);
 }
 
-.title {
-  font-size: 16px;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-  transition: var(--transition-fast);
-}
-
 .description {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .meta {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .meta-divider {
@@ -175,9 +194,24 @@ onMounted(() => {
   background: var(--border-strong);
 }
 
+.item-actions {
+  flex-shrink: 0;
+}
+
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 24px;
+  margin-top: var(--space-5);
+}
+
+@media (max-width: 767px) {
+  .favorite-item {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .description {
+    white-space: normal;
+  }
 }
 </style>

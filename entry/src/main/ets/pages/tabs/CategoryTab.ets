@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, BlurPerformance } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, BlurPerformance, FontScale, Spacing, EmptyState, GridLayout } from '@neushare/common';
 import { CategoryItem } from '../../models/ResourceModel';
 import { CategoryCard } from '../../components/CategoryCard';
 
@@ -14,20 +14,8 @@ export struct CategoryTab {
     animateTo({ duration: 200, curve: Curve.EaseOut }, () => { this.appearOpacity = 1; });
   }
 
-  private columnsTemplate(): string {
-    return new BpType<string>({ sm: '1fr 1fr', md: '1fr 1fr 1fr', lg: '1fr 1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr 1fr';
-  }
-
   private maxContentWidth(): number {
     return new BpType<number>({ sm: 9999, md: 576, lg: 656, xl: 900 }).getValue(this.currentBreakpoint) ?? 9999;
-  }
-
-  private contentPadding(): number {
-    return new BpType<number>({ sm: 24, md: 28, lg: 32, xl: 44 }).getValue(this.currentBreakpoint) ?? 24;
-  }
-
-  private titleFontSize(): number {
-    return new BpType<number>({ sm: 20, md: 22, lg: 26, xl: 34 }).getValue(this.currentBreakpoint) ?? 20;
   }
 
   build() {
@@ -35,27 +23,35 @@ export struct CategoryTab {
       Scroll() {
         Column() {
           Column() {
-            Text('全部学习分类')
-              .fontSize(this.titleFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              .width('100%').padding({ left: this.contentPadding(), top: 16 })
+            Text('全部分类')
+              .fontSize(FontScale.HERO).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              .width('100%').padding({ left: Spacing.PAGE, top: Spacing.LG })
+            Text(this.categories.length.toString() + ' 个学习分类')
+              .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode))
+              .width('100%').padding({ left: Spacing.PAGE, top: Spacing.XXS })
 
-            Grid() {
-              ForEach(this.categories, (item: CategoryItem) => {
-                GridItem() {
-                  CategoryCard({
-                    category: item,
-                    onTap: () => {
-                      router.pushUrl({ url: 'pages/CategoryPage', params: { categoryId: item.id, categoryTitle: item.title } });
-                    }
-                  })
-                }
-              }, (item: CategoryItem) => item.id.toString())
+            if (this.categories.length === 0) {
+              EmptyState({ message: '暂无分类', hint: '请稍后重试' })
+            } else {
+              GridRow({
+                columns: { xs: 1, sm: 1, md: 2, lg: 3, xl: 4 },
+                gutter: { x: Spacing.SM, y: Spacing.SM },
+                breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+              }) {
+                ForEach(this.categories, (item: CategoryItem) => {
+                  GridCol({ span: 1 }) {
+                    CategoryCard({
+                      category: item,
+                      onTap: () => {
+                        router.pushUrl({ url: 'pages/CategoryPage', params: { categoryId: item.id, categoryTitle: item.title } });
+                      }
+                    })
+                  }
+                }, (item: CategoryItem) => item.id.toString())
+              }
+              .width('100%')
+              .padding({ left: Spacing.PAGE, right: Spacing.PAGE, top: Spacing.SM })
             }
-            .columnsTemplate(this.columnsTemplate())
-            .rowsGap(8)
-            .columnsGap(8)
-            .width('100%')
-            .padding({ left: this.contentPadding() - 4, right: this.contentPadding() - 4, top: 8 })
 
             Column().height(80)
           }

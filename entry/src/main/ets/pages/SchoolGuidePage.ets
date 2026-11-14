@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, FontScale, Radii } from '@neushare/common';
 
 interface EvalItem {
   subject: string;    // 学科名称
@@ -371,11 +371,11 @@ const SCHOOLS: SchoolInfo[] = [
 
 /** 评级→颜色：A+红 → A粉 → A-蓝紫 → B+青绿 → B灰蓝 */
 function ratingColor(rating: string): string {
-  if (rating === 'A+') return '#FF6B6B';
-  if (rating === 'A') return '#FF8FB1';
-  if (rating === 'A-') return '#4A6BFF';
-  if (rating === 'B+') return '#00C2CB';
-  return '#89CFEF';
+  if (rating === 'A+') return ColorTokens.ERROR_LIGHT;
+  if (rating === 'A') return ColorTokens.ACCENT_PINK_LIGHT;
+  if (rating === 'A-') return ColorTokens.PRIMARY_LIGHT;
+  if (rating === 'B+') return ColorTokens.ACCENT_TEAL_LIGHT;
+  return ColorTokens.ACCENT_SKY_LIGHT;
 }
 
 @Entry
@@ -418,10 +418,10 @@ struct SchoolGuidePage {
     Column() {
       // Header
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { router.back(); })
         Text('计算机考研择校')
-          .fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+          .fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
           .layoutWeight(1).textAlign(TextAlign.Center).margin({ right: 24 })
       }
       .width('100%').height(52).padding({ left: 24, right: 24 })
@@ -430,23 +430,23 @@ struct SchoolGuidePage {
       // Stats summary — 按最高评级统计
       Row() {
         Column() {
-          Text(SCHOOLS.length.toString()).fontSize(20).fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode))
-          Text('院校总数').fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+          Text(SCHOOLS.length.toString()).fontSize(FontScale.TITLE_SM).fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode))
+          Text('院校总数').fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
         }.layoutWeight(1)
         Column() {
           Text(SCHOOLS.filter(s => this.bestRating(s.evaluations) === 'A+').length.toString())
-            .fontSize(20).fontWeight(FontWeight.Bold).fontColor(ratingColor('A+'))
-          Text('A+ 院校').fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+            .fontSize(FontScale.TITLE_SM).fontWeight(FontWeight.Bold).fontColor(ratingColor('A+'))
+          Text('A+ 院校').fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
         }.layoutWeight(1)
         Column() {
           Text(SCHOOLS.filter(s => this.bestRating(s.evaluations) === 'A').length.toString())
-            .fontSize(20).fontWeight(FontWeight.Bold).fontColor(ratingColor('A'))
-          Text('A 院校').fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+            .fontSize(FontScale.TITLE_SM).fontWeight(FontWeight.Bold).fontColor(ratingColor('A'))
+          Text('A 院校').fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
         }.layoutWeight(1)
         Column() {
           Text(SCHOOLS.filter(s => this.bestRating(s.evaluations) === 'A-').length.toString())
-            .fontSize(20).fontWeight(FontWeight.Bold).fontColor(ratingColor('A-'))
-          Text('A- 院校').fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+            .fontSize(FontScale.TITLE_SM).fontWeight(FontWeight.Bold).fontColor(ratingColor('A-'))
+          Text('A- 院校').fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
         }.layoutWeight(1)
       }
       .width('100%').padding(16)
@@ -460,7 +460,7 @@ struct SchoolGuidePage {
               // ═══ 卡片头部（折叠态） ═══
               Row() {
                 Text(school.name)
-                  .fontSize(14).fontWeight(FontWeight.Bold)
+                  .fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Bold)
                   .fontColor(ColorTokens.textPrimary(this.isDarkMode))
                   .layoutWeight(1).maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -471,18 +471,18 @@ struct SchoolGuidePage {
                     ForEach(school.evaluations, (ev: EvalItem, ei: number) => {
                       Row() {
                         Text(ev.subject.substring(0, 2))  // "计算机"→"计算" / "软件" / "网络"
-                          .fontSize(9)
-                          .fontColor(this.isDarkMode ? '#000000' : ev.rating === 'A+' ? '#FFFFFF' : ColorTokens.textPrimary(this.isDarkMode))
+                          .fontSize(FontScale.MICRO_SM)
+                          .fontColor(this.isDarkMode ? ColorTokens.BG_PAGE_DARK : ev.rating === 'A+' ? ColorTokens.TEXT_WHITE : ColorTokens.textPrimary(this.isDarkMode))
                         Text(ev.rating)
-                          .fontSize(10).fontWeight(FontWeight.Bold)
-                          .fontColor(this.isDarkMode ? '#000000' : '#FFFFFF')
+                          .fontSize(FontScale.TINY).fontWeight(FontWeight.Bold)
+                          .fontColor(this.isDarkMode ? ColorTokens.BG_PAGE_DARK : ColorTokens.TEXT_WHITE)
                         Text(ev.round === '第四轮' ? '④' : '⑤')
-                          .fontSize(8)
-                          .fontColor(this.isDarkMode ? '#000000' : '#FFFFFFBB')
+                          .fontSize(FontScale.NANO)
+                          .fontColor(this.isDarkMode ? ColorTokens.BG_PAGE_DARK : ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, 'BB'))
                       }
                       .padding({ left: 5, right: 5, top: 2, bottom: 2 })
-                      .backgroundColor(this.isDarkMode ? '#FFFFFF' : ratingColor(ev.rating))
-                      .borderRadius(4)
+                      .backgroundColor(this.isDarkMode ? ColorTokens.TEXT_WHITE : ratingColor(ev.rating))
+                      .borderRadius(Radii.XS)
                       .margin({ left: ei > 0 ? 4 : 0 })
                     }, (ev: EvalItem, ei: number) => 'hdr_' + index + '_' + ei.toString())
                   }
@@ -494,33 +494,33 @@ struct SchoolGuidePage {
                 Column() {
                   // ── 学科评估表格 ──
                   Text('学科评估')
-                    .fontSize(13).fontWeight(FontWeight.Bold)
+                    .fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold)
                     .fontColor(ColorTokens.textPrimary(this.isDarkMode))
                     .width('100%').margin({ top: 10 })
 
                   // 表头
                   Row() {
-                    Text('学科').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).width(80)
-                    Text('评级').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).width(44)
-                    Text('轮次').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).layoutWeight(1)
+                    Text('学科').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).width(80)
+                    Text('评级').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).width(44)
+                    Text('轮次').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).layoutWeight(1)
                   }.width('100%').padding({ top: 4, bottom: 4 })
 
                   // 评估行
                   ForEach(school.evaluations, (ev: EvalItem, ei: number) => {
                     Row() {
                       Text(ev.subject)
-                        .fontSize(12).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+                        .fontSize(FontScale.LABEL).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                         .width(80)
                       Row() {
                         Text(ev.rating)
-                          .fontSize(12).fontWeight(FontWeight.Bold)
-                          .fontColor(this.isDarkMode ? '#000000' : '#FFFFFF')
+                          .fontSize(FontScale.LABEL).fontWeight(FontWeight.Bold)
+                          .fontColor(this.isDarkMode ? ColorTokens.BG_PAGE_DARK : ColorTokens.TEXT_WHITE)
                           .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                          .backgroundColor(this.isDarkMode ? '#FFFFFF' : ratingColor(ev.rating))
-                          .borderRadius(6)
+                          .backgroundColor(this.isDarkMode ? ColorTokens.TEXT_WHITE : ratingColor(ev.rating))
+                          .borderRadius(Radii.SM)
                       }.width(44)
                       Text(ev.round)
-                        .fontSize(11).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+                        .fontSize(FontScale.MICRO).fontColor(ColorTokens.textSecondary(this.isDarkMode))
                         .layoutWeight(1)
                     }
                     .width('100%').padding({ top: 5, bottom: 5 })
@@ -529,29 +529,29 @@ struct SchoolGuidePage {
 
                   // ── 初试科目 ──
                   Row() {
-                    Text('初试：').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode))
+                    Text('初试：').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode))
                     Text(school.exam)
-                      .fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                      .fontSize(FontScale.MICRO).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                       .padding({ left: 8, right: 8, top: 2, bottom: 2 })
                       .backgroundColor(school.exam === '408' ? ColorTokens.primary(this.isDarkMode) : ColorTokens.accentLight(this.isDarkMode))
-                      .borderRadius(6)
+                      .borderRadius(Radii.SM)
                   }.width('100%').margin({ top: 12 })
 
                   // ── 相关院系 ──
                   Text('相关院系：')
-                    .fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode))
+                    .fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode))
                     .width('100%').margin({ top: 8 })
                   Text(school.colleges)
-                    .fontSize(11).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+                    .fontSize(FontScale.MICRO).fontColor(ColorTokens.textSecondary(this.isDarkMode))
                     .lineHeight(16).width('100%')
 
                   // ── 研究生院链接 ──
                   Row() {
-                    Text('🔗 研究生院')
-                      .fontSize(12).fontColor(ColorTokens.primary(this.isDarkMode))
+                    Text('研究生院')
+                      .fontSize(FontScale.LABEL).fontColor(ColorTokens.primary(this.isDarkMode))
                       .padding({ left: 10, right: 10, top: 4, bottom: 4 })
                       .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
-                      .borderRadius(10)
+                      .borderRadius(Radii.LG)
                       .onClick(() => { this.openGradUrl(school.gradUrl, school.name); })
                   }.width('100%').margin({ top: 10 })
                 }
@@ -561,15 +561,15 @@ struct SchoolGuidePage {
               // ── 底部：展开/收起提示 ──
               Row() {
                 Text(this.expandedIndex === index ? '收起 ▲' : '详情 ▼')
-                  .fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode))
+                  .fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode))
               }.width('100%').justifyContent(FlexAlign.Center).margin({ top: this.expandedIndex === index ? 6 : 4 })
             }
             .width('100%')
             .padding(14)
             .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-            .borderRadius(14)
+            .borderRadius(Radii.XL)
             .margin({ left: 12, right: 12, top: 6 })
-            .shadow({ radius: 4, color: '#06000000', offsetX: 0, offsetY: 1 })
+            .shadow({ radius: 4, color: ColorTokens.SHADOW_SOFT_LIGHT, offsetX: 0, offsetY: 1 })
             .onClick(() => { this.toggleExpand(index); })
           }, (school: SchoolInfo, index: number) => index.toString())
 

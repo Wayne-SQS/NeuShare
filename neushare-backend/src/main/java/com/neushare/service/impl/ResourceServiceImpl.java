@@ -1,12 +1,12 @@
 package com.neushare.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.neushare.dto.ResourceDTO;
 import com.neushare.entity.Comment;
 import com.neushare.entity.Favorite;
@@ -102,7 +102,14 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
         if (!resource.getUploadUserId().equals(userId) && !"admin".equals(role)) {
             throw new BusinessException("无权修改此资源");
         }
-        BeanUtil.copyProperties(resourceDTO, resource);
+        // DTO 里没传的字段保持原值，避免编辑时把已有封面/文件地址清空
+        BeanUtil.copyProperties(resourceDTO, resource, CopyOptions.create().setIgnoreNullValue(true));
+        boolean isAdmin = "admin".equals(role);
+        if (!isAdmin) {
+            // 普通用户修改内容后需要重新审核，防止"审核通过 -> 改内容 -> 免审核发布"
+            resource.setStatus(0);
+            resource.setRejectReason(null);
+        }
         resource.setUpdateTime(LocalDateTime.now());
         updateById(resource);
     }

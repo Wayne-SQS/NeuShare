@@ -3,7 +3,7 @@ services:
     image: mysql:8.0
     container_name: neushare-db
     environment:
-      MYSQL_ROOT_PASSWORD: SQS626070
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中设置 MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: neushare
       TZ: Asia/Shanghai
     ports:
@@ -24,7 +24,9 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/neushare?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: SQS626070
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中设置 MYSQL_ROOT_PASSWORD}
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中设置 MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?请在 .env 中设置 JWT_SECRET}
       TZ: Asia/Shanghai
     ports:
       - "8080:8080"

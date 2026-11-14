@@ -16,7 +16,7 @@
         ├──────────────┬────────────┬──────────────┤
         │  🌐 Web      │  ☕ API    │  📱 App      │
         │  Vue 3       │  Spring   │  HarmonyOS   │
-        │  :5173       │  :8080    │  NEXT        │
+        │  :3000       │  :8080    │  NEXT        │
         └──────────────┴────────────┴──────────────┘
                         │
                     🗄️ MySQL 8
@@ -27,20 +27,28 @@
 | **Web 前端** | Vue 3 + Vite 5 + Element Plus + Pinia + ECharts | SPA 应用，用户端 + 管理后台 |
 | **后端 API** | Spring Boot 3.3.7 + MyBatis-Plus 3.5.13 + JWT | RESTful，角色权限 + 通知系统 |
 | **移动端** | HarmonyOS NEXT + ArkUI + ArkTS | 鸿蒙原生，3 层 HAR 架构，5 级断点 |
-| **数据库** | MySQL 8 | 10 张表，预置种子数据 |
+| **数据库** | MySQL 8 | 16 张表，预置种子数据 |
 
 ---
 
 ## 快速开始
 
+> 后端不再内置任何默认口令：启动前必须提供 `DB_PASSWORD` 与 `JWT_SECRET` 两个环境变量（`JWT_SECRET` 长度需 ≥ 32 字节）。
+
 ```bash
+# 0. 配置环境变量（任选其一）
+cp .env.example .env && vim .env      # 方式 A：供 docker compose 使用
+export DB_PASSWORD=你的口令            # 方式 B：本机直接运行后端
+export JWT_SECRET=至少32字节的随机字符串
+
 # Web 前端
 cd neushare-frontend
-npm install && npm run dev        # → localhost:5173
+npm install && npm run dev        # → localhost:3000
 
 # 后端 (JDK 17+)
 cd neushare-backend
 mvn spring-boot:run              # → localhost:8080
+mvn test                         # 运行单元测试
 
 # 鸿蒙 App
 # DevEco Studio 打开项目根目录 → Sync → Run
@@ -87,7 +95,7 @@ NeuShare/
 │
 ├── neushare-backend/           # Spring Boot 后端
 │   └── src/main/java/com/neushare/
-│       ├── controller/         # 8 个 REST 控制器
+│       ├── controller/         # 14 个 REST 控制器
 │       ├── service/            # 业务逻辑层
 │       ├── mapper/             # MyBatis-Plus + XML
 │       ├── entity/ dto/ vo/    # 数据对象

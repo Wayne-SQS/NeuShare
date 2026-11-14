@@ -4,6 +4,7 @@
 // ============================================================
 
 import { ColorTokens } from '../theme/ColorTokens';
+import { FontScale, Radii, Spacing } from '../theme/DesignTokens';
 
 @Component
 export struct TypeTag {
@@ -18,22 +19,22 @@ export struct TypeTag {
     if (this.isDark) {
       // ── 深色模式：字母缩写 + 细边框 ─────────
       Text(ColorTokens.typeAbbreviation(this.type))
-        .fontSize(10)
+        .fontSize(FontScale.TINY)
         .fontWeight(FontWeight.Medium)
         .fontColor(ColorTokens.TEXT_SECONDARY_DARK)
         .letterSpacing(1)
-        .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-        .borderRadius(6)
+        .padding({ left: Spacing.SM, right: Spacing.SM, top: Spacing.XXS, bottom: Spacing.XXS })
+        .borderRadius(Radii.SM)
         .border({ width: 0.5, color: ColorTokens.DIVIDER_DARK })
         .backgroundColor(ColorTokens.BG_CARD_DARK)
     } else {
       // ── 亮色模式：多彩胶囊 ──────────────────
       Text(this.getTypeLabel())
-        .fontSize(11)
+        .fontSize(FontScale.MICRO)
         .fontWeight(FontWeight.Medium)
         .fontColor(ColorTokens.TEXT_WHITE)
-        .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-        .borderRadius(12)
+        .padding({ left: Spacing.LG, right: Spacing.LG, top: Spacing.XS, bottom: Spacing.XS })
+        .borderRadius(Radii.CARD)
         .backgroundColor(ColorTokens.typeColor(this.type, false))
     }
   }
@@ -47,3 +48,4 @@ export struct TypeTag {
       default: return '其他';
     }
   }
+}

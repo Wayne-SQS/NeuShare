@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, AuthStore } from '@neushare/common';
+import { ColorTokens, AuthStore, FontScale, Radii } from '@neushare/common';
 import { AuthApi, UserInfo } from '../api/AuthApi';
 import { GradePill } from '../components/GradePill';
 import { Context } from '@ohos.abilityAccessCtrl';
@@ -57,15 +57,15 @@ struct EditProfilePage {
   build() {
     Column() {
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { router.back(); })
-        Text('编辑资料').fontSize(18).fontWeight(FontWeight.Bold)
+        Text('编辑资料').fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold)
           .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
         Blank()
-        Text('保存').fontSize(15).fontWeight(FontWeight.Bold)
+        Text('保存').fontSize(FontScale.BODY).fontWeight(FontWeight.Bold)
           .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-          .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(16)
+          .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(Radii.XXL)
           .onClick(() => { this.saveProfile(); })
       }
       .width('100%').height(52).padding({ left: 12, right: 12 })
@@ -76,47 +76,47 @@ struct EditProfilePage {
           // Avatar preview
           Row() {
             Stack({ alignContent: Alignment.Center }) {
-              Column().width(80).height(80).borderRadius(40).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
+              Column().width(80).height(80).borderRadius(Radii.PILL).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
               if (this.avatarUrl) {
-                Image(this.avatarUrl).width(80).height(80).borderRadius(40).objectFit(ImageFit.Cover)
+                Image(this.avatarUrl).width(80).height(80).borderRadius(Radii.PILL).objectFit(ImageFit.Cover)
               } else {
-                Text('👤').fontSize(40)
+                Text('头像').fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode))
               }
             }
             Column() {
-              Text('头像').fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('输入图片URL地址').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+              Text('头像').fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('输入图片URL地址').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
             }.margin({ left: 16 })
           }
           .width('100%').padding(20)
           .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
           .margin({ left: 24, right: 24, top: 12 })
-          .borderRadius(14)
+          .borderRadius(Radii.XL)
 
           // Form
           Column() {
-            Text('头像URL').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ bottom: 6 })
+            Text('头像URL').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ bottom: 6 })
             TextInput({ text: this.avatarUrl, placeholder: 'https://...' })
-              .fontSize(14).width('100%').height(44)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+              .fontSize(FontScale.BODY_SM).width('100%').height(44)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
               .padding({ left: 12 })
               .onChange((value: string) => { this.avatarUrl = value; })
 
-            Text('昵称').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 6 })
+            Text('昵称').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 6 })
             TextInput({ text: this.nickname, placeholder: '你的昵称' })
-              .fontSize(14).width('100%').height(44)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+              .fontSize(FontScale.BODY_SM).width('100%').height(44)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
               .padding({ left: 12 })
               .onChange((value: string) => { this.nickname = value; })
 
-            Text('学院').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 6 })
+            Text('学院').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 6 })
             TextInput({ text: this.college, placeholder: '软件学院' })
-              .fontSize(14).width('100%').height(44)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+              .fontSize(FontScale.BODY_SM).width('100%').height(44)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
               .padding({ left: 12 })
               .onChange((value: string) => { this.college = value; })
 
-            Text('年级').fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 8 })
+            Text('年级').fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 16, bottom: 8 })
             Row() {
               ForEach(this.grades, (label: string, idx: number) => {
                 GradePill({
@@ -130,11 +130,11 @@ struct EditProfilePage {
           .width('100%').padding(20)
           .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
           .margin({ left: 24, right: 24, top: 12 })
-          .borderRadius(14)
+          .borderRadius(Radii.XL)
 
           if (this.message) {
             Text(this.message)
-              .fontSize(13)
+              .fontSize(FontScale.CAPTION)
               .fontColor(this.message.includes('成功') ? ColorTokens.success(this.isDarkMode) : ColorTokens.error(this.isDarkMode))
               .margin({ top: 12 })
           }

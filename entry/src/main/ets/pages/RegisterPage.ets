@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { AuthStore, ColorTokens } from '@neushare/common';
+import { AuthStore, ColorTokens, FontScale, Radii, Spacing, ControlSize, PageScaffold, AppButton } from '@neushare/common';
 import { AuthApi } from '../api/AuthApi';
 import { Context } from '@ohos.abilityAccessCtrl';
 
@@ -89,124 +89,113 @@ struct RegisterPage {
   }
 
   build() {
-    Column() {
-      Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-          .onClick(() => { router.back(); })
-        Text('创建账号').fontSize(18).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-          .margin({ left: 12 })
-      }
-      .width('100%').height(52).padding({ left: 24 }).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-
-      Scroll() {
+    PageScaffold({ title: '创建账号' }) {
+      Column() {
         Column() {
-          Column() {
-            // 学号
-            Text('学号').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-              .margin({ bottom: 6 }).width('100%')
-            TextInput({ text: this.username, placeholder: '请输入学号' })
-              .fontSize(15).width('100%').height(48)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
-              .padding({ left: 16 })
-              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 12 })
-              .onChange((value: string) => { this.username = value; })
+          // 学号
+          Text('学号').fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+            .margin({ bottom: Spacing.XS }).width('100%')
+          TextInput({ text: this.username, placeholder: '请输入学号' })
+            .fontSize(FontScale.BODY).width('100%').height(ControlSize.INPUT)
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
+            .padding({ left: Spacing.LG })
+            .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
+            .onChange((value: string) => { this.username = value; })
 
-            // 昵称
-            Text('昵称').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-              .margin({ top: 14, bottom: 6 }).width('100%')
-            TextInput({ text: this.nickname, placeholder: '请输入昵称' })
-              .fontSize(15).width('100%').height(48)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
-              .padding({ left: 16 })
-              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 12 })
-              .onChange((value: string) => { this.nickname = value; })
+          // 昵称
+          Text('昵称').fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+            .margin({ top: Spacing.MD, bottom: Spacing.XS }).width('100%')
+          TextInput({ text: this.nickname, placeholder: '请输入昵称' })
+            .fontSize(FontScale.BODY).width('100%').height(ControlSize.INPUT)
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
+            .padding({ left: Spacing.LG })
+            .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
+            .onChange((value: string) => { this.nickname = value; })
 
-            // 密码
-            Text('密码').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-              .margin({ top: 14, bottom: 6 }).width('100%')
-            TextInput({ text: this.password, placeholder: '请输入密码（至少6位）' })
-              .fontSize(15).width('100%').height(48)
-              .type(InputType.Password)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
-              .padding({ left: 16 })
-              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 12 })
-              .onChange((value: string) => { this.password = value; })
+          // 密码
+          Text('密码').fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+            .margin({ top: Spacing.MD, bottom: Spacing.XS }).width('100%')
+          TextInput({ text: this.password, placeholder: '请输入密码（至少6位）' })
+            .fontSize(FontScale.BODY).width('100%').height(ControlSize.INPUT)
+            .type(InputType.Password)
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
+            .padding({ left: Spacing.LG })
+            .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
+            .onChange((value: string) => { this.password = value; })
 
-            // 确认密码
-            Text('确认密码').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-              .margin({ top: 14, bottom: 6 }).width('100%')
-            TextInput({ text: this.confirmPassword, placeholder: '请确认密码' })
-              .fontSize(15).width('100%').height(48)
-              .type(InputType.Password)
-              .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
-              .padding({ left: 16 })
-              .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 12 })
-              .onChange((value: string) => { this.confirmPassword = value; })
+          // 确认密码
+          Text('确认密码').fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+            .margin({ top: Spacing.MD, bottom: Spacing.XS }).width('100%')
+          TextInput({ text: this.confirmPassword, placeholder: '请确认密码' })
+            .fontSize(FontScale.BODY).width('100%').height(ControlSize.INPUT)
+            .type(InputType.Password)
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
+            .padding({ left: Spacing.LG })
+            .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
+            .onChange((value: string) => { this.confirmPassword = value; })
 
-            // 学院
-            Text('学院').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-              .margin({ top: 14, bottom: 6 }).width('100%')
-            Flex({ wrap: FlexWrap.Wrap }) {
-              ForEach(this.colleges, (item: string, idx: number) => {
-                Text(item)
-                  .fontSize(14)
-                  .fontColor(this.college === item ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
-                  .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-                  .backgroundColor(this.college === item ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
-                  .borderRadius(10)
-                  .margin({ right: 8, top: 4 })
-                  .onClick(() => { this.college = item; })
-              }, (item: string, idx: number) => 'col_' + idx.toString())
-            }.width('100%')
+          // 学院
+          Text('学院').fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+            .margin({ top: Spacing.MD, bottom: Spacing.XS }).width('100%')
+          Flex({ wrap: FlexWrap.Wrap }) {
+            ForEach(this.colleges, (item: string, idx: number) => {
+              Text(item)
+                .fontSize(FontScale.BODY_SM)
+                .fontColor(this.college === item ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
+                .padding({ left: Spacing.LG, right: Spacing.LG, top: Spacing.SM, bottom: Spacing.SM })
+                .backgroundColor(this.college === item ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
+                .borderRadius(Radii.SM)
+                .margin({ right: Spacing.SM, top: Spacing.XS })
+                .onClick(() => { this.college = item; })
+            }, (item: string, idx: number) => 'col_' + idx.toString())
+          }.width('100%')
 
-            // 年级
-            Text('年级').fontSize(13).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-              .margin({ top: 14, bottom: 6 }).width('100%')
-            Row() {
-              ForEach(this.grades, (label: string, idx: number) => {
-                Text(label)
-                  .fontSize(14)
-                  .fontColor(this.grade === (idx + 1) ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
-                  .padding({ left: 20, right: 20, top: 10, bottom: 10 })
-                  .backgroundColor(this.grade === (idx + 1) ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
-                  .borderRadius(10)
-                  .margin({ right: 8 })
-                  .onClick(() => { this.toggleGrade(idx); })
-              }, (label: string, idx: number) => 'grad_' + idx.toString())
-            }.width('100%')
+          // 年级
+          Text('年级').fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+            .margin({ top: Spacing.MD, bottom: Spacing.XS }).width('100%')
+          Row() {
+            ForEach(this.grades, (label: string, idx: number) => {
+              Text(label)
+                .fontSize(FontScale.BODY_SM)
+                .fontColor(this.grade === (idx + 1) ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
+                .padding({ left: Spacing.XL, right: Spacing.XL, top: Spacing.SM, bottom: Spacing.SM })
+                .backgroundColor(this.grade === (idx + 1) ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
+                .borderRadius(Radii.SM)
+                .margin({ right: Spacing.SM })
+                .onClick(() => { this.toggleGrade(idx); })
+            }, (label: string, idx: number) => 'grad_' + idx.toString())
+          }.width('100%')
 
-            if (this.errorMsg) {
-              Text(this.errorMsg).fontSize(13).fontColor(ColorTokens.error(this.isDarkMode)).margin({ top: 14 })
-            }
-
-            Button(this.isLoading ? '注册中...' : '注 册')
-              .width('100%').height(48)
-              .fontSize(16).fontWeight(FontWeight.Bolder).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
-              .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(14)
-              .margin({ top: 28 })
-              .enabled(!this.isLoading)
-              .scale({ x: this.btnPressed ? 0.96 : 1, y: this.btnPressed ? 0.96 : 1 })
-              .animation({ curve: Curve.EaseOut, duration: 200 })
-              .onTouch((event: TouchEvent) => {
-                if (event.type === TouchType.Down) { this.btnPressed = true; }
-                else if (event.type === TouchType.Up || event.type === TouchType.Cancel) { this.btnPressed = false; }
-              })
-              .onClick(() => { this.doRegister(); })
-
-            Text('已有账号？去登录 →')
-              .fontSize(14).fontWeight(FontWeight.Medium).fontColor(ColorTokens.primary(this.isDarkMode))
-              .margin({ top: 18 })
-              .onClick(() => { router.back(); })
+          if (this.errorMsg) {
+            Text(this.errorMsg).fontSize(FontScale.CAPTION).fontColor(ColorTokens.error(this.isDarkMode)).margin({ top: Spacing.MD })
           }
-          .width('100%').padding(24)
-          .margin({ top: 8, left: 24, right: 24 })
 
-          Column().height(60)
+          Button(this.isLoading ? '注册中...' : '注 册')
+            .width('100%').height(ControlSize.BUTTON)
+            .fontSize(FontScale.BODY).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+            .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(Radii.BUTTON)
+            .margin({ top: Spacing.XXL })
+            .enabled(!this.isLoading)
+            .scale({ x: this.btnPressed ? 0.96 : 1, y: this.btnPressed ? 0.96 : 1 })
+            .animation({ curve: Curve.EaseOut, duration: 200 })
+            .onTouch((event: TouchEvent) => {
+              if (event.type === TouchType.Down) { this.btnPressed = true; }
+              else if (event.type === TouchType.Up || event.type === TouchType.Cancel) { this.btnPressed = false; }
+            })
+            .onClick(() => { this.doRegister(); })
+
+          Text('已有账号？去登录')
+            .fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Medium).fontColor(ColorTokens.primary(this.isDarkMode))
+            .height(ControlSize.BUTTON)
+            .margin({ top: Spacing.MD })
+            .onClick(() => { router.back(); })
         }
+        .width('100%').padding(Spacing.XXL)
+
+        Column().height(Spacing.HUGE)
       }
-      .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
+      .width('100%')
     }
-    .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
   }
 
   pageTransition() {

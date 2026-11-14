@@ -38,18 +38,18 @@
 
 <style scoped>
 .footer {
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border-default);
   background: var(--bg-base);
   margin-top: auto;
 }
 
 .footer-container {
-  max-width: 1280px;
+  max-width: var(--container-max);
   margin: 0 auto;
-  padding: 48px 28px 36px;
+  padding: var(--space-9) var(--space-6) var(--space-7);
   display: flex;
   justify-content: space-between;
-  gap: 60px;
+  gap: var(--space-10);
 }
 
 .footer-brand {
@@ -59,79 +59,80 @@
 .footer-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .logo-mark {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+  border-radius: var(--radius-sm);
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .logo-text {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 .footer-desc {
   color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
 }
 
 .footer-links {
   display: flex;
-  gap: 64px;
+  gap: var(--space-10);
 }
 
 .link-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .link-title {
   color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--space-1);
+  letter-spacing: 0.06em;
 }
 
 .link-group a {
-  color: var(--text-muted);
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
   transition: var(--transition-fast);
 }
 
 .link-group a:hover {
-  color: var(--accent-light);
+  color: var(--accent);
 }
 
 .footer-bottom {
   border-top: 1px solid var(--border-subtle);
-  padding: 20px 28px;
+  padding: var(--space-5) var(--space-6);
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .footer-container {
     flex-direction: column;
-    gap: 32px;
+    gap: var(--space-7);
+    padding: var(--space-8) var(--space-4) var(--space-6);
   }
+
   .footer-links {
-    gap: 40px;
+    gap: var(--space-10);
   }
 }
 </style>

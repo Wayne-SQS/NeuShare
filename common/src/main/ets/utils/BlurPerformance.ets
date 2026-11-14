@@ -3,6 +3,8 @@
 // 滚动时关闭 blur / 低端设备降级为纯色 / 三级模糊策略
 // ============================================================
 
+import { ColorTokens } from '../theme/ColorTokens';
+
 export enum BlurLevel {
   NONE = 0,    // 无模糊（低端设备 / 滚动中）
   LOW = 20,    // 低模糊（中端设备）
@@ -67,6 +69,6 @@ export class BlurPerformance {
 
   // ── 获取纯色降级背景（模糊关闭时替代半透明） ──
   static fallbackBg(isDark: boolean): string {
-    return isDark ? '#1C1C1F' : '#F0F3FF'; // 深色：卡片色 / 亮色：接近页面底色的不透明色
+    return isDark ? ColorTokens.BG_CARD_DARK : ColorTokens.BG_PAGE_LIGHT;
   }
 }

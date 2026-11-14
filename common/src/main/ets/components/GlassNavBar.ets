@@ -5,6 +5,7 @@
 // ============================================================
 
 import { ColorTokens } from '../theme/ColorTokens';
+import { FontScale, ControlSize, Spacing } from '../theme/DesignTokens';
 import { BlurPerformance } from '../utils/BlurPerformance';
 
 @Component
@@ -28,27 +29,27 @@ export struct GlassNavBar {
   private get navBg(): string {
     // 模糊关闭时使用不透明降级色
     if (this.effectiveBlur === 0 && !this.isDark) {
-      return '#F4F7FF'; // 不透明淡蓝白
+      return ColorTokens.GLASS_LIGHT; // 不透明淡蓝白
     }
-    return this.isDark ? '#0E0E10CC' : '#F4F7FFCC';
+    return this.isDark ? ColorTokens.withAlpha(ColorTokens.GLASS_DARK, 'CC') : ColorTokens.withAlpha(ColorTokens.GLASS_LIGHT, 'CC');
   }
 
   private get navBorderColor(): string {
-    return this.isDark ? ColorTokens.DIVIDER_DARK : '#4A6BFF20';
+    return this.isDark ? ColorTokens.DIVIDER_DARK : ColorTokens.withAlpha(ColorTokens.PRIMARY_LIGHT, '20');
   }
 
   build() {
     Row() {
       if (this.showBack) {
-        Text('←')
-          .fontSize(20)
+        Text('返回')
+          .fontSize(FontScale.BODY_SM)
           .fontColor(ColorTokens.textPrimary(this.isDark))
-          .padding({ right: 12 })
+          .padding({ right: Spacing.MD })
           .onClick(() => this.onBack())
       }
 
       Text(this.title)
-        .fontSize(18)
+        .fontSize(FontScale.SECTION)
         .fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDark))
         .layoutWeight(1)
@@ -56,8 +57,8 @@ export struct GlassNavBar {
       Blank()
     }
     .width('100%')
-    .height(56)
-    .padding({ left: 16, right: 16 })
+    .height(ControlSize.HEADER)
+    .padding({ left: Spacing.PAGE, right: Spacing.PAGE })
     .backgroundColor(this.navBg)
     .backdropBlur(this.effectiveBlur)
     .border({ width: { bottom: 0.5 }, color: this.navBorderColor })

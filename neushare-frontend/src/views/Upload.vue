@@ -1,17 +1,22 @@
 <template>
   <div class="upload-page">
-    <div class="page-container">
-      <div class="upload-card">
-        <div class="card-header">
-          <el-icon><Upload /></el-icon>
-          <span>{{ isEdit ? '编辑资料' : '上传资料' }}</span>
+    <div class="container container--form">
+      <div class="page-head">
+        <div class="page-head__text">
+          <span class="breadcrumb">首页 / {{ isEdit ? '编辑资料' : '上传资料' }}</span>
+          <h1 class="page-title">{{ isEdit ? '编辑资料' : '上传资料' }}</h1>
+          <p class="page-subtitle">
+            {{ isEdit ? '修改资料信息后保存，文件内容不会被替换' : '填写资料信息并上传文件，审核通过后即可公开展示' }}
+          </p>
         </div>
+      </div>
 
+      <div class="upload-card">
         <el-form
           ref="formRef"
           :model="uploadForm"
           :rules="uploadRules"
-          label-width="100px"
+          label-position="top"
           class="upload-form"
         >
           <el-form-item label="资料标题" prop="title">
@@ -43,15 +48,16 @@
               v-model="uploadForm.description"
               type="textarea"
               :rows="4"
-              placeholder="请输入资料描述"
+              placeholder="请输入资料描述，说明适用范围与内容摘要"
               maxlength="500"
               show-word-limit
             />
           </el-form-item>
 
-          <el-form-item label="上传文件" prop="file">
+          <el-form-item v-if="!isEdit" label="上传文件" prop="file">
             <el-upload
               ref="uploadRef"
+              class="upload-dragger"
               :auto-upload="false"
               :limit="1"
               :on-change="handleFileChange"
@@ -71,17 +77,16 @@
             </el-upload>
           </el-form-item>
 
-          <!-- 上传进度 -->
           <el-form-item v-if="uploadProgress > 0 && uploadProgress < 100" label="上传进度">
-            <el-progress :percentage="uploadProgress" :stroke-width="16" :text-inside="true" />
+            <el-progress :percentage="uploadProgress" :stroke-width="12" :text-inside="true" />
           </el-form-item>
 
-          <el-form-item>
+          <div class="form-actions">
             <el-button type="primary" :loading="submitting" @click="handleSubmit">
               {{ isEdit ? '保存修改' : '提交上传' }}
             </el-button>
             <el-button @click="handleReset">重置</el-button>
-          </el-form-item>
+          </div>
         </el-form>
       </div>
     </div>
@@ -217,49 +222,34 @@ onMounted(() => {
 
 <style scoped>
 .upload-page {
-  min-height: 100%;
-  padding: 28px 0;
+  padding: var(--section-gap-md) 0 var(--section-gap-lg);
 }
 
-.page-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 28px;
+.container--form {
+  max-width: var(--container-form);
 }
 
 .upload-card {
   background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 28px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border-subtle);
-  letter-spacing: -0.02em;
-}
-
-.card-header .el-icon {
-  color: var(--accent);
+  padding: var(--space-7);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-default);
 }
 
 .upload-form {
   padding: 0;
 }
 
+.upload-form :deep(.el-form-item) {
+  margin-bottom: var(--space-5);
+}
+
 :deep(.el-upload-dragger) {
   width: 100%;
-  background: var(--bg-elevated);
-  border: 2px dashed var(--border-default);
-  border-radius: var(--radius);
+  padding: var(--space-8) var(--space-4);
+  background: var(--bg-deep);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
 }
 
 :deep(.el-upload-dragger:hover) {
@@ -267,14 +257,14 @@ onMounted(() => {
 }
 
 .upload-icon {
-  font-size: 40px;
+  font-size: calc(var(--text-3xl) + var(--space-1));
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .upload-text {
-  color: var(--text-muted);
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
 .upload-text em {
@@ -284,7 +274,34 @@ onMounted(() => {
 
 .upload-tip {
   color: var(--text-muted);
-  font-size: 12px;
-  margin-top: 8px;
+  font-size: var(--text-xs);
+  margin-top: var(--space-2);
+  line-height: var(--leading-normal);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 767px) {
+  .upload-page {
+    padding: var(--space-5) 0 var(--section-gap-md);
+  }
+
+  .upload-card {
+    padding: var(--space-5);
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .el-button {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 </style>

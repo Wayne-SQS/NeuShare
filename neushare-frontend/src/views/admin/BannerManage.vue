@@ -1,65 +1,89 @@
 <template>
   <div class="banner-manage-page">
-    <div class="banner-card">
-      <div class="card-header">
-        <span>轮播图管理</span>
+    <div class="page-head">
+      <div class="page-head__text">
+        <span class="breadcrumb">管理后台 / 轮播图管理</span>
+        <h1 class="page-title">轮播图管理</h1>
+        <p class="page-subtitle">管理首页轮播图与跳转链接</p>
+      </div>
+      <div class="page-head__actions">
         <el-button type="primary" @click="handleAdd">
           <el-icon><Plus /></el-icon>添加轮播图
         </el-button>
       </div>
+    </div>
 
-      <el-table :data="banners" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="imageUrl" label="图片" width="150">
-          <template #default="{ row }">
-            <el-image
-              :src="row.imageUrl"
-              :preview-src-list="[row.imageUrl]"
-              fit="cover"
-              style="width: 120px; height: 60px; border-radius: 4px"
+    <div class="panel">
+      <div v-if="loading" class="skeleton-list">
+        <SkeletonCard v-for="n in 4" :key="`skeleton-${n}`" variant="list" :rows="1" />
+      </div>
+
+      <div v-else class="table-wrap">
+        <el-table :data="banners" stripe>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="imageUrl" label="图片" width="150">
+            <template #default="{ row }">
+              <el-image
+                :src="row.imageUrl"
+                :preview-src-list="[row.imageUrl]"
+                fit="cover"
+                class="banner-thumb"
+                preview-teleported
+              >
+                <template #error>
+                  <div class="image-placeholder">
+                    <el-icon><Picture /></el-icon>
+                  </div>
+                </template>
+              </el-image>
+            </template>
+          </el-table-column>
+          <el-table-column prop="title" label="标题" min-width="160" />
+          <el-table-column prop="linkUrl" label="链接" min-width="200">
+            <template #default="{ row }">
+              <span class="link-text">{{ row.linkUrl || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="sort" label="排序" width="80" align="right" />
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="{ row }">
+              <el-switch
+                :model-value="row.status === 1"
+                @change="handleStatusChange(row)"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="140" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+              <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+
+          <template #empty>
+            <EmptyState
+              icon="Picture"
+              title="暂无轮播图"
+              description="添加轮播图后展示在首页顶部"
             >
-              <template #error>
-                <div class="image-placeholder">
-                  <el-icon><Picture /></el-icon>
-                </div>
-              </template>
-            </el-image>
+              <el-button type="primary" @click="handleAdd">添加轮播图</el-button>
+            </EmptyState>
           </template>
-        </el-table-column>
-        <el-table-column prop="title" label="标题" min-width="150" />
-        <el-table-column prop="linkUrl" label="链接" min-width="150">
-          <template #default="{ row }">
-            <span class="link-text">{{ row.linkUrl || '-' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-switch
-              :model-value="row.status === 1"
-              @change="handleStatusChange(row)"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
     </div>
 
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑轮播图' : '添加轮播图'"
-      width="500px"
+      width="520px"
+      destroy-on-close
     >
       <el-form
         ref="formRef"
         :model="bannerForm"
         :rules="bannerRules"
-        label-width="80px"
+        label-position="top"
       >
         <el-form-item label="标题" prop="title">
           <el-input v-model="bannerForm.title" placeholder="请输入标题" />
@@ -87,9 +111,11 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getBannerList, addBanner, updateBanner, deleteBanner, updateBannerStatus } from '@/api/admin'
 
-const loading = ref(false)
+const loading = ref(true)
 const submitting = ref(false)
 const banners = ref([])
 const dialogVisible = ref(false)
@@ -199,26 +225,28 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.banner-card {
-  background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-}
-
-.card-header {
+.banner-manage-page {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  flex-direction: column;
 }
 
-.card-header > span {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.banner-thumb {
+  width: 100px;
+  height: 52px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-deep);
 }
 
 .image-placeholder {
@@ -227,13 +255,19 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-elevated);
   color: var(--text-muted);
-  border-radius: 4px;
+  background: var(--bg-deep);
 }
 
 .link-text {
-  color: var(--text-muted);
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  word-break: break-all;
+}
+
+@media (max-width: 767px) {
+  .el-dialog {
+    width: calc(100vw - var(--space-8)) !important;
+  }
 }
 </style>

@@ -1,4 +1,4 @@
-import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, BreakpointType as BpType, BreakpointTypeEnum, BreakpointSystem, FontScale, Radii, Spacing } from '@neushare/common';
 import { BannerItem } from '../models/ResourceModel';
 
 // 星空点数据
@@ -71,37 +71,28 @@ export struct BannerSwiper {
       lg: this.isDarkMode ? 480 : 420,
       xl: this.isDarkMode ? 560 : 480
     }).getValue(this.currentBreakpoint) ?? 220;
-    return base;
+    // 首屏 hero 不超过屏幕高度的 1/3，避免挤占下方内容
+    return Math.min(base, BreakpointSystem.heroMaxHeight(base));
   }
 
   /** 标题字号 */
   private bannerFontSize(): number {
     return new BpType<number>({
-      sm: 18,
-      md: 18,
-      lg: 28,  // 电脑端大字号
-      xl: 36
+      sm: FontScale.SECTION,
+      md: FontScale.SECTION,
+      lg: FontScale.HERO_LG,  // 电脑端大字号
+      xl: FontScale.BRAND
     }).getValue(this.currentBreakpoint) ?? 18;
   }
 
   /** 副标题字号 */
   private bannerSubtitleFontSize(): number {
     return new BpType<number>({
-      sm: 13,
-      md: 13,
-      lg: 16,
-      xl: 20
+      sm: FontScale.CAPTION,
+      md: FontScale.CAPTION,
+      lg: FontScale.SUBTITLE,
+      xl: FontScale.TITLE_SM
     }).getValue(this.currentBreakpoint) ?? 13;
-  }
-
-  /** Emoji装饰大小 */
-  private bannerEmojiSize(): number {
-    return new BpType<number>({
-      sm: 48,
-      md: 52,
-      lg: 80,  // 电脑端大装饰
-      xl: 100
-    }).getValue(this.currentBreakpoint) ?? 48;
   }
 
   /** 圆角大小 */
@@ -175,8 +166,8 @@ export struct BannerSwiper {
           .itemHeight(this.isDesktop() ? 10 : 8)
           .selectedItemWidth(this.isDesktop() ? 10 : 8)
           .selectedItemHeight(this.isDesktop() ? 10 : 8)
-          .color(this.isDarkMode ? '#30FFFFFF' : (this.isDesktop() ? '#60FFFFFF' : '#40FFFFFF'))
-          .selectedColor(this.isDarkMode ? '#FFFFFF' : ColorTokens.primary(this.isDarkMode))
+          .color(this.isDarkMode ? ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '30') : (this.isDesktop() ? ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '60') : ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '40')))
+          .selectedColor(this.isDarkMode ? ColorTokens.TEXT_WHITE : ColorTokens.primary(this.isDarkMode))
           .bottom(this.isDesktop() ? 20 : 12)
       )
       .loop(true)
@@ -214,7 +205,7 @@ export struct BannerSwiper {
             Column()
               .width('100%')
               .height('100%')
-              .backgroundColor('#60000000')
+              .backgroundColor(ColorTokens.OVERLAY)
               .borderRadius(this.bannerBorderRadius())
           }
         }
@@ -237,7 +228,7 @@ export struct BannerSwiper {
             // ── 深色模式：星空点装饰 ──
             ForEach(this.getStarDots(index), (dot: StarDot) => {
               Circle({ width: dot.size, height: dot.size })
-                .fill('#FFFFFF')
+                .fill(ColorTokens.TEXT_WHITE)
                 .opacity(dot.opacity)
                 .position({ x: dot.x + '%', y: dot.y + '%' })
             }, (dot: StarDot, i: number) => `${index}-${i}`)
@@ -247,7 +238,7 @@ export struct BannerSwiper {
               .width('100%').height('40%')
               .linearGradient({
                 direction: GradientDirection.Bottom,
-                colors: [['#00000000', 0], ['#0AFFFFFF', 1]]
+                colors: [[ColorTokens.TRANSPARENT, 0], [ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '0A'), 1]]
               })
               .position({ x: 0, y: '60%' })
           } else if (this.isDesktop()) {
@@ -257,17 +248,17 @@ export struct BannerSwiper {
               .height('100%')
               .linearGradient({
                 direction: GradientDirection.Right,
-                colors: [['#00000000', 0], ['#20000000', 0.5], ['#40000000', 1]]
+                colors: [[ColorTokens.TRANSPARENT, 0], [ColorTokens.OVERLAY_LIGHT, 0.5], [ColorTokens.OVERLAY_LIGHT, 1]]
               })
 
             // 装饰性圆形光晕
             Column()
               .width(200)
               .height(200)
-              .borderRadius(100)
+              .borderRadius(Radii.PILL)
               .linearGradient({
                 direction: GradientDirection.Right,
-                colors: [['#30FFFFFF', 0], ['#00FFFFFF', 1]]
+                colors: [[ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '30'), 0], [ColorTokens.TRANSPARENT, 1]]
               })
               .position({ x: '60%', y: -20 })
               .blur(40)
@@ -286,21 +277,16 @@ export struct BannerSwiper {
             // 帖子标签
             if (this.isPostBanner(item)) {
               Row() {
-                if (this.isDarkMode) {
-                  Circle({ width: 6, height: 6 }).fill('#FFFFFF').opacity(0.8)
-                } else {
-                  Text('🔥')
-                    .fontSize(this.isDesktop() ? 14 : 12)
-                }
+                Circle({ width: 6, height: 6 }).fill(ColorTokens.TEXT_WHITE).opacity(0.8)
                 Text('热门帖子')
-                  .fontSize(this.isDesktop() ? 13 : 11)
+                  .fontSize(this.isDesktop() ? FontScale.CAPTION : FontScale.MICRO)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(this.isDarkMode ? '#FFFFFF' : ColorTokens.GOLD)
+                  .fontColor(this.isDarkMode ? ColorTokens.TEXT_WHITE : ColorTokens.GOLD)
                   .margin({ left: 4 })
               }
               .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-              .backgroundColor(this.isDarkMode ? '#15FFFFFF' : '#FFFFFF25')
-              .borderRadius(12)
+              .backgroundColor(this.isDarkMode ? ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '15') : ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '25'))
+              .borderRadius(Radii.CARD)
               .margin({ bottom: this.isDesktop() ? 16 : 10 })
             }
 
@@ -313,7 +299,7 @@ export struct BannerSwiper {
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .textShadow({ 
                 radius: this.isDesktop() ? 8 : 4, 
-                color: '#90000000', 
+                color: ColorTokens.OVERLAY, 
                 offsetX: 0, 
                 offsetY: this.isDesktop() ? 3 : 1 
               })
@@ -329,7 +315,7 @@ export struct BannerSwiper {
                 .opacity(0.9)
                 .textShadow({ 
                   radius: this.isDesktop() ? 4 : 2, 
-                  color: '#70000000', 
+                  color: ColorTokens.OVERLAY, 
                   offsetX: 0, 
                   offsetY: 1 
                 })
@@ -339,56 +325,39 @@ export struct BannerSwiper {
             if (this.isDesktop()) {
               Row() {
                 Text('查看详情')
-                  .fontSize(14)
-                  .fontColor(ColorTokens.TEXT_WHITE)
-                Text(' →')
-                  .fontSize(14)
+                  .fontSize(FontScale.BODY_SM)
                   .fontColor(ColorTokens.TEXT_WHITE)
               }
-              .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-              .backgroundColor(this.isDarkMode ? '#20FFFFFF' : '#FFFFFF30')
-              .borderRadius(20)
-              .margin({ top: 20 })
+              .padding({ left: Spacing.LG, right: Spacing.LG, top: Spacing.SM, bottom: Spacing.SM })
+              .backgroundColor(this.isDarkMode ? ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '20') : ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '30'))
+              .borderRadius(Radii.HUGE)
+              .margin({ top: Spacing.XL })
             }
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
 
-          // 右侧：Emoji装饰
+          // 右侧：几何装饰（不使用 emoji）
           if (!this.isDesktop()) {
-            // 手机/平板：右侧Emoji或白色圆点
-            if (this.isDarkMode) {
-              Circle({ width: 40, height: 40 })
-                .fill('#FFFFFF')
-                .opacity(0.12)
-                .margin({ right: 16 })
-            } else {
-              Text(item.emoji)
-                .fontSize(this.bannerEmojiSize())
-                .margin({ right: 16 })
-            }
+            Circle({ width: 40, height: 40 })
+              .fill(ColorTokens.TEXT_WHITE)
+              .opacity(this.isDarkMode ? 0.12 : 0.18)
+              .margin({ right: Spacing.LG })
           }
         }
         .width('100%')
         .alignItems(VerticalAlign.Center)
 
-        // 电脑端：Emoji或白色圆点放在底部右侧作为装饰
+        // 电脑端：几何装饰放在底部右侧
         if (this.isDesktop()) {
           Blank()
 
           Row() {
             Blank()
-            if (this.isDarkMode) {
-              Circle({ width: 60, height: 60 })
-                .fill('#FFFFFF')
-                .opacity(0.08)
-                .margin({ right: this.contentPadding(), bottom: 20 })
-            } else {
-              Text(item.emoji)
-                .fontSize(this.bannerEmojiSize())
-                .opacity(0.9)
-                .margin({ right: this.contentPadding(), bottom: 20 })
-            }
+            Circle({ width: 60, height: 60 })
+              .fill(ColorTokens.TEXT_WHITE)
+              .opacity(this.isDarkMode ? 0.08 : 0.14)
+              .margin({ right: this.contentPadding(), bottom: Spacing.XL })
           }
           .width('100%')
         }
@@ -412,7 +381,7 @@ export struct BannerSwiper {
     })
     .shadow({
       radius: this.isDesktop() ? 20 : 12,
-      color: this.isDarkMode ? '#00000000' : (this.isDesktop() ? '#20000000' : ColorTokens.SHADOW_MEDIUM),
+      color: this.isDarkMode ? ColorTokens.TRANSPARENT : (this.isDesktop() ? ColorTokens.OVERLAY_LIGHT : ColorTokens.SHADOW_MEDIUM),
       offsetX: 0,
       offsetY: this.isDesktop() ? 8 : 4
     })

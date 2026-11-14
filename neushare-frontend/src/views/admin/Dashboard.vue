@@ -1,87 +1,91 @@
 <template>
   <div class="dashboard-page">
-    <el-row :gutter="20" class="stat-cards">
-      <el-col :span="6">
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon--blue">
-              <el-icon :size="28"><User /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.userCount || 0 }}</div>
-              <div class="stat-label">用户总数</div>
-            </div>
-          </div>
-        </div>
-      </el-col>
-      <el-col :span="6">
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon--green">
-              <el-icon :size="28"><Document /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.resourceCount || 0 }}</div>
-              <div class="stat-label">资料总数</div>
-            </div>
-          </div>
-        </div>
-      </el-col>
-      <el-col :span="6">
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon--gold">
-              <el-icon :size="28"><ChatDotRound /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.commentCount || 0 }}</div>
-              <div class="stat-label">评论总数</div>
-            </div>
-          </div>
-        </div>
-      </el-col>
-      <el-col :span="6">
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon--red">
-              <el-icon :size="28"><Clock /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.pendingResourceCount || 0 }}</div>
-              <div class="stat-label">待审核</div>
-            </div>
-          </div>
-        </div>
-      </el-col>
-    </el-row>
+    <div class="page-head">
+      <div class="page-head__text">
+        <span class="breadcrumb">管理后台 / 数据统计</span>
+        <h1 class="page-title">数据统计</h1>
+        <p class="page-subtitle">平台概览与资料分布</p>
+      </div>
+    </div>
 
-    <el-row :gutter="20" class="chart-row">
-      <el-col :span="12">
-        <div class="chart-card">
-          <div class="chart-card__header">
-            <span>资料上传趋势</span>
-          </div>
+    <div v-if="statsLoading" class="stat-grid">
+      <SkeletonCard v-for="n in 4" :key="`stat-skeleton-${n}`" :rows="1" />
+    </div>
+    <div v-else class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon--blue">
+          <el-icon :size="22"><User /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.userCount || 0 }}</div>
+          <div class="stat-label">用户总数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon--green">
+          <el-icon :size="22"><Document /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.resourceCount || 0 }}</div>
+          <div class="stat-label">资料总数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon--gold">
+          <el-icon :size="22"><ChatDotRound /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.commentCount || 0 }}</div>
+          <div class="stat-label">评论总数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon--red">
+          <el-icon :size="22"><Clock /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ statistics.pendingResourceCount || 0 }}</div>
+          <div class="stat-label">待审核</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3 class="panel-title">资料上传趋势</h3>
+        </div>
+        <div class="chart-body">
           <div ref="resourceChartRef" class="chart-container"></div>
+          <div v-if="statsLoading" class="chart-skeleton skeleton"></div>
         </div>
-      </el-col>
-      <el-col :span="12">
-        <div class="chart-card">
-          <div class="chart-card__header">
-            <span>分类分布</span>
-          </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3 class="panel-title">分类分布</h3>
+        </div>
+        <div class="chart-body">
           <div ref="categoryChartRef" class="chart-container"></div>
+          <div v-if="statsLoading" class="chart-skeleton skeleton"></div>
         </div>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
+import SkeletonCard from '@/components/SkeletonCard.vue'
 import { getStatistics } from '@/api/admin'
 import { getCategories, getResourceList } from '@/api/resource'
 import { RESOURCE_STATUS } from '@/utils/constants'
+
+const CHART_AXIS = '#d1d5db'
+const CHART_LABEL = '#9ca3af'
+const CHART_SPLIT = '#e5e7eb'
+const CHART_ACCENT = '#2563eb'
+const CHART_LEGEND = '#6b7280'
 
 const resourceChartRef = ref(null)
 const categoryChartRef = ref(null)
@@ -89,6 +93,8 @@ const categoryChartRef = ref(null)
 let resourceChart = null
 let categoryChart = null
 let disposed = false
+
+const statsLoading = ref(true)
 
 const statistics = ref({
   userCount: 0,
@@ -103,6 +109,8 @@ const fetchStatistics = async () => {
     statistics.value = res.data || {}
   } catch (error) {
     console.error('Failed to fetch statistics:', error)
+  } finally {
+    statsLoading.value = false
   }
 }
 
@@ -122,11 +130,12 @@ const initCharts = async () => {
     }
   } catch (error) {
     console.error('Failed to fetch chart data:', error)
-    if (!disposed) initDemoCharts()
+    if (!disposed) initEmptyCharts()
   }
 }
 
-const initDemoCharts = () => {
+// 没有数据时画空图并给出提示，不用演示数据冒充真实统计
+const initEmptyCharts = () => {
   initResourceChart([])
   initCategoryChart([], [])
 }
@@ -146,32 +155,31 @@ const initResourceChart = (resources) => {
   const counts = months.map(m => monthMap[m])
 
   if (months.length === 0) {
-    const labels = ['9月', '10月', '11月', '12月']
-    const data = [3, 5, 4, 2]
     const option = {
-      tooltip: { trigger: 'axis' },
+      title: {
+        text: '暂无上传数据',
+        left: 'center',
+        top: 'middle',
+        textStyle: { color: CHART_LABEL, fontSize: 13, fontWeight: 'normal' }
+      },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
       xAxis: {
         type: 'category',
-        data: labels,
-        axisLine: { lineStyle: { color: '#d1d5db' } },
-        axisLabel: { color: '#9ca3af' }
+        data: [],
+        axisLine: { lineStyle: { color: CHART_AXIS } },
+        axisLabel: { color: CHART_LABEL }
       },
       yAxis: {
         type: 'value',
-        splitLine: { lineStyle: { color: '#e5e7eb' } },
-        axisLabel: { color: '#9ca3af' }
+        splitLine: { lineStyle: { color: CHART_SPLIT } },
+        axisLabel: { color: CHART_LABEL }
       },
       series: [{
         name: '上传数量',
         type: 'bar',
-        data: data,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#3b82f6' },
-            { offset: 1, color: '#2563eb' }
-          ])
-        }
+        barMaxWidth: 28,
+        data: [],
+        itemStyle: { color: CHART_ACCENT, borderRadius: [2, 2, 0, 0] }
       }]
     }
     resourceChart.setOption(option)
@@ -184,24 +192,20 @@ const initResourceChart = (resources) => {
     xAxis: {
       type: 'category',
       data: months,
-      axisLine: { lineStyle: { color: '#d1d5db' } },
-      axisLabel: { color: '#9ca3af' }
+      axisLine: { lineStyle: { color: CHART_AXIS } },
+      axisLabel: { color: CHART_LABEL }
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#e5e7eb' } },
-      axisLabel: { color: '#9ca3af' }
+      splitLine: { lineStyle: { color: CHART_SPLIT } },
+      axisLabel: { color: CHART_LABEL }
     },
     series: [{
       name: '上传数量',
       type: 'bar',
+      barMaxWidth: 28,
       data: counts,
-      itemStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#3b82f6' },
-          { offset: 1, color: '#2563eb' }
-        ])
-      }
+      itemStyle: { color: CHART_ACCENT, borderRadius: [2, 2, 0, 0] }
     }]
   }
   resourceChart.setOption(option)
@@ -222,25 +226,19 @@ const initCategoryChart = (categories, resources) => {
   })).filter(d => d.value > 0)
 
   if (data.length === 0) {
-    const demoData = [
-      { name: '高等数学', value: 3 },
-      { name: '数据结构与算法', value: 2 },
-      { name: '操作系统', value: 1 },
-      { name: '计算机网络', value: 1 },
-      { name: 'Python程序设计', value: 1 }
-    ]
     const option = {
-      tooltip: { trigger: 'item' },
-      legend: { bottom: 0, textStyle: { color: '#6b7280' } },
+      title: {
+        text: '暂无分类数据',
+        left: 'center',
+        top: 'middle',
+        textStyle: { color: CHART_LABEL, fontSize: 13, fontWeight: 'normal' }
+      },
       series: [{
         type: 'pie',
         radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
         label: { show: false },
-        emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#111827' } },
         labelLine: { show: false },
-        data: demoData
+        data: []
       }]
     }
     categoryChart.setOption(option)
@@ -249,12 +247,12 @@ const initCategoryChart = (categories, resources) => {
 
   const option = {
     tooltip: { trigger: 'item' },
-    legend: { bottom: 0, textStyle: { color: '#6b7280' } },
+    legend: { bottom: 0, textStyle: { color: CHART_LEGEND } },
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
       label: { show: false },
       emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#111827' } },
       labelLine: { show: false },
@@ -283,78 +281,114 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.stat-cards {
-  margin-bottom: 20px;
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
 }
 
 .stat-card {
-  background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  border: 1px solid var(--border-subtle);
-  height: 100%;
-}
-
-.stat-content {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  padding: var(--space-5);
 }
 
 .stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.stat-icon--blue { background: rgba(64, 158, 255, 0.15); color: #409eff; }
-.stat-icon--green { background: rgba(103, 194, 58, 0.15); color: #67c23a; }
-.stat-icon--gold { background: rgba(200, 164, 78, 0.15); color: var(--accent); }
-.stat-icon--red { background: rgba(245, 108, 108, 0.15); color: #f56c6c; }
+.stat-icon--blue { background: var(--info-bg); color: var(--info); }
+.stat-icon--green { background: var(--success-bg); color: var(--success); }
+.stat-icon--gold { background: var(--warning-bg); color: var(--warning); }
+.stat-icon--red { background: var(--danger-bg); color: var(--danger); }
 
 .stat-info {
   flex: 1;
+  min-width: 0;
 }
 
 .stat-value {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
 }
 
-.chart-row {
-  margin-bottom: 20px;
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
 }
 
 .chart-card {
   background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  padding: var(--space-5);
 }
 
 .chart-card__header {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-  padding-bottom: 14px;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.chart-body {
+  position: relative;
 }
 
 .chart-container {
   height: 300px;
+}
+
+.chart-skeleton {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 1279px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991px) {
+  .chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chart-container {
+    height: 240px;
+  }
 }
 </style>

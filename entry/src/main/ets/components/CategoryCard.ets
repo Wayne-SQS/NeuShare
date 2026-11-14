@@ -1,4 +1,4 @@
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale, Radii, Spacing, ControlSize, Elevation } from '@neushare/common';
 import { CategoryItem } from '../models/ResourceModel';
 
 @Component
@@ -12,29 +12,31 @@ export struct CategoryCard {
     Column() {
       Stack({ alignContent: Alignment.Center }) {
         Column()
-          .width(56).height(56).borderRadius(18)
-          .backgroundColor(this.isDarkMode ? '#1AFFFFFF' : ColorTokens.withAlpha(this.category.color, '1A'))
-        Text(this.category.icon)
-          .fontSize(28)
+          .width(ControlSize.ICON_LG + Spacing.SM).height(ControlSize.ICON_LG + Spacing.SM).borderRadius(Radii.XXL)
+          .backgroundColor(this.isDarkMode ? ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '1A') : ColorTokens.withAlpha(this.category.color, '1A'))
+        Text(this.category.title.substring(0, 1))
+          .fontSize(FontScale.SECTION)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.category.color)
       }
 
       Text(this.category.title)
-        .fontSize(14).fontWeight(FontWeight.Bold)
+        .fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDarkMode))
         .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
-        .margin({ top: 10 })
+        .margin({ top: Spacing.SM })
 
       Text(this.category.description)
-        .fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode))
+        .fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode))
         .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
-        .margin({ top: 4 }).textAlign(TextAlign.Center).lineHeight(15)
+        .margin({ top: Spacing.XS }).textAlign(TextAlign.Center).lineHeight(FontScale.BODY)
     }
     .width('100%')
-    .padding({ top: 18, bottom: 16, left: 10, right: 10 })
+    .padding({ top: Spacing.LG, bottom: Spacing.LG, left: Spacing.SM, right: Spacing.SM })
     .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-    .borderRadius(18)
-    .shadow({ radius: 8, color: ColorTokens.SHADOW_MEDIUM, offsetX: 0, offsetY: 2 })
-    .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 18 })
+    .borderRadius(Radii.CARD)
+    .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+    .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.border(this.isDarkMode), radius: Radii.CARD })
     .scale({ x: this.tapped ? 0.95 : 1, y: this.tapped ? 0.95 : 1 })
     .animation({ curve: Curve.EaseOut, duration: 200 })
     .hoverEffect(HoverEffect.Auto)

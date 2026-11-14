@@ -1,126 +1,149 @@
 <template>
-  <div class="resource-detail-page" v-loading="loading">
-    <div class="page-container" v-if="resource">
-      <div class="resource-header">
-        <div class="resource-info">
-          <el-tag class="category-tag">{{ resource.categoryName || '未分类' }}</el-tag>
-          <h1 class="title">{{ resource.title }}</h1>
-          <div class="meta">
-            <span class="meta-item">
-              <el-icon><User /></el-icon>
-              <router-link :to="`/user/${resource.uploadUserId}`" class="uploader-link">
-                {{ resource.uploadNickname || '匿名' }}
-              </router-link>
-            </span>
-            <span class="meta-divider"></span>
-            <span class="meta-item">
-              <el-icon><Clock /></el-icon>
-              {{ formatTime(resource.createTime) }}
-            </span>
-            <span class="meta-divider"></span>
-            <span class="meta-item">
-              <el-icon><View /></el-icon>
-              {{ resource.viewCount || 0 }} 次浏览
-            </span>
-            <span class="meta-divider"></span>
-            <span class="meta-item">
-              <el-icon><Star /></el-icon>
-              {{ resource.favoriteCount || 0 }} 次收藏
-            </span>
-          </div>
-        </div>
-        <div class="resource-actions">
-          <el-button
-            :class="['action-btn', { 'action-btn--active': isLiked }]"
-            @click="handleLike"
-          >
-            <el-icon><StarFilled v-if="isLiked" /><Star v-else /></el-icon>
-            <span>{{ resource.likeCount || 0 }}</span>
-          </el-button>
-          <el-button
-            :class="['action-btn', { 'action-btn--active': isFavorited }]"
-            @click="handleFavorite"
-          >
-            <el-icon><CollectionTag v-if="isFavorited" /><Collection v-else /></el-icon>
-            <span>{{ isFavorited ? '已收藏' : '收藏' }}</span>
-          </el-button>
-        </div>
+  <div class="resource-detail-page">
+    <div class="container container--narrow">
+      <div v-if="loading" class="detail-skeleton">
+        <SkeletonCard variant="detail" :rows="3" />
+        <SkeletonCard variant="detail" :rows="4" />
       </div>
 
-      <div class="content-card">
-        <div class="card-label">资料描述</div>
-        <div class="description">
-          {{ resource.description || '暂无描述' }}
-        </div>
-        <div class="file-info" v-if="resource.contentUrl">
-          <el-icon><Document /></el-icon>
-          <span>{{ resource.contentUrl }}</span>
-        </div>
+      <div v-else-if="!resource" class="state-panel">
+        <EmptyState
+          icon="DocumentDelete"
+          title="资料不存在或已下架"
+          description="该资料可能已被删除，或链接地址有误"
+        >
+          <el-button type="primary" @click="$router.push('/resource')">返回资源广场</el-button>
+        </EmptyState>
       </div>
 
-      <div class="comment-card">
-        <div class="card-label">评论 ({{ totalComments }})</div>
-
-        <div class="comment-form" v-if="userStore.isLoggedIn">
-          <el-input
-            v-model="commentForm.content"
-            type="textarea"
-            :rows="3"
-            placeholder="写下你的评论..."
-            maxlength="500"
-            show-word-limit
-          />
-          <el-button type="primary" :loading="submitting" class="submit-btn" @click="submitComment">
-            发表评论
-          </el-button>
-        </div>
-        <div v-else class="login-tip">
-          <router-link to="/login">登录</router-link> 后参与评论
-        </div>
-
-        <div class="comment-list">
-          <div v-for="comment in comments" :key="comment.id" class="comment-item">
-            <div class="comment-avatar" v-if="!comment.deleted">
-              <el-avatar :size="40" :src="comment.avatarUrl">
-                {{ getInitial(comment.nickname) }}
-              </el-avatar>
+      <template v-else>
+        <header class="resource-header">
+          <div class="resource-info">
+            <div class="header-top">
+              <el-tag class="category-tag" size="small" effect="plain">
+                {{ resource.categoryName || '未分类' }}
+              </el-tag>
+              <span class="upload-time">{{ formatTime(resource.createTime) }}</span>
             </div>
-            <div class="comment-content">
-              <template v-if="comment.deleted">
-                <div class="comment-deleted">该评论已被删除</div>
-              </template>
-              <template v-else>
-                <div class="comment-header">
-                  <span class="username">{{ comment.nickname }}</span>
-                  <span class="time">{{ formatTime(comment.createTime) }}</span>
-                </div>
-                <div class="comment-text">{{ comment.content }}</div>
-              </template>
-              <div class="comment-replies" v-if="comment.children && comment.children.length > 0">
-                <div v-for="reply in comment.children" :key="reply.id" class="reply-item">
-                  <el-avatar :size="28" :src="reply.avatarUrl" v-if="!reply.deleted">
-                    {{ getInitial(reply.nickname) }}
-                  </el-avatar>
-                  <div class="reply-content">
-                    <template v-if="reply.deleted">
-                      <span class="reply-deleted">该评论已被删除</span>
-                    </template>
-                    <template v-else>
-                      <span class="reply-nickname">{{ reply.nickname }}</span>
-                      <span class="reply-text">{{ reply.content }}</span>
-                      <span class="reply-time">{{ formatTime(reply.createTime) }}</span>
-                    </template>
+            <h1 class="title">{{ resource.title }}</h1>
+            <div class="meta">
+              <router-link :to="`/user/${resource.uploadUserId}`" class="uploader">
+                <el-icon><User /></el-icon>
+                <span>{{ resource.uploadNickname || '匿名' }}</span>
+              </router-link>
+              <span class="meta-item">
+                <el-icon><View /></el-icon>
+                <span>{{ resource.viewCount || 0 }} 次浏览</span>
+              </span>
+              <span class="meta-item">
+                <el-icon><Star /></el-icon>
+                <span>{{ resource.favoriteCount || 0 }} 次收藏</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="resource-actions">
+            <el-button
+              :class="['action-btn', { 'action-btn--active': isLiked }]"
+              @click="handleLike"
+            >
+              <el-icon><StarFilled v-if="isLiked" /><Star v-else /></el-icon>
+              <span>{{ resource.likeCount || 0 }}</span>
+            </el-button>
+            <el-button
+              :class="['action-btn', { 'action-btn--active': isFavorited }]"
+              @click="handleFavorite"
+            >
+              <el-icon><CollectionTag v-if="isFavorited" /><Collection v-else /></el-icon>
+              <span>{{ isFavorited ? '已收藏' : '收藏' }}</span>
+            </el-button>
+          </div>
+        </header>
+
+        <section class="content-card">
+          <h3 class="card-label">资料描述</h3>
+          <p class="description">{{ resource.description || '暂无描述' }}</p>
+          <div v-if="resource.contentUrl" class="file-info">
+            <el-icon><Document /></el-icon>
+            <span>{{ resource.contentUrl }}</span>
+          </div>
+        </section>
+
+        <section class="comment-card">
+          <div class="comment-head">
+            <h3 class="card-label">评论</h3>
+            <span class="comment-count">{{ totalComments }}</span>
+          </div>
+
+          <div v-if="userStore.isLoggedIn" class="comment-form">
+            <el-input
+              v-model="commentForm.content"
+              type="textarea"
+              :rows="3"
+              placeholder="写下你的评论..."
+              maxlength="500"
+              show-word-limit
+            />
+            <div class="comment-form__actions">
+              <el-button type="primary" :loading="submitting" @click="submitComment">
+                发表评论
+              </el-button>
+            </div>
+          </div>
+          <div v-else class="login-tip">
+            <router-link to="/login">登录</router-link> 后参与评论
+          </div>
+
+          <div class="comment-list">
+            <div v-for="comment in comments" :key="comment.id" class="comment-item">
+              <div v-if="!comment.deleted" class="comment-avatar">
+                <el-avatar :size="36" :src="comment.avatarUrl">
+                  {{ getInitial(comment.nickname) }}
+                </el-avatar>
+              </div>
+              <div class="comment-content">
+                <template v-if="comment.deleted">
+                  <div class="comment-deleted">该评论已被删除</div>
+                </template>
+                <template v-else>
+                  <div class="comment-header">
+                    <span class="username">{{ comment.nickname }}</span>
+                    <span class="time">{{ formatTime(comment.createTime) }}</span>
+                  </div>
+                  <div class="comment-text">{{ comment.content }}</div>
+                </template>
+                <div v-if="comment.children && comment.children.length > 0" class="comment-replies">
+                  <div v-for="reply in comment.children" :key="reply.id" class="reply-item">
+                    <el-avatar v-if="!reply.deleted" :size="24" :src="reply.avatarUrl">
+                      {{ getInitial(reply.nickname) }}
+                    </el-avatar>
+                    <div class="reply-content">
+                      <template v-if="reply.deleted">
+                        <span class="reply-deleted">该评论已被删除</span>
+                      </template>
+                      <template v-else>
+                        <span class="reply-nickname">{{ reply.nickname }}</span>
+                        <span class="reply-text">{{ reply.content }}</span>
+                        <span class="reply-time">{{ formatTime(reply.createTime) }}</span>
+                      </template>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="comment-actions" v-if="userStore.isLoggedIn && !comment.deleted">
-                <el-button type="primary" link size="small" @click="handleReply(comment)">回复</el-button>
+                <div v-if="userStore.isLoggedIn && !comment.deleted" class="comment-actions">
+                  <el-button type="primary" link size="small" @click="handleReply(comment)">回复</el-button>
+                </div>
               </div>
             </div>
+
+            <EmptyState
+              v-if="comments.length === 0"
+              icon="ChatDotRound"
+              title="暂无评论"
+              description="成为第一个留下学习心得的人"
+            />
           </div>
-          <el-empty v-if="comments.length === 0" description="暂无评论" />
-        </div>
-      </div>
+        </section>
+      </template>
     </div>
   </div>
 </template>
@@ -130,6 +153,8 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getResourceDetail, likeResource, unlikeResource, checkLiked } from '@/api/resource'
 import { getComments, addComment } from '@/api/comment'
 import { addFavorite, removeFavorite, checkFavorite } from '@/api/favorite'
@@ -178,6 +203,7 @@ const fetchResource = async () => {
     }
   } catch (error) {
     console.error('Failed to fetch resource:', error)
+    resource.value = null
   }
 }
 
@@ -288,162 +314,196 @@ onMounted(async () => {
 
 <style scoped>
 .resource-detail-page {
-  min-height: 100%;
-  padding: 28px 0;
+  padding: var(--section-gap-md) 0 var(--section-gap-lg);
 }
 
-.page-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 28px;
+.container--narrow {
+  max-width: var(--container-narrow);
 }
 
-/* Header */
+.detail-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.state-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+}
+
+/* Header: 标题 / 作者统计 / 操作 */
 .resource-header {
   background: var(--bg-surface);
-  padding: 32px;
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  padding: var(--space-7);
+  margin-bottom: var(--space-4);
 }
 
-.resource-info {
-  margin-bottom: 24px;
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .category-tag {
-  margin-bottom: 14px;
-  background: rgba(200, 164, 78, 0.12);
-  border: none;
-  color: var(--accent);
-  font-weight: 500;
+  color: var(--text-secondary);
+  border-color: var(--border-default);
+  background: var(--bg-deep);
+}
+
+.upload-time {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .title {
-  font-size: 26px;
-  font-weight: 700;
+  font-size: var(--heading-1);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
-  margin-bottom: 18px;
+  margin-bottom: var(--space-4);
   letter-spacing: -0.02em;
   line-height: 1.3;
 }
 
 .meta {
   display: flex;
-  gap: 16px;
-  color: var(--text-muted);
-  font-size: 14px;
   align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
-.meta-item {
+.meta-item,
+.uploader {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1);
 }
 
-.meta-divider {
-  width: 1px;
-  height: 14px;
-  background: var(--border-strong);
+.uploader {
+  color: var(--text-secondary);
+}
+
+.uploader:hover {
+  color: var(--accent);
 }
 
 .resource-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .action-btn {
-  background: var(--bg-elevated) !important;
-  border: 1px solid var(--border-default) !important;
-  color: var(--text-secondary) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 10px 20px !important;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
 }
 
 .action-btn:hover {
-  border-color: var(--border-accent) !important;
-  color: var(--accent-light) !important;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 .action-btn--active {
-  border-color: var(--accent) !important;
-  color: var(--accent) !important;
-  background: rgba(200, 164, 78, 0.08) !important;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--info-bg);
 }
 
-/* Content & Comment cards */
+/* Content / comments */
 .content-card,
 .comment-card {
   background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+  margin-bottom: var(--space-4);
 }
 
 .card-label {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--heading-3);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-4);
 }
 
 .description {
-  line-height: 1.75;
+  line-height: var(--leading-relaxed);
   color: var(--text-secondary);
-  margin-bottom: 20px;
-  font-size: 15px;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-base);
+  white-space: pre-wrap;
 }
 
 .file-info {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: var(--bg-elevated);
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-deep);
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
   border: 1px solid var(--border-subtle);
+  word-break: break-all;
 }
 
-/* Comments */
+.comment-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.comment-head .card-label {
+  margin-bottom: 0;
+}
+
+.comment-count {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+}
+
 .comment-form {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-5);
 }
 
-.comment-form .el-textarea {
-  margin-bottom: 12px;
-}
-
-.submit-btn {
-  margin-top: 8px;
+.comment-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-3);
 }
 
 .login-tip {
   text-align: center;
-  padding: 20px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.login-tip a {
-  color: var(--accent);
+  padding: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  background: var(--bg-deep);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-5);
 }
 
 .comment-list {
-  margin-top: 20px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .comment-item {
   display: flex;
-  gap: 14px;
-  padding: 18px 0;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -453,64 +513,67 @@ onMounted(async () => {
 
 .comment-content {
   flex: 1;
+  min-width: 0;
 }
 
 .comment-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .username {
-  font-weight: 600;
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .time {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .comment-text {
   color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 14px;
+  line-height: var(--leading-normal);
+  font-size: var(--text-sm);
 }
 
 .comment-deleted {
-  color: #C0C4CC;
+  color: var(--text-muted);
   font-style: italic;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .reply-deleted {
-  color: #C0C4CC;
+  color: var(--text-muted);
   font-style: italic;
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 
 .comment-replies {
-  margin-top: 14px;
-  padding-left: 16px;
+  margin-top: var(--space-3);
+  padding-left: var(--space-4);
   border-left: 2px solid var(--border-default);
 }
 
 .reply-item {
   display: flex;
-  gap: 8px;
-  padding: 10px 0;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
 }
 
 .reply-content {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--text-sm);
+  min-width: 0;
 }
 
 .reply-nickname {
-  font-weight: 600;
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  margin-right: 8px;
+  margin-right: var(--space-2);
 }
 
 .reply-text {
@@ -519,20 +582,31 @@ onMounted(async () => {
 
 .reply-time {
   color: var(--text-muted);
-  font-size: 12px;
-  margin-left: 8px;
+  font-size: var(--text-xs);
+  margin-left: var(--space-2);
 }
 
 .comment-actions {
-  margin-top: 6px;
+  margin-top: var(--space-2);
 }
 
-.uploader-link {
-  color: var(--text-muted);
-  text-decoration: none;
-}
+@media (max-width: 767px) {
+  .resource-detail-page {
+    padding: var(--space-5) 0 var(--section-gap-md);
+  }
 
-.uploader-link:hover {
-  color: var(--accent);
+  .resource-header,
+  .content-card,
+  .comment-card {
+    padding: var(--space-5);
+  }
+
+  .title {
+    font-size: var(--text-2xl);
+  }
+
+  .meta {
+    gap: var(--space-3);
+  }
 }
 </style>

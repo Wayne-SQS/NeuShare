@@ -88,8 +88,16 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (!existing.getUserId().equals(userId) && !"admin".equals(role)) {
             throw new BusinessException("无权修改此帖子");
         }
-        post.setUpdateTime(LocalDateTime.now());
-        updateById(post);
+        // 只允许改内容字段，避免请求体篡改作者、状态、计数等字段
+        Post update = new Post();
+        update.setId(existing.getId());
+        update.setTitle(post.getTitle());
+        update.setContent(post.getContent());
+        update.setTags(post.getTags());
+        update.setImageUrls(post.getImageUrls());
+        update.setFiles(post.getFiles());
+        update.setUpdateTime(LocalDateTime.now());
+        updateById(update);
     }
 
     @Override

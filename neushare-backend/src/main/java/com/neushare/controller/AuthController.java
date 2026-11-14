@@ -101,6 +101,12 @@ public class AuthController {
         if (user == null) {
             return Result.error("用户不存在");
         }
+        if (newPassword == null || newPassword.length() < 6 || newPassword.length() > 32) {
+            return Result.error(400, "新密码长度需为 6-32 位");
+        }
+        if (oldPassword != null && oldPassword.equals(newPassword)) {
+            return Result.error(400, "新密码不能与旧密码相同");
+        }
         // 验证旧密码
         if (!BCryptUtil.verify(oldPassword, user.getPassword())) {
             return Result.error("旧密码错误");

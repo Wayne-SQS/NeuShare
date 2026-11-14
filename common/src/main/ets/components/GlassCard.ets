@@ -5,6 +5,7 @@
 // ============================================================
 
 import { ColorTokens } from '../theme/ColorTokens';
+import { FontScale } from '../theme/DesignTokens';
 import { BlurPerformance } from '../utils/BlurPerformance';
 
 @Component
@@ -43,11 +44,11 @@ export struct GlassCard {
   }
 
   private get borderColor(): string {
-    return this.isDark ? ColorTokens.DIVIDER_DARK : '#FFFFFF80';
+    return this.isDark ? ColorTokens.DIVIDER_DARK : ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '80');
   }
 
   private get shadowColor(): string {
-    return this.isDark ? '#00000040' : '#4A6BFF15';
+    return this.isDark ? ColorTokens.OVERLAY_LIGHT : ColorTokens.withAlpha(ColorTokens.PRIMARY_LIGHT, '15');
   }
 
   private get cardRadius(): number {
@@ -106,12 +107,12 @@ export struct GlassCard {
 GlassCard() {
   Column() {
     Text('标题')
-      .fontSize(18)
+      .fontSize(FontScale.SECTION)
       .fontWeight(FontWeight.Bold)
       .fontColor(ColorTokens.textPrimary(this.isDark))
 
     Text('描述内容')
-      .fontSize(14)
+      .fontSize(FontScale.BODY_SM)
       .fontColor(ColorTokens.textSecondary(this.isDark))
       .margin({ top: 8 })
   }

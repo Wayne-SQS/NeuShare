@@ -22,6 +22,11 @@ neushare-backend/target/
 .DS_Store
 Thumbs.db
 
+# 环境变量（含数据库口令 / JWT 密钥，禁止入库）
+/.env
+.env
+/docker-compose.override.yml
+
 # 运行时上传目录（用户上传的文件，不入库）
 neushare-backend/uploads/
 

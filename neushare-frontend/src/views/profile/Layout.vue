@@ -1,6 +1,6 @@
 <template>
   <div class="profile-layout">
-    <div class="profile-container">
+    <div class="container profile-container">
       <Sidebar />
       <div class="profile-content">
         <router-view />
@@ -15,20 +15,32 @@ import Sidebar from '@/components/Sidebar.vue'
 
 <style scoped>
 .profile-layout {
-  min-height: 100%;
-  padding: 28px 0;
+  padding: var(--section-gap-md) 0 var(--section-gap-lg);
 }
 
 .profile-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 28px;
   display: flex;
-  gap: 24px;
+  align-items: flex-start;
+  gap: var(--space-6);
 }
 
 .profile-content {
   flex: 1;
   min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .profile-layout {
+    padding: var(--space-5) 0 var(--section-gap-md);
+  }
+
+  .profile-container {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .profile-content {
+    width: 100%;
+  }
 }
 </style>

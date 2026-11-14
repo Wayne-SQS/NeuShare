@@ -1,12 +1,25 @@
 <template>
   <div class="user-profile-page">
-    <div class="page-container">
-      <!-- Profile Header -->
-      <div class="profile-header card animate-slide-up" v-loading="profileLoading">
-        <template v-if="profile">
+    <div class="container">
+      <div v-if="profileLoading">
+        <SkeletonCard variant="list" :rows="2" class="profile-skeleton" />
+      </div>
+
+      <div v-else-if="!profile" class="state-panel">
+        <EmptyState
+          icon="UserFilled"
+          title="用户不存在"
+          description="该用户可能已被禁用或删除"
+        >
+          <el-button type="primary" @click="$router.push('/')">返回首页</el-button>
+        </EmptyState>
+      </div>
+
+      <template v-else>
+        <header class="profile-header">
           <div class="profile-top">
             <div class="avatar-section">
-              <el-avatar :size="88" :src="profile.avatarUrl" class="profile-avatar">
+              <el-avatar :size="80" :src="profile.avatarUrl" class="profile-avatar">
                 {{ getInitial(profile.nickname) }}
               </el-avatar>
             </div>
@@ -16,6 +29,7 @@
                 <el-tag
                   :type="ROLE_TAG_TYPE[profile.role] || 'info'"
                   size="small"
+                  effect="plain"
                   class="role-tag"
                 >
                   {{ ROLE_MAP[profile.role] || profile.role }}
@@ -23,24 +37,25 @@
               </div>
               <div class="meta-row">
                 <span class="username">@{{ profile.username }}</span>
-                <span class="divider">|</span>
+                <span v-if="profile.college" class="divider"></span>
                 <span v-if="profile.college">{{ profile.college }}</span>
-                <span v-if="profile.grade" class="grade">
-                  {{ GRADE_LABELS[profile.grade] || profile.grade + '年级' }}
+                <span v-if="profile.grade" class="divider"></span>
+                <span v-if="profile.grade">
+                  {{ GRADE_LABELS[profile.grade - 1] || profile.grade + '年级' }}
                 </span>
               </div>
             </div>
-            <div class="action-section" v-if="userStore.isLoggedIn && userStore.userId !== userId">
+            <div v-if="userStore.isLoggedIn && userStore.userId !== userId" class="action-section">
               <el-button
                 :type="isFollowing ? 'default' : 'primary'"
                 :loading="followLoading"
                 @click="handleFollow"
-                class="follow-btn"
               >
-                {{ isFollowing ? '已关注' : '+ 关注' }}
+                {{ isFollowing ? '已关注' : '关注' }}
               </el-button>
             </div>
           </div>
+
           <div class="stats-row">
             <div class="stat-item">
               <span class="stat-num">{{ profile.resourceCount || 0 }}</span>
@@ -55,16 +70,19 @@
               <span class="stat-label">关注</span>
             </div>
           </div>
-        </template>
-        <el-empty v-else-if="!profileLoading" description="用户不存在或已被禁用" />
-      </div>
+        </header>
 
-      <!-- Resource Section -->
-      <div class="resource-section" v-if="profile">
-        <h3 class="section-title">TA 发布的资料</h3>
-        <div class="resource-list" v-loading="resourcesLoading">
-          <template v-if="resources.length > 0">
-            <div class="resource-grid">
+        <section class="resource-section">
+          <div class="section-header">
+            <h2 class="section-title">TA 发布的资料</h2>
+            <span class="section-count">共 {{ pagination.total }} 份</span>
+          </div>
+
+          <div v-if="resourcesLoading" class="grid-auto">
+            <SkeletonCard v-for="n in 3" :key="`skeleton-${n}`" :rows="2" />
+          </div>
+          <div v-else-if="resources.length > 0">
+            <div class="grid-auto">
               <ResourceCard
                 v-for="resource in resources"
                 :key="resource.id"
@@ -82,10 +100,16 @@
                 @current-change="fetchResources"
               />
             </div>
-          </template>
-          <el-empty v-else description="TA 还没有发布过资料" />
-        </div>
-      </div>
+          </div>
+          <div v-else class="state-panel">
+            <EmptyState
+              icon="Document"
+              title="TA 还没有发布过资料"
+              description="关注该用户，第一时间获取更新"
+            />
+          </div>
+        </section>
+      </template>
     </div>
   </div>
 </template>
@@ -95,6 +119,8 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import ResourceCard from '@/components/ResourceCard.vue'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getUserProfile, getUserResources } from '@/api/user'
 import { followUser, unfollowUser, checkFollow } from '@/api/follow'
 import { getInitial } from '@/utils/format'
@@ -107,9 +133,9 @@ const userStore = useUserStore()
 const userId = ref(Number(route.params.id))
 
 const profile = ref(null)
-const profileLoading = ref(false)
+const profileLoading = ref(true)
 const resources = ref([])
-const resourcesLoading = ref(false)
+const resourcesLoading = ref(true)
 const isFollowing = ref(false)
 const followLoading = ref(false)
 
@@ -198,27 +224,31 @@ onMounted(() => {
 
 <style scoped>
 .user-profile-page {
-  min-height: 100%;
-  padding: 28px 0;
+  padding: var(--section-gap-md) 0 var(--section-gap-lg);
 }
 
-.page-container {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 28px;
+.profile-skeleton {
+  padding: var(--space-7);
+}
+
+.state-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
 }
 
 .profile-header {
-  padding: 36px;
-  border-radius: var(--radius-lg);
-  margin-bottom: 32px;
-  min-height: 180px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  padding: var(--space-7);
+  margin-bottom: var(--space-7);
 }
 
 .profile-top {
   display: flex;
   align-items: flex-start;
-  gap: 24px;
+  gap: var(--space-5);
 }
 
 .avatar-section {
@@ -226,142 +256,141 @@ onMounted(() => {
 }
 
 .profile-avatar {
-  border: 3px solid var(--border-subtle);
-  font-size: 36px;
-  font-weight: 600;
+  border: 1px solid var(--border-default);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-semibold);
   color: var(--accent);
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: var(--bg-deep);
 }
 
 .info-section {
   flex: 1;
   min-width: 0;
-  padding-top: 6px;
 }
 
 .name-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .nickname {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: var(--heading-2);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .role-tag {
-  font-weight: 500;
+  font-weight: var(--font-medium);
 }
 
 .meta-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--text-sm);
   flex-wrap: wrap;
 }
 
 .username {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .divider {
-  color: var(--border-strong);
+  width: 1px;
+  height: 12px;
+  background: var(--border-strong);
 }
 
 .action-section {
   flex-shrink: 0;
-  padding-top: 18px;
-}
-
-.follow-btn {
-  border-radius: var(--radius-full);
-  padding: 8px 28px;
-  font-weight: 600;
-  font-size: 14px;
 }
 
 .stats-row {
   display: flex;
-  gap: 40px;
-  margin-top: 24px;
-  padding-top: 20px;
+  gap: var(--space-9);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--border-subtle);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .stat-num {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 
 .resource-section {
-  margin-top: 8px;
+  margin-top: var(--space-2);
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: var(--heading-3);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  margin-bottom: 20px;
-  padding-left: 4px;
 }
 
-.resource-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+.section-count {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 36px;
-  padding: 20px 0;
+  margin-top: var(--space-6);
 }
 
-@media (max-width: 900px) {
-  .resource-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 767px) {
+  .user-profile-page {
+    padding: var(--space-5) 0 var(--section-gap-md);
   }
-}
 
-@media (max-width: 640px) {
+  .profile-header {
+    padding: var(--space-5);
+  }
+
   .profile-top {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    gap: var(--space-4);
   }
-  .name-row {
-    justify-content: center;
-  }
-  .meta-row {
-    justify-content: center;
-  }
+
   .stats-row {
-    justify-content: center;
+    gap: var(--space-7);
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
   }
-  .resource-grid {
-    grid-template-columns: 1fr;
+
+  .nickname {
+    font-size: var(--text-xl);
   }
 }
 </style>

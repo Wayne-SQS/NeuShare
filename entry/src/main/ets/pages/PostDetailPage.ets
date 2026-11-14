@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointTypeEnum, AuthStore } from '@neushare/common';
+import { ColorTokens, BreakpointTypeEnum, AuthStore, FontScale, Radii, Spacing, ControlSize, EmptyState, StateView, ViewState } from '@neushare/common';
 import { CommunityService } from '../services/CommunityService';
 import { Post, PostComment, PostFile, formatFileSize, fileIcon, toComment } from '../models/PostModel';
 import { PostApi, PostCommentVO } from '../api/PostApi';
@@ -16,8 +16,11 @@ const BASE_URL: string = 'http://10.0.2.2:8080';
 @Component
 struct PostDetailPage {
   @StorageLink('isDarkMode') isDarkMode: boolean = false;
+  @StorageLink('topSafeAreaVp') topSafeArea: number = 0;
   @StorageLink('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.SM;
   @State post: Post | null = null;
+  @State isLoading: boolean = true;
+  @State loadFailed: boolean = false;
   @State comments: PostComment[] = [];
   @State commentText: string = '';
   @State replyToId: number = 0;
@@ -47,7 +50,15 @@ struct PostDetailPage {
   }
 
   async loadPost(): Promise<void> {
-    this.post = await this.communityService.getPostDetail(this.postId);
+    this.isLoading = true;
+    this.loadFailed = false;
+    try {
+      this.post = await this.communityService.getPostDetail(this.postId);
+    } catch (e) {
+      console.error('loadPost failed: ' + JSON.stringify(e));
+      this.loadFailed = true;
+    }
+    this.isLoading = false;
   }
 
   async loadComments(): Promise<void> {
@@ -354,21 +365,23 @@ struct PostDetailPage {
     Column() {
       // Header
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+          .height(ControlSize.TOUCH).textAlign(TextAlign.Start)
           .onClick(() => { router.back(); })
-        Text('帖子详情').fontSize(18).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
-        Blank()
+        Text('帖子详情').fontSize(FontScale.HERO).fontWeight(FontWeight.Bold)
+          .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: Spacing.SM }).layoutWeight(1)
         if (this.post && (this.post.userId === this.currentUserId)) {
           Row() {
-            Text('编辑').fontSize(14).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(14)
+            Text('编辑').fontSize(FontScale.CAPTION).fontColor(ColorTokens.primary(this.isDarkMode))
+              .height(ControlSize.BUTTON).padding({ left: Spacing.MD, right: Spacing.MD })
+              .textAlign(TextAlign.Center)
+              .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), radius: Radii.SM })
               .onClick(() => { router.pushUrl({ url: 'pages/CreatePostPage', params: { editPostId: this.post!.id } }); })
-            Text('删除').fontSize(14).fontColor(ColorTokens.error(this.isDarkMode))
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .backgroundColor(ColorTokens.withAlpha(ColorTokens.error(this.isDarkMode), '15')).borderRadius(14)
-              .margin({ left: 8 })
+            Text('删除').fontSize(FontScale.CAPTION).fontColor(ColorTokens.error(this.isDarkMode))
+              .height(ControlSize.BUTTON).padding({ left: Spacing.MD, right: Spacing.MD })
+              .textAlign(TextAlign.Center)
+              .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.error(this.isDarkMode), '40'), radius: Radii.SM })
+              .margin({ left: Spacing.SM })
               .onClick(() => { this.showDeleteConfirm = true; })
           }
         }
@@ -376,33 +389,46 @@ struct PostDetailPage {
       .width('100%').height(52).padding({ left: 16, right: 16 })
       .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
 
-      if (this.post) {
+      if (this.isLoading) {
+        StateView({ state: ViewState.LOADING, message: '正在加载帖子' })
+          .layoutWeight(1)
+      } else if (this.loadFailed) {
+        StateView({
+          state: ViewState.ERROR,
+          message: '帖子加载失败',
+          hint: '请检查网络后重试',
+          onRetry: () => { this.loadPost(); this.loadComments(); }
+        }).layoutWeight(1)
+      } else if (this.post) {
         Scroll() {
           Column() {
             // Author info
             Row() {
-              Text('👤').fontSize(16)
-              Text(this.post.authorNickname).fontSize(14).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 6 })
-              Text('·').fontSize(14).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 8, right: 8 })
-              Text(this.post.createTime).fontSize(12).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+              Text(this.post.authorNickname ? this.post.authorNickname.substring(0, 1) : '?')
+                .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+                .width(ControlSize.ICON).height(ControlSize.ICON).textAlign(TextAlign.Center)
+                .borderRadius(Radii.PILL).backgroundColor(ColorTokens.bgInput(this.isDarkMode))
+              Text(this.post.authorNickname).fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 6 })
+              Text('·').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 8, right: 8 })
+              Text(this.post.createTime).fontSize(FontScale.LABEL).fontColor(ColorTokens.textDisabled(this.isDarkMode))
               if (this.post.isRecommended) {
-                Text('⚡ 已推荐').fontSize(11).fontWeight(FontWeight.Bold)
+                Text('已推荐').fontSize(FontScale.MICRO).fontWeight(FontWeight.Bold)
                   .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                   .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                  .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(8)
+                  .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(Radii.MD)
                   .margin({ left: 8 })
               }
             }.width('100%').margin({ bottom: 12 })
 
             // Title
             Text(this.post.title)
-              .fontSize(20).fontWeight(FontWeight.Bold)
+              .fontSize(FontScale.TITLE_SM).fontWeight(FontWeight.Bold)
               .fontColor(ColorTokens.textPrimary(this.isDarkMode))
               .width('100%')
 
             // Content
             Text(this.post.content)
-              .fontSize(15).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+              .fontSize(FontScale.BODY).fontColor(ColorTokens.textSecondary(this.isDarkMode))
               .lineHeight(24).width('100%').margin({ top: 12 })
 
             // Images
@@ -410,7 +436,7 @@ struct PostDetailPage {
               Flex({ wrap: FlexWrap.Wrap }) {
                 ForEach(this.post.imageUrls, (url: string, idx: number) => {
                   Image(url).width('100%').height(200)
-                    .borderRadius(12).objectFit(ImageFit.Cover)
+                    .borderRadius(Radii.CARD).objectFit(ImageFit.Cover)
                     .margin({ top: 8 })
                 }, (url: string, idx: number) => 'img_' + idx.toString())
               }.width('100%').margin({ top: 8 })
@@ -421,18 +447,18 @@ struct PostDetailPage {
               Column() {
                 ForEach(this.post.files, (file: PostFile, idx: number) => {
                   Row() {
-                    Text(fileIcon(file.type)).fontSize(18)
+                    Text(fileIcon(file.type)).fontSize(FontScale.SECTION)
                     Column() {
-                      Text(file.name).fontSize(13).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+                      Text(file.name).fontSize(FontScale.CAPTION).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                         .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                       Text(file.type.toUpperCase().replace('.', '') + (file.size > 0 ? ' · ' + formatFileSize(file.size) : ''))
-                        .fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 2 })
+                        .fontSize(FontScale.MICRO).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 2 })
                     }.margin({ left: 10 }).layoutWeight(1)
-                    Text('⬇').fontSize(18).fontColor(ColorTokens.primary(this.isDarkMode))
+                    Text('下载').fontSize(FontScale.LABEL).fontColor(ColorTokens.primary(this.isDarkMode))
                       .width(32).height(32).textAlign(TextAlign.Center)
                   }
                   .width('100%').padding(12)
-                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
                   .margin({ top: 6 })
                   .onClick(() => { this.downloadPostFile(file); })
                 }, (file: PostFile, idx: number) => 'file_' + idx.toString() + '_' + file.name)
@@ -444,10 +470,10 @@ struct PostDetailPage {
               Row() {
                 ForEach(this.post.tags, (tag: string, idx: number) => {
                   Text(tag)
-                    .fontSize(11).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                    .fontSize(FontScale.MICRO).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                     .padding({ left: 8, right: 8, top: 2, bottom: 2 })
                     .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
-                    .borderRadius(6).margin({ right: 6, top: 4 })
+                    .borderRadius(Radii.SM).margin({ right: 6, top: 4 })
                 }, (tag: string, idx: number) => 'tag_' + idx.toString())
               }.width('100%').margin({ top: 12 })
             }
@@ -455,29 +481,31 @@ struct PostDetailPage {
             // Interaction bar
             Row() {
               Row() {
-                Text(this.post.isLiked ? '👍' : '👍').fontSize(16)
-                Text(this.post.likeCount.toString()).fontSize(14).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
+                Text(this.post.isLiked ? '已赞' : '赞').fontSize(FontScale.CAPTION)
+                  .fontColor(this.post.isLiked ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
+                Text(this.post.likeCount.toString()).fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
               }
               .scale({ x: this.likeBounce ? 1.3 : 1, y: this.likeBounce ? 1.3 : 1 })
               .animation({ curve: Curve.EaseOut, duration: 200 })
               .padding({ left: 12, right: 14, top: 8, bottom: 8 })
-              .backgroundColor(this.post.isLiked ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode)).borderRadius(16)
+              .backgroundColor(this.post.isLiked ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.XXL)
               .onClick(() => { this.toggleLike(); })
 
               Row() {
-                Text(this.post.isFavorited ? '⭐' : '⭐').fontSize(16)
-                Text(this.post.favoriteCount.toString()).fontSize(14).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
+                Text(this.post.isFavorited ? '已收藏' : '收藏').fontSize(FontScale.CAPTION)
+                  .fontColor(this.post.isFavorited ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
+                Text(this.post.favoriteCount.toString()).fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
               }
               .scale({ x: this.favBounce ? 1.3 : 1, y: this.favBounce ? 1.3 : 1 })
               .animation({ curve: Curve.EaseOut, duration: 200 })
               .padding({ left: 12, right: 14, top: 8, bottom: 8 })
-              .backgroundColor(this.post.isFavorited ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode)).borderRadius(16)
+              .backgroundColor(this.post.isFavorited ? ColorTokens.accentLight(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.XXL)
               .margin({ left: 10 })
               .onClick(() => { this.toggleFavorite(); })
 
               Row() {
-                Text('💬').fontSize(16)
-                Text(this.post.commentCount.toString()).fontSize(14).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
+                Text('评论').fontSize(FontScale.CAPTION).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+                Text(this.post.commentCount.toString()).fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 4 })
               }
               .padding({ left: 12, right: 14, top: 8, bottom: 8 })
               .margin({ left: 10 })
@@ -486,28 +514,28 @@ struct PostDetailPage {
             // ─── 评论区域 ───
             Divider().color(ColorTokens.divider(this.isDarkMode)).margin({ top: 20, bottom: 12 })
             Text('评论 (' + this.post.commentCount.toString() + ')')
-              .fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              .fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
               .width('100%').margin({ bottom: 12 })
 
             // Comment input
             Row() {
               TextInput({ text: this.commentText, placeholder: this.replyToId > 0 ? '回复...' : '写评论...' })
-                .fontSize(14).layoutWeight(1).height(40)
+                .fontSize(FontScale.BODY_SM).layoutWeight(1).height(40)
                 .backgroundColor(ColorTokens.bgInput(this.isDarkMode))
                 .onChange((value: string) => { this.commentText = value; })
               Text('发送')
-                .fontSize(13).fontWeight(FontWeight.Bold)
+                .fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold)
                 .fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                 .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-                .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(14)
+                .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(Radii.XL)
                 .margin({ left: 8 })
                 .onClick(() => { this.submitComment(); })
             }.width('100%')
 
             if (this.replyToId > 0) {
               Row() {
-                Text('↩ 回复 @' + this.replyToName).fontSize(12).fontColor(ColorTokens.primary(this.isDarkMode))
-                Text('  取消').fontSize(12).fontColor(ColorTokens.error(this.isDarkMode))
+                Text('↩ 回复 @' + this.replyToName).fontSize(FontScale.LABEL).fontColor(ColorTokens.primary(this.isDarkMode))
+                Text('  取消').fontSize(FontScale.LABEL).fontColor(ColorTokens.error(this.isDarkMode))
                   .onClick(() => { this.replyToId = 0; this.replyToName = ''; })
               }.margin({ top: 4 })
             }
@@ -520,7 +548,7 @@ struct PostDetailPage {
                 }, (comment: PostComment) => comment.id.toString())
               }.width('100%').margin({ top: 12 })
             } else {
-              Text('暂无评论，快来抢沙发！').fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode))
+              Text('暂无评论，快来抢沙发！').fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode))
                 .margin({ top: 16 }).width('100%').textAlign(TextAlign.Center)
             }
           }
@@ -531,8 +559,7 @@ struct PostDetailPage {
         .align(Alignment.Top)
       } else {
         Column() {
-          Text('📄').fontSize(48).margin({ top: 120 })
-          Text('帖子不存在').fontSize(16).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
+          EmptyState({ message: '帖子不存在或已被删除', hint: '返回列表看看其他帖子' })
         }.width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       }
 
@@ -540,67 +567,72 @@ struct PostDetailPage {
       if (this.showDeleteConfirm) {
         Column() {
           Column() {
-            Text('确认删除').fontSize(17).fontWeight(FontWeight.Bold)
+            Text('确认删除').fontSize(FontScale.SUBTITLE_MD).fontWeight(FontWeight.Bold)
               .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ bottom: 8 })
-            Text('删除后不可恢复，确定要删除这篇帖子吗？').fontSize(14)
+            Text('删除后不可恢复，确定要删除这篇帖子吗？').fontSize(FontScale.BODY_SM)
               .fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ bottom: 16 })
             Row() {
-              Text('取消').fontSize(15).fontWeight(FontWeight.Bold)
+              Text('取消').fontSize(FontScale.BODY).fontWeight(FontWeight.Bold)
                 .fontColor(ColorTokens.textSecondary(this.isDarkMode))
                 .padding({ left: 24, right: 24, top: 10, bottom: 10 })
-                .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(14)
+                .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.XL)
                 .layoutWeight(1).textAlign(TextAlign.Center)
                 .onClick(() => { this.showDeleteConfirm = false; })
-              Text('删除').fontSize(15).fontWeight(FontWeight.Bold)
+              Text('删除').fontSize(FontScale.BODY).fontWeight(FontWeight.Bold)
                 .fontColor(ColorTokens.TEXT_WHITE)
                 .padding({ left: 24, right: 24, top: 10, bottom: 10 })
-                .backgroundColor(ColorTokens.error(this.isDarkMode)).borderRadius(14)
+                .backgroundColor(ColorTokens.error(this.isDarkMode)).borderRadius(Radii.XL)
                 .layoutWeight(1).textAlign(TextAlign.Center)
                 .margin({ left: 12 })
                 .onClick(() => { this.showDeleteConfirm = false; this.deletePost(); })
             }.width('100%')
           }
           .width('80%').padding(20)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(16)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.XXL)
         }
         .width('100%').height('100%')
-        .backgroundColor(ColorTokens.withAlpha('#000000', '66'))
+        .backgroundColor(ColorTokens.withAlpha(ColorTokens.BG_PAGE_DARK, '66'))
         .justifyContent(FlexAlign.Center)
         .position({ x: 0, y: 0 })
       }
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .padding({ top: this.topSafeArea })
   }
 
   @Builder
   CommentItem(comment: PostComment, depth: number) {
     Column() {
       Row() {
-        Text('👤').fontSize(14)
+        Text(comment.nickname ? comment.nickname.substring(0, 1) : '?')
+          .fontSize(FontScale.TINY).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+          .width(20).height(20).textAlign(TextAlign.Center)
+          .borderRadius(Radii.PILL).backgroundColor(ColorTokens.bgInput(this.isDarkMode))
         Text(comment.deleted === 1 ? '已删除' : comment.nickname)
-          .fontSize(13).fontWeight(FontWeight.Bold)
+          .fontSize(FontScale.CAPTION).fontWeight(FontWeight.Bold)
           .fontColor(comment.deleted === 1 ? ColorTokens.textDisabled(this.isDarkMode) : ColorTokens.textPrimary(this.isDarkMode))
-          .margin({ left: 4 })
-        Text('·').fontSize(12).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 6, right: 6 })
-        Text(comment.createTime).fontSize(11).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+          .margin({ left: 6 })
+        Text('·').fontSize(FontScale.LABEL).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 6, right: 6 })
+        Text(comment.createTime).fontSize(FontScale.MICRO).fontColor(ColorTokens.textDisabled(this.isDarkMode))
         Blank()
         // 已删除的评论不显示操作按钮
         if (comment.deleted !== 1) {
           // 点赞
           Row() {
-            Text(this.commentLikedIds.has(comment.id) ? '❤️' : '🤍').fontSize(13)
+            Text(this.commentLikedIds.has(comment.id) ? '已赞' : '赞').fontSize(FontScale.CAPTION)
+              .fontColor(this.commentLikedIds.has(comment.id) ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
           }
           .margin({ right: 10 })
           .onClick(() => { this.toggleCommentLike(comment.id); })
           // 回复
-          Text('回复').fontSize(11).fontColor(ColorTokens.primary(this.isDarkMode))
+          Text('回复').fontSize(FontScale.MICRO).fontColor(ColorTokens.primary(this.isDarkMode))
             .onClick(() => {
               this.replyToId = comment.id;
               this.replyToName = comment.nickname;
             })
           // 删除（仅自己或帖子作者的评论可删）
           if (comment.userId === this.currentUserId || (this.post && this.post.userId === this.currentUserId)) {
-            Text('删除').fontSize(11).fontColor(ColorTokens.error(this.isDarkMode))
+            Text('删除').fontSize(FontScale.MICRO).fontColor(ColorTokens.error(this.isDarkMode))
               .margin({ left: 10 })
               .onClick(() => { this.deleteComment(comment.id); })
           }
@@ -608,7 +640,7 @@ struct PostDetailPage {
       }.width('100%')
 
       Text(comment.deleted === 1 ? '该评论已被删除' : comment.content)
-        .fontSize(14).fontColor(comment.deleted === 1 ? ColorTokens.textDisabled(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
+        .fontSize(FontScale.BODY_SM).fontColor(comment.deleted === 1 ? ColorTokens.textDisabled(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
         .width('100%').margin({ top: 6, left: 22 })
 
       // Children (replies) — 始终显示，即使父评论已删除

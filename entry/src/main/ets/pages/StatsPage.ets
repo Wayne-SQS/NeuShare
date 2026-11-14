@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, BreakpointTypeEnum } from '@neushare/common';
+import { ColorTokens, BreakpointTypeEnum, FontScale, Radii, Spacing, Elevation, GridLayout, PageHeader, StateView, ViewState } from '@neushare/common';
 import { StatsApi, StatsOverview, DistributionItem, TopResourceItem } from '../api/StatsApi';
 import promptAction from '@ohos.promptAction';
 
@@ -47,116 +47,108 @@ struct StatsPage {
 
   build() {
     Column() {
-      // Header
-      Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-          .onClick(() => { router.back(); })
-        Text('📊 数据统计').fontSize(18).fontWeight(FontWeight.Bold)
-          .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
-        Blank()
-      }
-      .width('100%').height(52).padding({ left: 24, right: 24 }).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+      PageHeader({ title: '数据统计' })
 
       if (this.loading) {
-        Column() {
-          LoadingProgress().width(36).height(36).color(ColorTokens.primary(this.isDarkMode))
-          Text('加载数据...').fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
-        }
-        .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
+        StateView({ state: ViewState.LOADING, message: '正在加载统计数据' })
+          .layoutWeight(1)
       } else if (this.loadError || !this.stats) {
-        Column() {
-          Text('📭').fontSize(48)
-          Text('加载失败').fontSize(18).fontWeight(FontWeight.Bold)
-            .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 12 })
-          Text('请确认后端服务已启动').fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 6 })
-          Text('重试').fontSize(14).fontColor(ColorTokens.textOnPrimary(this.isDarkMode)).fontWeight(FontWeight.Bold)
-            .padding({ left: 24, right: 24, top: 10, bottom: 10 })
-            .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(20).margin({ top: 20 })
-            .onClick(() => { this.loadStats(); })
-        }
-        .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
+        StateView({
+          state: ViewState.ERROR,
+          message: '统计数据加载失败',
+          hint: '请确认后端服务可用后重试',
+          onRetry: () => { this.loadStats(); }
+        }).layoutWeight(1)
+      } else if (this.stats!.totalResources === 0) {
+        StateView({
+          state: ViewState.EMPTY,
+          message: '暂无统计数据',
+          hint: '有资源上传后这里会显示统计结果'
+        }).layoutWeight(1)
       } else {
         Scroll() {
           Column() {
             // Overview cards
-            Row() {
-              this.OverviewCard('📚', '资源', this.stats!.totalResources.toString())
-              this.OverviewCard('👥', '用户', this.stats!.totalUsers.toString())
-              this.OverviewCard('💬', '评论', this.stats!.totalComments.toString())
+            GridRow({
+              columns: { xs: 2, sm: 2, md: 3, lg: 3, xl: 6 },
+              gutter: { x: Spacing.SM, y: Spacing.SM },
+              breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+            }) {
+              GridCol({ span: 1 }) { this.OverviewCard('资源', this.stats!.totalResources.toString()) }
+              GridCol({ span: 1 }) { this.OverviewCard('用户', this.stats!.totalUsers.toString()) }
+              GridCol({ span: 1 }) { this.OverviewCard('评论', this.stats!.totalComments.toString()) }
+              GridCol({ span: 1 }) { this.OverviewCard('浏览', this.formatNumber(this.stats!.totalViews)) }
+              GridCol({ span: 1 }) { this.OverviewCard('点赞', this.formatNumber(this.stats!.totalLikes)) }
+              GridCol({ span: 1 }) { this.OverviewCard('收藏', this.formatNumber(this.stats!.totalFavorites)) }
             }
-            .width('100%').padding({ left: 12, right: 12 }).margin({ top: 12 })
-            Row() {
-              this.OverviewCard('👁️', '浏览', this.formatNumber(this.stats!.totalViews))
-              this.OverviewCard('❤️', '点赞', this.formatNumber(this.stats!.totalLikes))
-              this.OverviewCard('⭐', '收藏', this.formatNumber(this.stats!.totalFavorites))
-            }
-            .width('100%').padding({ left: 12, right: 12 })
+            .width('100%').padding({ left: Spacing.MD, right: Spacing.MD }).margin({ top: Spacing.MD })
 
             // Recent uploads & pending
             Row() {
               Column() {
-                Text('📅 近7天新增').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
-                Text(this.stats!.recentUploads.toString()).fontSize(22).fontWeight(FontWeight.Bold)
+                Text('近7天新增').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode))
+                Text(this.stats!.recentUploads.toString()).fontSize(FontScale.TITLE_MD).fontWeight(FontWeight.Bold)
                   .fontColor(ColorTokens.primary(this.isDarkMode)).margin({ top: 2 })
               }
               .layoutWeight(1).alignItems(HorizontalAlign.Center)
               Column() {
-                Text('⏳ 待审核').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
-                Text(this.stats!.pendingResources.toString()).fontSize(22).fontWeight(FontWeight.Bold)
+                Text('待审核').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode))
+                Text(this.stats!.pendingResources.toString()).fontSize(FontScale.TITLE_MD).fontWeight(FontWeight.Bold)
                   .fontColor(this.stats!.pendingResources > 0 ? ColorTokens.warning(this.isDarkMode) : ColorTokens.textPrimary(this.isDarkMode))
                   .margin({ top: 2 })
               }
               .layoutWeight(1).alignItems(HorizontalAlign.Center)
             }
-            .width('100%').padding({ top: 14, bottom: 14 }).margin({ left: 12, right: 12, top: 8 })
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+            .width('100%').padding({ top: 14, bottom: 14 }).margin({ left: Spacing.MD, right: Spacing.MD, top: Spacing.SM })
+            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
+            .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
 
             // Category distribution
             if (this.stats!.categoryDistribution.length > 0) {
-              this.SectionTitle('📂 分类分布')
+              this.SectionTitle('分类分布')
               Column() {
                 ForEach(this.stats!.categoryDistribution, (item: DistributionItem, idx: number) => {
                   this.BarRow(item, this.maxCount(this.stats!.categoryDistribution))
                 }, (item: DistributionItem, idx: number) => 'cdist_' + idx.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-              .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
+              .borderRadius(Radii.CARD).border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD }).margin({ left: Spacing.MD, right: Spacing.MD, top: Spacing.SM })
             }
 
             // Type distribution
             if (this.stats!.typeDistribution.length > 0) {
-              this.SectionTitle('📝 类型分布')
+              this.SectionTitle('类型分布')
               Column() {
                 ForEach(this.stats!.typeDistribution, (item: DistributionItem, idx: number) => {
                   this.BarRowType(item, this.maxCount(this.stats!.typeDistribution))
                 }, (item: DistributionItem, idx: number) => 'tdist_' + idx.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-              .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
+              .borderRadius(Radii.CARD).border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD }).margin({ left: Spacing.MD, right: Spacing.MD, top: Spacing.SM })
             }
 
             // Source distribution
             if (this.stats!.sourceDistribution.length > 0) {
-              this.SectionTitle('🔗 来源网站 Top 10')
+              this.SectionTitle('来源网站 Top 10')
               Column() {
                 ForEach(this.stats!.sourceDistribution.slice(0, 10), (item: DistributionItem, idx: number) => {
                   this.BarRowSource(item, this.maxCount(this.stats!.sourceDistribution))
                 }, (item: DistributionItem, idx: number) => 'sdist_' + idx.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-              .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
+              .borderRadius(Radii.CARD).border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD }).margin({ left: Spacing.MD, right: Spacing.MD, top: Spacing.SM })
             }
 
             // Top 10 hot resources
             if (this.stats!.topResources.length > 0) {
-              this.SectionTitle('🔥 热门资源 Top 10')
+              this.SectionTitle('热门资源 Top 10')
               Column() {
                 ForEach(this.stats!.topResources, (item: TopResourceItem, index: number) => {
                   this.TopRow(item, index + 1)
                 }, (item: TopResourceItem, index: number) => 'top_' + item.id.toString())
               }
               .width('100%').padding(12).backgroundColor(ColorTokens.bgCard(this.isDarkMode))
-              .borderRadius(14).margin({ left: 12, right: 12, top: 6 })
+              .borderRadius(Radii.CARD).border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD }).margin({ left: Spacing.MD, right: Spacing.MD, top: Spacing.SM })
             }
 
             Column().height(40)
@@ -179,36 +171,36 @@ struct StatsPage {
   }
 
   @Builder
-  OverviewCard(emoji: string, label: string, value: string) {
+  OverviewCard(label: string, value: string) {
     Column() {
-      Text(emoji).fontSize(24)
-      Text(value).fontSize(20).fontWeight(FontWeight.Bold)
-        .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 4 })
-      Text(label).fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+      Text(value).fontSize(FontScale.TITLE_SM).fontWeight(FontWeight.Bold)
+        .fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      Text(label).fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: Spacing.XXS })
     }
-    .layoutWeight(1).padding({ top: 14, bottom: 14 })
-    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
-    .margin({ left: 4, right: 4 }).alignItems(HorizontalAlign.Center)
+    .width('100%').padding({ top: Spacing.MD, bottom: Spacing.MD })
+    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
+    .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
+    .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
   SectionTitle(title: string) {
     Text(title)
-      .fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-      .width('100%').padding({ left: 24, right: 24, top: 18, bottom: 4 })
+      .fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      .width('100%').padding({ left: Spacing.XXL, right: Spacing.XXL, top: Spacing.LG, bottom: Spacing.XS })
   }
 
   @Builder
   BarRow(item: DistributionItem, maxCount: number) {
     Row() {
-      Text(item.name).fontSize(13).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      Text(item.name).fontSize(FontScale.CAPTION).fontColor(ColorTokens.textPrimary(this.isDarkMode))
         .width(70).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
       Row()
         .width(Math.max(4, (item.count / maxCount) * 140)).height(16)
-        .borderRadius(8)
+        .borderRadius(Radii.MD)
         .linearGradient({ direction: GradientDirection.Right,
           colors: [[ColorTokens.primary(this.isDarkMode), 0], [ColorTokens.PURPLE, 1]] })
-      Text(item.count.toString()).fontSize(12).fontWeight(FontWeight.Bold)
+      Text(item.count.toString()).fontSize(FontScale.LABEL).fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
     }
     .width('100%').padding({ top: 6, bottom: 6 })
@@ -217,14 +209,14 @@ struct StatsPage {
   @Builder
   BarRowType(item: DistributionItem, maxCount: number) {
     Row() {
-      Text(this.typeLabel(item.name)).fontSize(13).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      Text(this.typeLabel(item.name)).fontSize(FontScale.CAPTION).fontColor(ColorTokens.textPrimary(this.isDarkMode))
         .width(70).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
       Row()
         .width(Math.max(4, (item.count / maxCount) * 140)).height(16)
-        .borderRadius(8)
+        .borderRadius(Radii.MD)
         .linearGradient({ direction: GradientDirection.Right,
           colors: [[ColorTokens.primary(this.isDarkMode), 0], [ColorTokens.SUCCESS_LIGHT, 1]] })
-      Text(item.count.toString()).fontSize(12).fontWeight(FontWeight.Bold)
+      Text(item.count.toString()).fontSize(FontScale.LABEL).fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
     }
     .width('100%').padding({ top: 6, bottom: 6 })
@@ -233,14 +225,14 @@ struct StatsPage {
   @Builder
   BarRowSource(item: DistributionItem, maxCount: number) {
     Row() {
-      Text(item.name).fontSize(13).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      Text(item.name).fontSize(FontScale.CAPTION).fontColor(ColorTokens.textPrimary(this.isDarkMode))
         .width(80).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
       Row()
         .width(Math.max(4, (item.count / maxCount) * 120)).height(16)
-        .borderRadius(8)
+        .borderRadius(Radii.MD)
         .linearGradient({ direction: GradientDirection.Right,
           colors: [[ColorTokens.warning(this.isDarkMode), 0], [ColorTokens.error(this.isDarkMode), 1]] })
-      Text(item.count.toString()).fontSize(12).fontWeight(FontWeight.Bold)
+      Text(item.count.toString()).fontSize(FontScale.LABEL).fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 8 })
     }
     .width('100%').padding({ top: 6, bottom: 6 })
@@ -250,17 +242,17 @@ struct StatsPage {
   TopRow(item: TopResourceItem, rank: number) {
     Row() {
       Text(rank.toString())
-        .fontSize(16).fontWeight(FontWeight.Bold)
+        .fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Bold)
         .fontColor(rank <= 3 ? (rank === 1 ? ColorTokens.warning(this.isDarkMode) : rank === 2 ? ColorTokens.textHint(this.isDarkMode) : ColorTokens.warning(this.isDarkMode)) : ColorTokens.textHint(this.isDarkMode))
         .width(24).textAlign(TextAlign.Center)
       Column() {
-        Text(item.title).fontSize(14).fontWeight(FontWeight.Medium)
+        Text(item.title).fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Medium)
           .fontColor(ColorTokens.textPrimary(this.isDarkMode)).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Row() {
-          Text('👁 ' + this.formatNumber(item.viewCount)).fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode))
-          Text(' ❤ ' + this.formatNumber(item.likeCount)).fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode))
-          Text(' ⭐ ' + this.formatNumber(item.favoriteCount)).fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode))
+          Text('浏览 ' + this.formatNumber(item.viewCount)).fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode))
+          Text('赞 ' + this.formatNumber(item.likeCount)).fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ left: 8 })
+          Text('收藏 ' + this.formatNumber(item.favoriteCount)).fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ left: 8 })
         }.margin({ top: 2 })
       }
       .layoutWeight(1).margin({ left: 8 })
@@ -271,10 +263,10 @@ struct StatsPage {
 
   private typeLabel(type: string): string {
     const labels: Record<string, string> = {
-      'document': '📄 文档', 'video': '🎬 视频',
-      'image': '🖼️ 图片', 'other': '📦 其他',
-      'tutorial': '📝 教程', 'book': '📖 书籍',
-      'software': '💻 软件'
+      'document': '文档', 'video': '视频',
+      'image': '图片', 'other': '其他',
+      'tutorial': '教程', 'book': '书籍',
+      'software': '软件'
     };
     return labels[type] || type;
   }

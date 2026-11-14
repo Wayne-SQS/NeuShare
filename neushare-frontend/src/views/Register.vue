@@ -1,34 +1,40 @@
 <template>
-  <div class="register-page">
-    <div class="register-left">
-      <div class="left-content">
-        <div class="brand">
-          <div class="brand-icon">
-            <el-icon :size="22"><Reading /></el-icon>
+  <div class="auth-page">
+    <aside class="auth-aside">
+      <div class="auth-aside__inner">
+        <div class="auth-brand">
+          <div class="auth-brand__mark">
+            <el-icon :size="18"><Reading /></el-icon>
           </div>
-          <span class="brand-text">NeuShare</span>
+          <span class="auth-brand__text">NeuShare</span>
         </div>
-        <h1 class="left-title">加入我们</h1>
-        <p class="left-desc">注册账号，开始分享你的学习资料</p>
+        <h1 class="auth-title">加入我们</h1>
+        <p class="auth-desc">注册账号，开始整理和分享你的学习资料。</p>
+        <ul class="auth-points">
+          <li>上传课程笔记、真题与课件</li>
+          <li>收藏需要的资料，随时回看</li>
+          <li>关注同学，获取同专业资料更新</li>
+        </ul>
       </div>
-    </div>
-    <div class="register-right">
-      <div class="register-container">
-        <h2>创建账号</h2>
-        <p class="register-subtitle">填写以下信息完成注册</p>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <h2 class="auth-card__title">创建账号</h2>
+        <p class="auth-card__subtitle">填写以下信息完成注册</p>
 
         <el-form
           ref="registerFormRef"
           :model="registerForm"
           :rules="registerRules"
-          class="register-form"
+          class="auth-form"
+          label-position="top"
           @submit.prevent="handleRegister"
         >
           <el-form-item prop="username">
             <el-input
               v-model="registerForm.username"
               placeholder="请输入学号"
-              size="large"
               prefix-icon="User"
             />
           </el-form-item>
@@ -37,7 +43,6 @@
             <el-input
               v-model="registerForm.nickname"
               placeholder="请输入昵称"
-              size="large"
               prefix-icon="UserFilled"
             />
           </el-form-item>
@@ -47,7 +52,6 @@
               v-model="registerForm.password"
               type="password"
               placeholder="请输入密码"
-              size="large"
               prefix-icon="Lock"
               show-password
             />
@@ -58,31 +62,20 @@
               v-model="registerForm.confirmPassword"
               type="password"
               placeholder="请确认密码"
-              size="large"
               prefix-icon="Lock"
               show-password
             />
           </el-form-item>
 
-          <div class="form-row">
-            <el-form-item prop="college" class="form-row-item">
-              <el-select
-                v-model="registerForm.college"
-                placeholder="请选择学院"
-                size="large"
-                style="width: 100%"
-              >
+          <div class="auth-row">
+            <el-form-item prop="college" class="auth-row__item">
+              <el-select v-model="registerForm.college" placeholder="请选择学院">
                 <el-option v-for="c in colleges" :key="c" :label="c" :value="c" />
               </el-select>
             </el-form-item>
 
-            <el-form-item prop="grade" class="form-row-item">
-              <el-select
-                v-model="registerForm.grade"
-                placeholder="请选择年级"
-                size="large"
-                style="width: 100%"
-              >
+            <el-form-item prop="grade" class="auth-row__item">
+              <el-select v-model="registerForm.grade" placeholder="请选择年级">
                 <el-option label="大一" :value="1" />
                 <el-option label="大二" :value="2" />
                 <el-option label="大三" :value="3" />
@@ -96,7 +89,7 @@
               type="primary"
               size="large"
               :loading="loading"
-              class="register-btn"
+              class="auth-submit"
               @click="handleRegister"
             >
               注册
@@ -104,12 +97,12 @@
           </el-form-item>
         </el-form>
 
-        <div class="register-footer">
+        <div class="auth-footer">
           <span>已有账号？</span>
           <router-link to="/login">立即登录</router-link>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -190,130 +183,190 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-.register-page {
-  min-height: calc(100vh - 64px);
+.auth-page {
+  min-height: calc(100vh - var(--header-height));
   display: flex;
+  background: var(--bg-base);
 }
 
-.register-left {
+.auth-aside {
   flex: 1;
-  background:
-    radial-gradient(ellipse at 70% 40%, rgba(200, 164, 78, 0.06) 0%, transparent 60%),
-    var(--bg-base);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
-  border-right: 1px solid var(--border-subtle);
+  padding: var(--space-10) var(--space-8);
+  background: var(--bg-deep);
+  border-right: 1px solid var(--border-default);
 }
 
-.left-content {
+.auth-aside__inner {
   max-width: 380px;
 }
 
-.brand {
+.auth-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 40px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
 }
 
-.brand-icon {
-  width: 36px;
-  height: 36px;
+.auth-brand__mark {
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
-.brand-text {
-  font-size: 18px;
-  font-weight: 700;
+.auth-brand__text {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
-.left-title {
-  font-size: 44px;
-  font-weight: 800;
+.auth-title {
+  font-size: var(--text-display);
+  font-weight: var(--font-bold);
   color: var(--text-primary);
-  margin-bottom: 16px;
-  line-height: 1.15;
-  letter-spacing: -0.04em;
+  margin-bottom: var(--space-4);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
 }
 
-.left-desc {
-  font-size: 16px;
-  color: var(--text-muted);
+.auth-desc {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-7);
 }
 
-.register-right {
+.auth-points {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.auth-points li {
+  position: relative;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.auth-points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.auth-main {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
-  background: var(--bg-deep);
+  padding: var(--space-10) var(--space-8);
+  background: var(--bg-base);
 }
 
-.register-container {
+.auth-card {
   width: 100%;
   max-width: 420px;
 }
 
-.register-container h2 {
-  font-size: 26px;
-  font-weight: 700;
+.auth-card__title {
+  font-size: var(--heading-2);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  margin-bottom: 6px;
-  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
 }
 
-.register-subtitle {
-  color: var(--text-muted);
-  font-size: 15px;
-  margin-bottom: 36px;
+.auth-card__subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-6);
 }
 
-.form-row {
+.auth-form {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
 }
 
-.form-row-item {
+.auth-form :deep(.el-form-item) {
+  margin-bottom: var(--space-4);
+}
+
+.auth-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.auth-row__item {
   flex: 1;
+  min-width: 0;
 }
 
-.register-btn {
+.auth-row__item :deep(.el-select) {
   width: 100%;
-  font-weight: 600;
 }
 
-.register-footer {
+.auth-submit {
+  width: 100%;
+  font-weight: var(--font-semibold);
+}
+
+.auth-footer {
   text-align: center;
-  margin-top: 28px;
-  color: var(--text-muted);
-  font-size: 14px;
+  margin-top: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
-.register-footer a {
+.auth-footer a {
   color: var(--accent);
-  text-decoration: none;
-  margin-left: 4px;
-  font-weight: 500;
+  margin-left: var(--space-1);
+  font-weight: var(--font-medium);
 }
 
-.register-footer a:hover {
-  color: var(--accent-light);
+.auth-footer a:hover {
+  color: var(--accent-dim);
 }
 
-@media (max-width: 768px) {
-  .register-left {
+@media (max-width: 900px) {
+  .auth-aside {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .auth-title {
+    font-size: var(--text-3xl);
+  }
+}
+
+@media (max-width: 767px) {
+  .auth-page {
+    min-height: calc(100vh - var(--header-height));
+  }
+
+  .auth-aside {
     display: none;
   }
-  .form-row {
+
+  .auth-main {
+    padding: var(--space-8) var(--space-4);
+    align-items: flex-start;
+  }
+
+  .auth-row {
     flex-direction: column;
     gap: 0;
   }

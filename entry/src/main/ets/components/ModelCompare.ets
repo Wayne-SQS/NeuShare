@@ -1,4 +1,4 @@
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale, Radii } from '@neushare/common';
 import modelPrices from '../data/modelPrices.json';
 import { ModelPrice } from '../models/ModelCompareModel';
 import window from '@ohos.window';
@@ -59,9 +59,9 @@ export struct ModelCompare {
             Row() {
               ForEach(this.providers, (provider: string, idx: number) => {
                 Text(provider)
-                  .fontSize(12).fontWeight(this.selectedProvider === provider ? FontWeight.Bold : FontWeight.Regular)
+                  .fontSize(FontScale.LABEL).fontWeight(this.selectedProvider === provider ? FontWeight.Bold : FontWeight.Regular)
                   .fontColor(this.selectedProvider === provider ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
-                  .padding({ left: 12, right: 12, top: 6, bottom: 6 }).borderRadius(14)
+                  .padding({ left: 12, right: 12, top: 6, bottom: 6 }).borderRadius(Radii.XL)
                   .backgroundColor(this.selectedProvider === provider ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                   .margin({ right: 6 })
                   .onClick(() => { this.selectedProvider = provider; this.sortModels(); })
@@ -75,21 +75,21 @@ export struct ModelCompare {
               [{ key: 'overall', label: '综合' }, { key: 'price', label: '价格' }, { key: 'coding', label: '编程' }, { key: 'reasoning', label: '推理' }, { key: 'chinese', label: '中文' }],
               (sort: Record<string, string>, idx: number) => {
                 Text(sort.label)
-                  .fontSize(11).fontWeight(this.sortBy === sort.key ? FontWeight.Bold : FontWeight.Regular)
+                  .fontSize(FontScale.MICRO).fontWeight(this.sortBy === sort.key ? FontWeight.Bold : FontWeight.Regular)
                   .fontColor(this.sortBy === sort.key ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
-                  .padding({ left: 10, right: 10, top: 5, bottom: 5 }).borderRadius(12)
+                  .padding({ left: 10, right: 10, top: 5, bottom: 5 }).borderRadius(Radii.CARD)
                   .backgroundColor(this.sortBy === sort.key ? ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '10') : Color.Transparent)
                   .margin({ right: 4 })
                   .onClick(() => { this.sortBy = sort.key; this.sortModels(); })
               }, (sort: Record<string, string>, idx: number) => 'sort_' + sort.key)
             Blank()
-            Text(this.showChart ? '▼ 图表' : '▶ 图表').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode))
+            Text(this.showChart ? '▼ 图表' : '▶ 图表').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode))
               .margin({ right: 8 })
               .onClick(() => { this.showChart = !this.showChart; })
-            Text(this.isLandscape ? '↺ 竖屏' : '↻ 横屏').fontSize(11)
+            Text(this.isLandscape ? '↺ 竖屏' : '↻ 横屏').fontSize(FontScale.MICRO)
               .fontColor(ColorTokens.primary(this.isDarkMode))
               .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-              .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), radius: 10 })
+              .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), radius: Radii.LG })
               .onClick(() => { this.toggleOrientation(); })
           }.width('100%').padding({ left: 16, right: 16, bottom: 6 })
 
@@ -97,28 +97,28 @@ export struct ModelCompare {
           if (this.showChart) {
             Column() {
               Row() {
-                Text('📊 综合排名').fontSize(14).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+                Text('综合排名').fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
               }.width('100%').padding({ left: 16, top: 4 })
 
               Column() {
                 ForEach([...this.models].sort((a, b) => b.overall - a.overall).slice(0, 10), (m: ModelPrice, i: number) => {
                   Row() {
-                    Text((i + 1).toString()).fontSize(10).fontWeight(FontWeight.Bold)
+                    Text((i + 1).toString()).fontSize(FontScale.TINY).fontWeight(FontWeight.Bold)
                       .fontColor(i < 3 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
                       .width(18)
-                    Text(m.name).fontSize(11).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+                    Text(m.name).fontSize(FontScale.MICRO).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                       .width(100).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                     Row()
-                      .width((m.overall / 100) * 120).height(10).borderRadius(5)
+                      .width((m.overall / 100) * 120).height(10).borderRadius(Radii.XS)
                       .backgroundColor(i < 3 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
                       .margin({ left: 8 })
-                    Text(m.overall.toString()).fontSize(11).fontWeight(FontWeight.Bold)
+                    Text(m.overall.toString()).fontSize(FontScale.MICRO).fontWeight(FontWeight.Bold)
                       .fontColor(i < 3 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.textSecondary(this.isDarkMode))
                       .margin({ left: 6 })
                   }.width('100%').padding({ top: 3, bottom: 3 })
                 }, (m: ModelPrice, i: number) => 'mb_' + m.name)
               }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 })
-              .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
+              .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
               .margin({ left: 16, right: 16, top: 4 })
             }
           }
@@ -129,34 +129,34 @@ export struct ModelCompare {
               // Header row: rank + name + provider
               Row() {
                 Text((index + 1).toString())
-                  .fontSize(11).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
-                  .width(20).height(20).borderRadius(6)
+                  .fontSize(FontScale.MICRO).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                  .width(20).height(20).borderRadius(Radii.SM)
                   .backgroundColor(index < 3 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.primary(this.isDarkMode))
                   .textAlign(TextAlign.Center)
                 Text(model.name)
-                  .fontSize(14).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+                  .fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                   .layoutWeight(1).margin({ left: 8 }).maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                 Text(model.provider)
-                  .fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode))
+                  .fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(4)
+                  .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.XS)
               }.width('100%')
 
               // Price row
               Row() {
                 Text('¥' + model.inputPrice.toFixed(1) + ' → ¥' + model.outputPrice.toFixed(1))
-                  .fontSize(12).fontWeight(FontWeight.Medium).fontColor(ColorTokens.textSecondary(this.isDarkMode))
-                Text(' /百万').fontSize(10).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+                  .fontSize(FontScale.LABEL).fontWeight(FontWeight.Medium).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+                Text(' /百万').fontSize(FontScale.TINY).fontColor(ColorTokens.textDisabled(this.isDarkMode))
                 if (model.contextWindow >= 1000000) {
-                  Text('1M').fontSize(9).fontColor(ColorTokens.success(this.isDarkMode))
+                  Text('1M').fontSize(FontScale.MICRO_SM).fontColor(ColorTokens.success(this.isDarkMode))
                     .padding({ left: 5, right: 5, top: 1, bottom: 1 })
-                    .backgroundColor(ColorTokens.withAlpha(ColorTokens.success(this.isDarkMode), '15')).borderRadius(3)
+                    .backgroundColor(ColorTokens.withAlpha(ColorTokens.success(this.isDarkMode), '15')).borderRadius(Radii.XXS)
                     .margin({ left: 6 })
                 } else if (model.contextWindow >= 256000) {
-                  Text('256K').fontSize(9).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
+                  Text('256K').fontSize(FontScale.MICRO_SM).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                     .padding({ left: 5, right: 5, top: 1, bottom: 1 })
-                    .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '20')).borderRadius(3)
+                    .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '20')).borderRadius(Radii.XXS)
                     .margin({ left: 6 })
                 }
               }.margin({ top: 8 })
@@ -175,15 +175,15 @@ export struct ModelCompare {
               // Note
               if (model.note) {
                 Text(model.note)
-                  .fontSize(10).fontColor(ColorTokens.textDisabled(this.isDarkMode)).lineHeight(14)
+                  .fontSize(FontScale.TINY).fontColor(ColorTokens.textDisabled(this.isDarkMode)).lineHeight(14)
                   .margin({ top: 8 }).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
               }
             }
             .width('100%').padding(14)
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.XL)
             .margin({ left: 16, right: 16, top: 5, bottom: 5 })
-            .shadow({ radius: 6, color: this.isDarkMode ? '#33FFFFFF' : '#0A000000', offsetX: 0, offsetY: 2 })
-            .border({ width: 1, color: this.isDarkMode ? ColorTokens.DIVIDER_DARK : '#06000000', radius: 14 })
+            .shadow({ radius: 6, color: this.isDarkMode ? ColorTokens.withAlpha(ColorTokens.TEXT_WHITE, '33') : ColorTokens.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
+            .border({ width: 1, color: this.isDarkMode ? ColorTokens.DIVIDER_DARK : ColorTokens.SHADOW_SOFT_LIGHT, radius: Radii.XL })
           }, (model: ModelPrice, index: number) => 'mdl_' + index.toString())
 
           Column().height(80)
@@ -198,11 +198,11 @@ export struct ModelCompare {
   dimColor(dim: string): string {
     if (this.isDarkMode) {
       switch (dim) {
-        case 'overall': return '#FFFFFF';   // 纯白（最强）
-        case 'coding': return '#E8E8EC';    // 近白
-        case 'reasoning': return '#C0C0C5'; // 浅灰
-        case 'chinese': return '#8A8A93';   // 中灰（最弱）
-        default: return '#FFFFFF';
+        case 'overall': return ColorTokens.TEXT_WHITE;   // 纯白（最强）
+        case 'coding': return ColorTokens.SUCCESS_DARK;    // 近白
+        case 'reasoning': return ColorTokens.TEXT_SECONDARY_DARK; // 浅灰
+        case 'chinese': return ColorTokens.TEXT_SECONDARY_DARK;   // 中灰（最弱）
+        default: return ColorTokens.TEXT_WHITE;
       }
     } else {
       switch (dim) {
@@ -219,11 +219,11 @@ export struct ModelCompare {
   dimBar(label: string, score: number, color: string, ratio: number) {
     Column() {
       Row() {
-        Text(label).fontSize(10).fontColor(ColorTokens.textHint(this.isDarkMode)).width(26)
+        Text(label).fontSize(FontScale.TINY).fontColor(ColorTokens.textHint(this.isDarkMode)).width(26)
         Row()
-          .width((score / 100) * 120).height(7).borderRadius(4)
+          .width((score / 100) * 120).height(7).borderRadius(Radii.XS)
           .backgroundColor(score >= 90 ? color : score >= 80 ? ColorTokens.withAlpha(color, 'CC') : ColorTokens.withAlpha(color, '80'))
-        Text(score.toString()).fontSize(11).fontWeight(FontWeight.Bold)
+        Text(score.toString()).fontSize(FontScale.MICRO).fontWeight(FontWeight.Bold)
           .fontColor(score >= 90 ? color : ColorTokens.textSecondary(this.isDarkMode))
           .margin({ left: 6 })
       }

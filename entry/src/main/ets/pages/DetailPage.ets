@@ -1,6 +1,6 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import router from '@ohos.router';
 import curves from '@ohos.curves';
-import { ColorTokens, ResourceTypeUtils, BreakpointType as BpType, BreakpointTypeEnum, AuthStore } from '@neushare/common';
+import { ColorTokens, ResourceTypeUtils, BreakpointType as BpType, BreakpointTypeEnum, AuthStore, FontScale, Radii, Spacing, ControlSize, StateView, ViewState } from '@neushare/common';
 import { ResourceService } from '../services/ResourceService';
 import { FavoriteService } from '../services/FavoriteService';
 import { RecommendService } from '../services/RecommendService';
@@ -29,6 +29,7 @@ struct DetailPage {
   @State replyToName: string = '';
   @State similarResources: ResourceItemModel[] = [];
   @State isSpeaking: boolean = false;
+  @StorageLink('topSafeAreaVp') topSafeArea: number = 0;
   @State loadFailed: boolean = false;
   @State loadTimeout: boolean = false;
   @State showComments: boolean = false; // 半模态评论面板（教程 §13.3）
@@ -56,23 +57,23 @@ struct DetailPage {
   }
 
   private titleFontSize(): number {
-    return new BpType<number>({ sm: 22, md: 26, lg: 30, xl: 38 }).getValue(this.currentBreakpoint) ?? 22;
+    return new BpType<number>({ sm: FontScale.TITLE_MD, md: 26, lg: FontScale.DISPLAY, xl: 38 }).getValue(this.currentBreakpoint) ?? 22;
   }
 
   private subtitleFontSize(): number {
-    return new BpType<number>({ sm: 16, md: 18, lg: 22, xl: 30 }).getValue(this.currentBreakpoint) ?? 16;
+    return new BpType<number>({ sm: FontScale.SUBTITLE, md: FontScale.SECTION, lg: FontScale.TITLE_MD, xl: FontScale.DISPLAY }).getValue(this.currentBreakpoint) ?? 16;
   }
 
   private bodyFontSize(): number {
-    return new BpType<number>({ sm: 14, md: 16, lg: 18, xl: 22 }).getValue(this.currentBreakpoint) ?? 14;
+    return new BpType<number>({ sm: FontScale.BODY_SM, md: FontScale.SUBTITLE, lg: FontScale.SECTION, xl: FontScale.TITLE_MD }).getValue(this.currentBreakpoint) ?? 14;
   }
 
   private captionFontSize(): number {
-    return new BpType<number>({ sm: 12, md: 14, lg: 16, xl: 20 }).getValue(this.currentBreakpoint) ?? 12;
+    return new BpType<number>({ sm: FontScale.LABEL, md: FontScale.BODY_SM, lg: FontScale.SUBTITLE, xl: FontScale.TITLE_SM }).getValue(this.currentBreakpoint) ?? 12;
   }
 
   private smallFontSize(): number {
-    return new BpType<number>({ sm: 11, md: 12, lg: 14, xl: 17 }).getValue(this.currentBreakpoint) ?? 11;
+    return new BpType<number>({ sm: FontScale.MICRO, md: FontScale.LABEL, lg: FontScale.BODY_SM, xl: FontScale.SUBTITLE_MD }).getValue(this.currentBreakpoint) ?? 11;
   }
 
   private headerHeight(): number {
@@ -428,27 +429,21 @@ struct DetailPage {
       if (!this.resource) {
         Column() {
           if (this.loadTimeout || this.loadFailed) {
-            Text('📭').fontSize(48)
-            Text('加载失败').fontSize(18).fontWeight(FontWeight.Bold)
-              .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ top: 12 })
-            Text('请检查网络连接或确认后端服务已启动')
-              .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 6 })
-            Text('重试').fontSize(14).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
-              .fontWeight(FontWeight.Bold)
-              .padding({ left: 24, right: 24, top: 10, bottom: 10 })
-              .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(20)
-              .margin({ top: 20 })
-              .onClick(() => {
+            StateView({
+              state: ViewState.ERROR,
+              message: '资源加载失败',
+              hint: '请检查网络连接或确认后端服务已启动',
+              onRetry: () => {
                 this.loadFailed = false;
                 this.loadTimeout = false;
                 this.loadDetailFromApi();
                 this.loadTimer = setTimeout(() => {
                   if (!this.resource) { this.loadTimeout = true; }
                 }, 8000);
-              })
+              }
+            })
           } else {
-            LoadingProgress().width(36).height(36).color(ColorTokens.primary(this.isDarkMode))
-            Text('加载中...').fontSize(14).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 12 })
+            StateView({ state: ViewState.LOADING, message: '正在加载资源' })
           }
         }
         .width('100%').height('100%').justifyContent(FlexAlign.Center)
@@ -481,7 +476,7 @@ struct DetailPage {
             if (this.similarResources.length > 0) {
               Scroll() {
                 Column() {
-                  Text('📋 相似推荐')
+                  Text('相似推荐')
                     .fontSize(this.bodyFontSize() - 1).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                     .width('100%').padding({ top: 12, bottom: 8 })
 
@@ -495,7 +490,7 @@ struct DetailPage {
                           if (item.tags && item.tags.length > 0) {
                             Text(item.tags[0]).fontSize(this.smallFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                               .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                              .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(6)
+                              .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(Radii.SM)
                           }
                           Text(item.author).fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
                             .margin({ left: 6 })
@@ -505,7 +500,7 @@ struct DetailPage {
                     }
                     .width('100%').padding(this.cardPadding())
                     .margin({ top: 6 })
-                    .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
+                    .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
                     .onClick(() => {
                       router.replaceUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } });
                     })
@@ -567,29 +562,28 @@ struct DetailPage {
   @Builder
   HeaderBar() {
     Row() {
-      Text('←').fontSize(this.titleFontSize()).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+      Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+        .height(ControlSize.TOUCH).textAlign(TextAlign.Start)
         .onClick(() => { router.back(); })
       Blank()
-      Text(this.resource!.type === 'book' ? '📖' :
-        this.resource!.type === 'video' ? '🎬' :
-        this.resource!.type === 'software' ? '💻' : '📝').fontSize(this.subtitleFontSize() + 4)
-        .sharedTransition('cover_' + this.resourceId, { duration: 300, curve: Curve.EaseInOut })
       Text(this.resource!.type === 'book' ? '书籍详情' :
         this.resource!.type === 'video' ? '视频详情' :
         this.resource!.type === 'software' ? '软件详情' : '教程详情')
-        .fontSize(this.bodyFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ left: 6 })
+        .fontSize(this.bodyFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode))
       Blank()
-      Text(this.isSpeaking ? '🔊' : '🔈').fontSize(this.subtitleFontSize() + 6)
-        .fontColor(ColorTokens.primary(this.isDarkMode)).margin({ right: 12 })
+      Text(this.isSpeaking ? '停止' : '朗读').fontSize(FontScale.CAPTION)
+        .fontColor(ColorTokens.primary(this.isDarkMode)).margin({ right: Spacing.MD })
+        .height(ControlSize.TOUCH).textAlign(TextAlign.Center)
         .onClick(() => { this.toggleTts(); })
-      Text('↗').fontSize(this.subtitleFontSize() + 6).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ right: 12 })
+      Text('分享').fontSize(FontScale.CAPTION).fontColor(ColorTokens.textSecondary(this.isDarkMode)).margin({ right: Spacing.MD })
+        .height(ControlSize.TOUCH).textAlign(TextAlign.Center)
         .onClick(() => {
           if (this.resource) {
             this.shareHelper.shareResource(this.resourceId, this.resource.title);
           }
         })
-      Text(this.isFavorited ? '★' : '☆')
-        .fontSize(this.titleFontSize() + 6).fontColor(ColorTokens.primary(this.isDarkMode))
+      Text(this.isFavorited ? '已收藏' : '收藏')
+        .fontSize(FontScale.CAPTION).fontColor(ColorTokens.primary(this.isDarkMode))
         .scale({ x: this.favBounce ? 1.4 : 1, y: this.favBounce ? 1.4 : 1 })
         .animation({ curve: Curve.EaseOut, duration: 200 })
         .onClick(() => { this.toggleFavorite(); this.favBounce = true; setTimeout(() => { this.favBounce = false; }, 200); })
@@ -625,7 +619,7 @@ struct DetailPage {
               .fontSize(this.smallFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
               .padding({ left: 8, right: 8, top: 3, bottom: 3 })
               .backgroundColor(ColorTokens.accentLight(this.isDarkMode))
-              .borderRadius(10).margin({ right: 6, top: 6 })
+              .borderRadius(Radii.LG).margin({ right: 6, top: 6 })
           })
         }.width('100%').margin({ top: 8 })
       }
@@ -636,7 +630,7 @@ struct DetailPage {
   @Builder
   DescriptionSection() {
     Column() {
-      Text('📖 详细介绍')
+      Text('详细介绍')
         .fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
       Text(this.resource!.description)
         .fontSize(this.bodyFontSize()).fontColor(ColorTokens.textSecondary(this.isDarkMode))
@@ -649,10 +643,9 @@ struct DetailPage {
   @Builder
   FileDownload() {
     Column() {
-      Text('📥 下载文件').fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold)
+      Text('下载文件').fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDarkMode))
       Row() {
-        Text('📄').fontSize(20)
         Column() {
           Text(this.resource!.url)
             .fontSize(this.captionFontSize()).fontWeight(FontWeight.Medium)
@@ -663,14 +656,14 @@ struct DetailPage {
             .margin({ top: 2 })
         }
         .layoutWeight(1).margin({ left: 10 })
-        Text('⬇').fontSize(this.subtitleFontSize() + 4).fontColor(ColorTokens.primary(this.isDarkMode))
-          .width(36).height(36).borderRadius(18)
+        Text('下载').fontSize(FontScale.LABEL).fontColor(ColorTokens.primary(this.isDarkMode))
+          .width(36).height(36).borderRadius(Radii.XXL)
           .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '15'))
           .textAlign(TextAlign.Center)
       }
       .width('100%').padding(12).margin({ top: 10 })
-      .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
-      .border({ width: 1, color: ColorTokens.primary(this.isDarkMode), radius: 12 })
+      .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
+      .border({ width: 1, color: ColorTokens.primary(this.isDarkMode), radius: Radii.CARD })
       .onClick(() => { this.downloadFile(); })
     }
     .width('100%').padding(this.cardPadding()).backgroundColor(ColorTokens.bgCard(this.isDarkMode)).margin({ top: 8 })
@@ -679,7 +672,7 @@ struct DetailPage {
   @Builder
   ExternalLink() {
     Column() {
-      Text('🔗 在线资源').fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold)
+      Text('在线资源').fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold)
         .fontColor(ColorTokens.textPrimary(this.isDarkMode))
       Row() {
         Text(this.resource!.url)
@@ -691,12 +684,12 @@ struct DetailPage {
         Text('应用内打开')
           .fontSize(this.captionFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-          .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(12)
+          .backgroundColor(ColorTokens.primary(this.isDarkMode)).borderRadius(Radii.CARD)
           .onClick(() => { this.openUrl(this.resource!.url); })
         Text('浏览器打开')
           .fontSize(this.captionFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
-          .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(12)
+          .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(Radii.CARD)
           .margin({ left: 10 })
           .onClick(() => { this.openInBrowser(this.resource!.url); })
       }.margin({ top: 10 })
@@ -707,13 +700,13 @@ struct DetailPage {
   @Builder
   PriceComparison() {
     Column() {
-      Text('💰 各平台价格对比')
+      Text('各平台价格对比')
         .fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
       Text('点击跳转购买').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
 
-      this.priceRow('京东', 'https://search.jd.com/Search?keyword=' + encodeURI(this.resource!.title), '#E74C3C')
-      this.priceRow('当当', 'https://search.dangdang.com/?key=' + encodeURI(this.resource!.title), '#E74C3C')
-      this.priceRow('淘宝', 'https://s.taobao.com/search?q=' + encodeURI(this.resource!.title), '#FF6600')
+      this.priceRow('京东', 'https://search.jd.com/Search?keyword=' + encodeURI(this.resource!.title), ColorTokens.ERROR_LIGHT)
+      this.priceRow('当当', 'https://search.dangdang.com/?key=' + encodeURI(this.resource!.title), ColorTokens.ERROR_LIGHT)
+      this.priceRow('淘宝', 'https://s.taobao.com/search?q=' + encodeURI(this.resource!.title), ColorTokens.STATUS_WARNING_LIGHT)
     }
     .width('100%').padding(this.cardPadding()).backgroundColor(ColorTokens.bgCard(this.isDarkMode)).margin({ top: 8 })
   }
@@ -722,16 +715,15 @@ struct DetailPage {
   @Builder
   CommentTrigger() {
     Row() {
-      Text('💬').fontSize(this.bodyFontSize() + 2)
       Text(this.cloudComments.length > 0 ?
-        ' 查看评论 (' + this.cloudComments.length.toString() + ')' :
-        ' 写评论')
+        '查看评论 (' + this.cloudComments.length.toString() + ')' :
+        '写评论')
         .fontSize(this.bodyFontSize()).fontColor(ColorTokens.textPrimary(this.isDarkMode))
       Blank()
       Text('›').fontSize(this.subtitleFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
     }
     .width('100%').padding(this.cardPadding())
-    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
+    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
     .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 8 })
     .onClick(() => { this.showComments = true; })
   }
@@ -745,7 +737,7 @@ struct DetailPage {
         Text('评论').fontSize(this.subtitleFontSize()).fontWeight(FontWeight.Bold)
           .fontColor(ColorTokens.textPrimary(this.isDarkMode))
         Blank()
-        Text('✕').fontSize(this.subtitleFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
+        Text('关闭').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textHint(this.isDarkMode))
           .width(40).height(40).textAlign(TextAlign.Center)
           .onClick(() => { this.showComments = false; })
       }
@@ -764,6 +756,7 @@ struct DetailPage {
       .scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).layoutWeight(1)
     }
     .width('100%').height('100%').backgroundColor(ColorTokens.bgPage(this.isDarkMode))
+    .padding({ top: this.topSafeArea })
   }
 
   @Builder
@@ -772,23 +765,23 @@ struct DetailPage {
       // Reply indicator
       if (this.replyToId > 0) {
         Row() {
-          Text('↩ 回复 @' + this.replyToName).fontSize(this.smallFontSize())
+          Text('回复 @' + this.replyToName).fontSize(this.smallFontSize())
             .fontColor(ColorTokens.primary(this.isDarkMode)).layoutWeight(1)
-          Text('✕').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
+          Text('取消').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
             .width(24).height(24).textAlign(TextAlign.Center)
             .onClick(() => { this.cancelReply(); })
         }
         .width('100%').padding({ left: 14, right: 10, top: 6, bottom: 6 })
         .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '10'))
-        .borderRadius(10).margin({ bottom: 8 })
+        .borderRadius(Radii.LG).margin({ bottom: 8 })
       }
       // Input row
       Row() {
         TextInput({ text: this.newComment, placeholder: this.replyToId > 0 ? '回复 @' + this.replyToName + '...' : '写下你的评论...' })
           .fontSize(this.bodyFontSize()).layoutWeight(1).height(this.bodyFontSize() + 26)
-          .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(20)
+          .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.HUGE)
           .padding({ left: 14 })
-          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 20 })
+          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: Radii.HUGE })
           .onChange((value: string) => { this.newComment = value; })
         Text('发送')
           .fontSize(this.bodyFontSize()).fontWeight(FontWeight.Bold)
@@ -796,7 +789,7 @@ struct DetailPage {
           .padding({ left: 16, right: 16, top: 8, bottom: 8 })
           .backgroundColor(this.newComment.trim() ? ColorTokens.primary(this.isDarkMode) :
             ColorTokens.textDisabled(this.isDarkMode))
-          .borderRadius(18)
+          .borderRadius(Radii.XXL)
           .margin({ left: 10 })
           .opacity(this.newComment.trim() ? 1 : 0.5)
           .onClick(() => { this.submitComment(); })
@@ -811,7 +804,7 @@ struct DetailPage {
     if (this.cloudComments.length > 0) {
       Column() {
         Row() {
-          Text('💬 评论 (' + this.cloudComments.length.toString() + ')')
+          Text('评论 (' + this.cloudComments.length.toString() + ')')
             .fontSize(this.bodyFontSize() - 1).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
         }.width('100%').padding({ left: this.contentPadding(), right: this.contentPadding(), top: 12 })
 
@@ -832,13 +825,13 @@ struct DetailPage {
                 Text('回复').fontSize(this.smallFontSize()).fontColor(ColorTokens.primary(this.isDarkMode))
                   .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                   .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '10'))
-                  .borderRadius(8)
+                  .borderRadius(Radii.MD)
                   .onClick(() => { this.startReply(item.id, item.nickname); })
                 // Delete button (only for comment owner)
                 if (item.userId === this.currentUserId) {
-                  Text('删除').fontSize(this.smallFontSize()).fontColor('#E74C3C')
+                  Text('删除').fontSize(this.smallFontSize()).fontColor(ColorTokens.ERROR_LIGHT)
                     .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                    .border({ width: 1, color: '#E74C3C', radius: 6 }).margin({ left: 6 })
+                    .border({ width: 1, color: ColorTokens.ERROR_LIGHT, radius: Radii.SM }).margin({ left: 6 })
                     .onClick(() => { this.deleteComment(item.id); })
                 }
               }.width('100%')
@@ -864,13 +857,13 @@ struct DetailPage {
                         Text('回复').fontSize(this.smallFontSize() - 1).fontColor(ColorTokens.primary(this.isDarkMode))
                           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                           .backgroundColor(ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '10'))
-                          .borderRadius(6)
+                          .borderRadius(Radii.SM)
                           .onClick(() => { this.startReply(child.id, child.nickname); })
                         // Delete button (only for comment owner)
                         if (child.userId === this.currentUserId) {
-                          Text('删除').fontSize(this.smallFontSize() - 1).fontColor('#E74C3C')
+                          Text('删除').fontSize(this.smallFontSize() - 1).fontColor(ColorTokens.ERROR_LIGHT)
                             .padding({ left: 5, right: 5, top: 1, bottom: 1 })
-                            .border({ width: 1, color: '#E74C3C', radius: 4 }).margin({ left: 4 })
+                            .border({ width: 1, color: ColorTokens.ERROR_LIGHT, radius: Radii.XS }).margin({ left: 4 })
                             .onClick(() => { this.deleteComment(child.id); })
                         }
                       }.width('100%')
@@ -880,7 +873,7 @@ struct DetailPage {
                     }
                   }
                   .width('100%').padding(10)
-                  .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(8)
+                  .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.MD)
                   .margin({ top: 6 })
                 }, (child: CommentItem) => child.id.toString())
               }
@@ -889,7 +882,7 @@ struct DetailPage {
             }
           }
           .width('100%').padding(this.cardPadding())
-          .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
+          .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
           .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 6 })
         }, (item: CommentItem) => item.id.toString())
       }
@@ -901,7 +894,7 @@ struct DetailPage {
   @Builder
   SimilarRecommendations() {
     Column() {
-      Text('📋 相似推荐')
+      Text('相似推荐')
         .fontSize(this.bodyFontSize() - 1).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
         .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding(), top: 12 })
 
@@ -915,7 +908,7 @@ struct DetailPage {
               if (item.tags && item.tags.length > 0) {
                 Text(item.tags[0]).fontSize(this.smallFontSize()).fontColor(ColorTokens.textOnPrimary(this.isDarkMode))
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                  .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(6)
+                  .backgroundColor(ColorTokens.accentLight(this.isDarkMode)).borderRadius(Radii.SM)
               }
               Text(item.author).fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
                 .margin({ left: 6 })
@@ -925,7 +918,7 @@ struct DetailPage {
         }
         .width('100%').padding(this.cardPadding())
         .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 6 })
-        .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(12)
+        .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.CARD)
         .onClick(() => {
           router.replaceUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } });
         })
@@ -945,7 +938,7 @@ struct DetailPage {
         .fontSize(this.captionFontSize()).fontColor(ColorTokens.primary(this.isDarkMode))
     }
     .width('100%').padding(12)
-    .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+    .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
     .margin({ top: 8 })
     .onClick(() => { this.openUrl(url); })
   }

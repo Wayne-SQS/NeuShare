@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, AuthStore, BreakpointType as BpType, BreakpointTypeEnum, AppTheme, ThemeMode, BlurPerformance } from '@neushare/common';
+import { ColorTokens, AuthStore, BreakpointType as BpType, BreakpointTypeEnum, AppTheme, ThemeMode, BlurPerformance, FontScale, Radii, Spacing, ControlSize, Elevation, GridLayout, EmptyState, PageHeader, StateView, ViewState } from '@neushare/common';
 import { ResourceService } from '../../services/ResourceService';
 import { FavoriteService } from '../../services/FavoriteService';
 import { ResourceItem as ResourceItemModel } from '../../models/ResourceModel';
@@ -28,6 +28,7 @@ export struct ProfileTab {
   @State userGrade: number = 0;
   @State isLoggedIn: boolean = false;
   @State dataReady: boolean = false;
+  @State loadFailed: boolean = false;
   @State followerCount: number = 0;
   @State followingCount: number = 0;
   @State myPosts: PostVO[] = [];
@@ -53,23 +54,23 @@ export struct ProfileTab {
   }
 
   private titleFontSize(): number {
-    return new BpType<number>({ sm: 20, md: 22, lg: 26, xl: 34 }).getValue(this.currentBreakpoint) ?? 20;
+    return new BpType<number>({ sm: FontScale.TITLE_SM, md: FontScale.TITLE_MD, lg: 26, xl: FontScale.DISPLAY_LG }).getValue(this.currentBreakpoint) ?? 20;
   }
 
   private subtitleFontSize(): number {
-    return new BpType<number>({ sm: 18, md: 20, lg: 24, xl: 32 }).getValue(this.currentBreakpoint) ?? 18;
+    return new BpType<number>({ sm: FontScale.SECTION, md: FontScale.TITLE_SM, lg: FontScale.HERO, xl: 32 }).getValue(this.currentBreakpoint) ?? 18;
   }
 
   private bodyFontSize(): number {
-    return new BpType<number>({ sm: 14, md: 16, lg: 18, xl: 22 }).getValue(this.currentBreakpoint) ?? 14;
+    return new BpType<number>({ sm: FontScale.BODY_SM, md: FontScale.SUBTITLE, lg: FontScale.SECTION, xl: FontScale.TITLE_MD }).getValue(this.currentBreakpoint) ?? 14;
   }
 
   private captionFontSize(): number {
-    return new BpType<number>({ sm: 12, md: 13, lg: 15, xl: 19 }).getValue(this.currentBreakpoint) ?? 12;
+    return new BpType<number>({ sm: FontScale.LABEL, md: FontScale.CAPTION, lg: FontScale.BODY, xl: 19 }).getValue(this.currentBreakpoint) ?? 12;
   }
 
   private smallFontSize(): number {
-    return new BpType<number>({ sm: 11, md: 12, lg: 14, xl: 17 }).getValue(this.currentBreakpoint) ?? 11;
+    return new BpType<number>({ sm: FontScale.MICRO, md: FontScale.LABEL, lg: FontScale.BODY_SM, xl: FontScale.SUBTITLE_MD }).getValue(this.currentBreakpoint) ?? 11;
   }
 
   private emptyIconSize(): number {
@@ -77,7 +78,7 @@ export struct ProfileTab {
   }
 
   private emptyTitleSize(): number {
-    return new BpType<number>({ sm: 15, md: 18, lg: 22, xl: 30 }).getValue(this.currentBreakpoint) ?? 15;
+    return new BpType<number>({ sm: FontScale.BODY, md: FontScale.SECTION, lg: FontScale.TITLE_MD, xl: FontScale.DISPLAY }).getValue(this.currentBreakpoint) ?? 15;
   }
   private favoriteService: FavoriteService = FavoriteService.getInstance();
   private authStore: AuthStore = AuthStore.getInstance();
@@ -131,11 +132,17 @@ export struct ProfileTab {
   }
 
   async loadFavorites(): Promise<void> {
-    const favResult = await this.favoriteService.getFavoriteResources(1, 100);
-    this.favorites = favResult.items;
-    if (this.favorites.length === 0 && favResult.total > 0) {
-      const favIds = await this.favoriteService.getFavoriteIds();
-      this.favorites = this.resourceService.getLocalResources().filter(r => favIds.has(r.id));
+    try {
+      const favResult = await this.favoriteService.getFavoriteResources(1, 100);
+      this.favorites = favResult.items;
+      if (this.favorites.length === 0 && favResult.total > 0) {
+        const favIds = await this.favoriteService.getFavoriteIds();
+        this.favorites = this.resourceService.getLocalResources().filter(r => favIds.has(r.id));
+      }
+      this.loadFailed = false;
+    } catch (e) {
+      console.error('loadFavorites failed: ' + JSON.stringify(e));
+      this.loadFailed = true;
     }
   }
 
@@ -282,19 +289,19 @@ export struct ProfileTab {
             .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
             .margin({ top: 4 })
           Row() {
-            Text('❤ ' + post.likeCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode))
-            Text('💬 ' + post.commentCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
+            Text('赞 ' + post.likeCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+            Text('评论 ' + post.commentCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
             Text(this.formatTimeAgo(post.createTime)).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
           }.margin({ top: 6 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start)
-        Text('›').fontSize(20).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+        Text('›').fontSize(FontScale.TITLE_SM).fontColor(ColorTokens.textDisabled(this.isDarkMode))
       }
       .width('100%').padding(16).alignItems(VerticalAlign.Center)
     }
     .width('100%')
-    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.XL)
     .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 8 })
-    .border({ width: 1, color: '#08000000', radius: 14 })
+    .border({ width: 1, color: ColorTokens.SHADOW_LIGHT, radius: Radii.XL })
     .onClick(() => {
       router.pushUrl({ url: 'pages/PostDetailPage', params: { postId: post.id } });
     })
@@ -305,11 +312,14 @@ export struct ProfileTab {
       Row() {
         Column() {
           Row() {
-            Text(comment.sourceType === 'resource' ? '📄' : '📝')
-              .fontSize(this.smallFontSize())
+            Text(comment.sourceType === 'resource' ? '资源' : '帖子')
+              .fontSize(FontScale.TINY)
+              .padding({ left: Spacing.XS, right: Spacing.XS, top: Spacing.XXS, bottom: Spacing.XXS })
+              .borderRadius(Radii.XS)
+              .backgroundColor(ColorTokens.bgInput(this.isDarkMode))
               .fontColor(comment.sourceType === 'resource' ?
-                ColorTokens.resolve('#4A6BFF', '#FFFFFF', this.isDarkMode) :
-                ColorTokens.resolve('#6BCB77', '#FFFFFF', this.isDarkMode))
+                ColorTokens.resolve(ColorTokens.PRIMARY_LIGHT, ColorTokens.TEXT_WHITE, this.isDarkMode) :
+                ColorTokens.resolve(ColorTokens.STATUS_SUCCESS_LIGHT, ColorTokens.TEXT_WHITE, this.isDarkMode))
             Text(comment.sourceTitle)
               .fontSize(this.captionFontSize()).fontWeight(FontWeight.Medium)
               .fontColor(ColorTokens.textPrimary(this.isDarkMode))
@@ -321,19 +331,19 @@ export struct ProfileTab {
             .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
             .margin({ top: 4 })
           Row() {
-            Text('❤ ' + comment.likeCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode))
-            Text('💬 ' + comment.replyCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
+            Text('赞 ' + comment.likeCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+            Text('回复 ' + comment.replyCount).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
             Text(this.formatTimeAgo(comment.createTime)).fontSize(this.smallFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ left: 12 })
           }.margin({ top: 4 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start)
-        Text('›').fontSize(20).fontColor(ColorTokens.textDisabled(this.isDarkMode))
+        Text('›').fontSize(FontScale.TITLE_SM).fontColor(ColorTokens.textDisabled(this.isDarkMode))
       }
       .width('100%').padding(16).alignItems(VerticalAlign.Center)
     }
     .width('100%')
-    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+    .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.XL)
     .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 8 })
-    .border({ width: 1, color: '#08000000', radius: 14 })
+    .border({ width: 1, color: ColorTokens.SHADOW_LIGHT, radius: Radii.XL })
     .onClick(() => {
       if (comment.sourceType === 'resource') {
         router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: comment.sourceId } });
@@ -343,14 +353,32 @@ export struct ProfileTab {
     })
   }
 
+  @Builder
+  statTile(value: string, label: string, color: string, onTapHandler: () => void) {
+    Column() {
+      Text(value)
+        .fontSize(FontScale.HERO_SM)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(color)
+      Text(label)
+        .fontSize(FontScale.CAPTION)
+        .fontColor(ColorTokens.textHint(this.isDarkMode))
+        .margin({ top: Spacing.XS })
+    }
+    .width('100%')
+    .padding(Spacing.MD)
+    .alignItems(HorizontalAlign.Center)
+    .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+    .borderRadius(Radii.CARD)
+    .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
+    .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+    .onClick(() => { onTapHandler(); })
+  }
+
   build() {
     Column() {
       // Header
-      Row() {
-        Text('我的').fontSize(this.titleFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-      }
-      .width('100%').height(this.headerHeight()).padding({ left: this.contentPadding(), right: this.contentPadding() })
-      .backgroundColor(ColorTokens.bgCard(this.isDarkMode))
+      PageHeader({ title: '我的', showBack: false })
 
       Scroll() {
         Column() {
@@ -358,11 +386,13 @@ export struct ProfileTab {
           // Profile card — clickable to login/edit
           Row() {
             Stack({ alignContent: Alignment.Center }) {
-              Column().width(64).height(64).borderRadius(32).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
+              Column().width(64).height(64).borderRadius(Radii.PILL).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
               if (this.userAvatar) {
-                Image(this.userAvatar).width(64).height(64).borderRadius(32).objectFit(ImageFit.Cover)
+                Image(this.userAvatar).width(64).height(64).borderRadius(Radii.PILL).objectFit(ImageFit.Cover)
               } else {
-                Text('👤').fontSize(this.subtitleFontSize() + 12)
+                Text(this.isLoggedIn && this.userNickname ? this.userNickname.substring(0, 1) : '我')
+                  .fontSize(FontScale.HERO).fontWeight(FontWeight.Bold)
+                  .fontColor(ColorTokens.textSecondary(this.isDarkMode))
               }
             }
             Column() {
@@ -376,12 +406,12 @@ export struct ProfileTab {
             if (this.isLoggedIn) {
               Text('编辑资料').fontSize(this.captionFontSize()).fontColor(ColorTokens.primary(this.isDarkMode))
                 .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), radius: 12 })
+                .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.primary(this.isDarkMode), '40'), radius: Radii.CARD })
                 .onClick(() => { router.pushUrl({ url: 'pages/EditProfilePage' }); })
             }
           }
           .width('100%').padding(new BpType<number>({ sm: 18, md: 20, lg: 24, xl: 36 }).getValue(this.currentBreakpoint) ?? 18)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.XL)
           .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 14 })
           .onClick(() => {
             if (!this.isLoggedIn) { router.pushUrl({ url: 'pages/LoginPage' }); }
@@ -392,118 +422,79 @@ export struct ProfileTab {
             Row() {
               Text('退出登录').fontSize(this.smallFontSize()).fontColor(ColorTokens.error(this.isDarkMode))
                 .padding({ left: 12, right: 12, top: 5, bottom: 5 })
-                .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.error(this.isDarkMode), '25'), radius: 10 })
+                .border({ width: 1, color: ColorTokens.withAlpha(ColorTokens.error(this.isDarkMode), '25'), radius: Radii.LG })
                 .onClick(() => { this.doLogout(); })
               Blank()
             }
             .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() }).margin({ top: 8 })
           }
 
-          // Stats row
-          Row() {
-            Column() {
-              Text(this.favorites.length.toString())
-                .fontSize(new BpType<number>({ sm: 26, md: 28, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 26)
-                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode))
-              Text('我的收藏').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+          // Stats grid：xs 单列堆叠，sm 起两列以上
+          GridRow({
+            columns: { xs: 1, sm: 1, md: 2, lg: 3, xl: 4 },
+            gutter: { x: Spacing.SM, y: Spacing.SM },
+            breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+          }) {
+            GridCol({ span: 1 }) {
+              this.statTile(this.favorites.length.toString(), '我的收藏', ColorTokens.primary(this.isDarkMode), () => {
+                this.activeTab = 0; this.searchKeyword = ''; this.sortMode = 'default';
+              })
             }
-            .layoutWeight(1).padding(14)
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-            .onClick(() => { this.activeTab = 0; this.searchKeyword = ''; this.sortMode = 'default'; })
-
-            Column() {
-              Text(this.historyResources.length.toString())
-                .fontSize(new BpType<number>({ sm: 26, md: 28, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 26)
-                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.success(this.isDarkMode))
-              Text('浏览历史').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+            GridCol({ span: 1 }) {
+              this.statTile(this.historyResources.length.toString(), '浏览历史', ColorTokens.success(this.isDarkMode), () => {
+                this.activeTab = 1; this.searchKeyword = ''; this.sortMode = 'default';
+              })
             }
-            .layoutWeight(1).padding(14).margin({ left: 8 })
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-            .onClick(() => { this.activeTab = 1; this.searchKeyword = ''; this.sortMode = 'default'; })
-
-            Column() {
-              Text('📄').fontSize(new BpType<number>({ sm: 22, md: 24, lg: 28, xl: 36 }).getValue(this.currentBreakpoint) ?? 22)
-              Text('我的资源').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+            GridCol({ span: 1 }) {
+              this.statTile('进入', '我的资源', ColorTokens.textSecondary(this.isDarkMode), () => {
+                router.pushUrl({ url: 'pages/MyResourcesPage' });
+              })
             }
-            .layoutWeight(1).padding(14).margin({ left: 8 })
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-            .onClick(() => { router.pushUrl({ url: 'pages/MyResourcesPage' }); })
+            GridCol({ span: 1 }) {
+              this.statTile(this.postCount.toString(), '我的帖子', ColorTokens.warning(this.isDarkMode), () => {
+                this.activeTab = 2; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyPosts();
+              })
+            }
+            GridCol({ span: 1 }) {
+              this.statTile(this.commentCount.toString(), '我的评论', ColorTokens.statusWarning(this.isDarkMode), () => {
+                this.activeTab = 3; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyComments();
+              })
+            }
+            GridCol({ span: 1 }) {
+              this.statTile(this.followerCount.toString(), '粉丝', ColorTokens.PURPLE, () => {
+                router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 0 } });
+              })
+            }
+            GridCol({ span: 1 }) {
+              this.statTile(this.followingCount.toString(), '关注', ColorTokens.primary(this.isDarkMode), () => {
+                router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 1 } });
+              })
+            }
           }
-          .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() })
-          .justifyContent(FlexAlign.SpaceBetween)
-          .margin({ top: 12 })
-
-          Row() {
-            Column() {
-              Text(this.postCount.toString())
-                .fontSize(new BpType<number>({ sm: 26, md: 28, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 26)
-                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.warning(this.isDarkMode))
-              Text('我的帖子').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
-            }
-            .layoutWeight(1).padding(14)
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-            .onClick(() => { this.activeTab = 2; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyPosts(); })
-
-            Column() {
-              Text(this.commentCount.toString())
-                .fontSize(new BpType<number>({ sm: 26, md: 28, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 26)
-                .fontWeight(FontWeight.Bold).fontColor('#FF9500')
-              Text('我的评论').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
-            }
-            .layoutWeight(1).padding(14).margin({ left: 8 })
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-            .onClick(() => { this.activeTab = 3; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyComments(); })
-          }
-          .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() })
-          .justifyContent(FlexAlign.SpaceBetween)
-          .margin({ top: 8 })
-
-          // Follow stats row
-          Row() {
-            Column() {
-              Text(this.followerCount.toString())
-                .fontSize(new BpType<number>({ sm: 26, md: 28, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 26)
-                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.PURPLE)
-              Text('粉丝').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
-            }
-            .layoutWeight(1).padding(14)
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-            .onClick(() => { router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 0 } }); })
-
-            Column() {
-              Text(this.followingCount.toString())
-                .fontSize(new BpType<number>({ sm: 26, md: 28, lg: 32, xl: 40 }).getValue(this.currentBreakpoint) ?? 26)
-                .fontWeight(FontWeight.Bold).fontColor(ColorTokens.primary(this.isDarkMode))
-              Text('关注').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
-            }
-            .layoutWeight(1).padding(14).margin({ left: 8 })
-            .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
-            .onClick(() => { router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 1 } }); })
-          }
-          .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() })
-          .justifyContent(FlexAlign.SpaceBetween)
-          .margin({ top: 8 })
+          .width('100%')
+          .padding({ left: this.contentPadding(), right: this.contentPadding() })
+          .margin({ top: Spacing.MD })
 
           // Stats entry
           Row() {
-            Text('📊').fontSize(22)
+            Row().width(3).height(ControlSize.ICON_LG).borderRadius(Radii.XXS).backgroundColor(ColorTokens.primary(this.isDarkMode))
             Column() {
               Text('数据统计').fontSize(this.bodyFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('分类分布 · 来源排行 · 热度Top10').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
-            }.margin({ left: 10 })
-            Blank()
-            Text('查看 ›').fontSize(this.captionFontSize()).fontColor(ColorTokens.primary(this.isDarkMode))
+              Text('分类分布 · 来源排行 · 热度Top10').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: Spacing.XXS })
+            }.margin({ left: Spacing.MD }).layoutWeight(1).alignItems(HorizontalAlign.Start)
+            Text('查看').fontSize(this.captionFontSize()).fontColor(ColorTokens.primary(this.isDarkMode))
           }
-          .width('100%').padding(14)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
-          .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 8 })
-          .shadow({ radius: 4, color: ColorTokens.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
-          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
+          .width('100%').padding(Spacing.LG)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
+          .margin({ left: this.contentPadding(), right: this.contentPadding(), top: Spacing.SM })
+          .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+          .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
           .onClick(() => { router.pushUrl({ url: 'pages/StatsPage' }); })
 
           // 主题切换
           Row() {
-            Text(this.isDarkMode ? '🌙' : '☀️').fontSize(22)
+            Text(this.isDarkMode ? '深' : '浅')
+              .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textSecondary(this.isDarkMode))
             Column() {
               Text('外观主题').fontSize(this.bodyFontSize()).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
               Text(this.isDarkMode ? '深色模式' : '亮色模式').fontSize(this.smallFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
@@ -511,26 +502,26 @@ export struct ProfileTab {
             Blank()
             // 三档切换按钮
             Row() {
-              Text('☀️').fontSize(14)
+              Text('浅色').fontSize(FontScale.CAPTION)
                 .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-                .borderRadius(8)
-                .backgroundColor(!this.isDarkMode ? ColorTokens.primary(this.isDarkMode) : '#00000000')
-                .fontColor(!this.isDarkMode ? '#FFFFFF' : ColorTokens.textHint(this.isDarkMode))
+                .borderRadius(Radii.MD)
+                .backgroundColor(!this.isDarkMode ? ColorTokens.primary(this.isDarkMode) : ColorTokens.TRANSPARENT)
+                .fontColor(!this.isDarkMode ? ColorTokens.TEXT_WHITE : ColorTokens.textHint(this.isDarkMode))
                 .onClick(() => { AppTheme.getInstance().setThemeMode(ThemeMode.LIGHT); })
-              Text('🌙').fontSize(14)
+              Text('深色').fontSize(FontScale.CAPTION)
                 .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-                .borderRadius(8)
-                .backgroundColor(this.isDarkMode ? ColorTokens.primary(this.isDarkMode) : '#00000000')
+                .borderRadius(Radii.MD)
+                .backgroundColor(this.isDarkMode ? ColorTokens.primary(this.isDarkMode) : ColorTokens.TRANSPARENT)
                 .fontColor(this.isDarkMode ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
                 .onClick(() => { AppTheme.getInstance().setThemeMode(ThemeMode.DARK); })
             }
-            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(10)
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.LG)
           }
           .width('100%').padding(14)
-          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(14)
+          .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
           .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 8 })
-          .shadow({ radius: 4, color: ColorTokens.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
-          .border({ width: 1, color: ColorTokens.divider(this.isDarkMode), radius: 14 })
+          .shadow({ radius: Elevation.CARD_SHADOW_RADIUS, color: ColorTokens.shadowCard(this.isDarkMode), offsetX: 0, offsetY: Elevation.CARD_SHADOW_OFFSET_Y })
+          .border({ width: Elevation.BORDER_WIDTH, color: ColorTokens.divider(this.isDarkMode), radius: Radii.CARD })
 
           // Tab pills
           Row() {
@@ -538,7 +529,7 @@ export struct ProfileTab {
               .fontSize(this.captionFontSize()).fontWeight(this.activeTab === 0 ? FontWeight.Bold : FontWeight.Regular)
               .fontColor(this.activeTab === 0 ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
               .padding({ left: 18, right: 18, top: 7, bottom: 7 })
-              .borderRadius(18)
+              .borderRadius(Radii.XXL)
               .backgroundColor(this.activeTab === 0 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
               .onClick(() => { this.activeTab = 0; this.searchKeyword = ''; this.sortMode = 'default'; })
 
@@ -546,7 +537,7 @@ export struct ProfileTab {
               .fontSize(this.captionFontSize()).fontWeight(this.activeTab === 1 ? FontWeight.Bold : FontWeight.Regular)
               .fontColor(this.activeTab === 1 ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
               .padding({ left: 18, right: 18, top: 7, bottom: 7 })
-              .borderRadius(18)
+              .borderRadius(Radii.XXL)
               .backgroundColor(this.activeTab === 1 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
               .margin({ left: 8 })
               .onClick(() => { this.activeTab = 1; this.searchKeyword = ''; this.sortMode = 'default'; })
@@ -555,7 +546,7 @@ export struct ProfileTab {
               .fontSize(this.captionFontSize()).fontWeight(this.activeTab === 2 ? FontWeight.Bold : FontWeight.Regular)
               .fontColor(this.activeTab === 2 ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
               .padding({ left: 18, right: 18, top: 7, bottom: 7 })
-              .borderRadius(18)
+              .borderRadius(Radii.XXL)
               .backgroundColor(this.activeTab === 2 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
               .margin({ left: 8 })
               .onClick(() => { this.activeTab = 2; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyPosts(); })
@@ -564,7 +555,7 @@ export struct ProfileTab {
               .fontSize(this.captionFontSize()).fontWeight(this.activeTab === 3 ? FontWeight.Bold : FontWeight.Regular)
               .fontColor(this.activeTab === 3 ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
               .padding({ left: 18, right: 18, top: 7, bottom: 7 })
-              .borderRadius(18)
+              .borderRadius(Radii.XXL)
               .backgroundColor(this.activeTab === 3 ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
               .margin({ left: 8 })
               .onClick(() => { this.activeTab = 3; this.searchKeyword = ''; this.sortMode = 'default'; this.loadMyComments(); })
@@ -576,18 +567,17 @@ export struct ProfileTab {
           // Search + Sort — only for favorites (tab 0) and history (tab 1)
           if ((this.activeTab === 0 || this.activeTab === 1) && (this.getFilteredList().length > 0 || this.searchKeyword.trim())) {
             Row() {
-              Text('🔍').fontSize(this.captionFontSize())
               TextInput({ text: this.searchKeyword, placeholder: '搜索...' })
                 .fontSize(this.captionFontSize()).layoutWeight(1).height(34)
-                .backgroundColor('#00000000').padding({ left: 8 })
+                .backgroundColor(ColorTokens.TRANSPARENT).padding({ left: 8 })
                 .onChange((value: string) => { this.searchKeyword = value; })
               if (this.searchKeyword) {
-                Text('✕').fontSize(this.captionFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
+                Text('清除').fontSize(this.captionFontSize()).fontColor(ColorTokens.textHint(this.isDarkMode))
                   .onClick(() => { this.searchKeyword = ''; })
               }
             }
             .width('100%').height(38).padding({ left: this.contentPadding(), right: this.contentPadding() })
-            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(18)
+            .backgroundColor(ColorTokens.bgInput(this.isDarkMode)).borderRadius(Radii.XXL)
             .margin({ left: this.contentPadding(), right: this.contentPadding(), top: 14 })
 
             Row() {
@@ -604,87 +594,64 @@ export struct ProfileTab {
           }
 
           // Content
-          if (this.activeTab === 0) {
+          if (!this.dataReady) {
+            StateView({ state: ViewState.LOADING, hint: '正在加载...' })
+          } else if (this.loadFailed) {
+            StateView({
+              state: ViewState.ERROR,
+              message: '加载失败',
+              hint: '请检查网络后重试',
+              onRetry: () => { this.loadFavorites(); this.loadHistory(); }
+            })
+          } else if (this.activeTab === 0) {
             if (this.favorites.length === 0) {
-              Column() {
-                Text('☆').fontSize(this.emptyIconSize()).opacity(0.3).margin({ top: 50 })
-                Text('还没有收藏').fontSize(this.emptyTitleSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 10 })
-                Text('浏览资源时点击 ☆ 即可收藏').fontSize(this.captionFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
-              }.width('100%')
+              EmptyState({ message: '还没有收藏', hint: '浏览资源时点击收藏即可' })
             } else if (this.searchKeyword.trim() && this.getFilteredList().length === 0) {
-              Column() {
-                Text('🔍').fontSize(this.emptyIconSize()).opacity(0.3).margin({ top: 50 })
-                Text('未找到「' + this.searchKeyword + '」').fontSize(this.emptyTitleSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 10 })
-              }.width('100%')
+              EmptyState({ message: '未找到「' + this.searchKeyword + '」', hint: '换个关键词试试' })
             } else {
-              if (this.currentBreakpoint === BreakpointTypeEnum.MD || this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) {
-                Grid() {
-                  ForEach(this.getFilteredList(), (item: ResourceItemModel) => {
-                    GridItem() {
-                      ResourceCard({
-                        resource: item,
-                        isFavorite: true,
-                        onTap: () => { router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } }); }
-                      })
-                    }
-                  }, (item: ResourceItemModel) => item.id.toString())
-                }
-                .columnsTemplate(new BpType<string>({ md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr 1fr')
-                .rowsGap(4).columnsGap(4)
-                .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() })
-              } else {
+              GridRow({
+                columns: { xs: 1, sm: 1, md: 2, lg: 3, xl: 4 },
+                gutter: { x: Spacing.SM, y: Spacing.SM },
+                breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+              }) {
                 ForEach(this.getFilteredList(), (item: ResourceItemModel) => {
-                  ResourceCard({
-                    resource: item,
-                    isFavorite: true,
-                    onTap: () => { router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } }); }
-                  })
+                  GridCol({ span: 1 }) {
+                    ResourceCard({
+                      resource: item,
+                      isFavorite: true,
+                      onTap: () => { router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } }); }
+                    })
+                  }
                 }, (item: ResourceItemModel) => item.id.toString())
               }
+              .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() })
             }
           } else if (this.activeTab === 1) {
             if (this.historyResources.length === 0) {
-              Column() {
-                Text('🕐').fontSize(this.emptyIconSize()).opacity(0.3).margin({ top: 50 })
-                Text('还没有浏览记录').fontSize(this.emptyTitleSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 10 })
-              }.width('100%')
+              EmptyState({ message: '还没有浏览记录', hint: '看过的资源会出现在这里' })
             } else if (this.searchKeyword.trim() && this.getFilteredList().length === 0) {
-              Column() {
-                Text('🔍').fontSize(this.emptyIconSize()).opacity(0.3).margin({ top: 50 })
-                Text('未找到「' + this.searchKeyword + '」').fontSize(this.emptyTitleSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 10 })
-              }.width('100%')
+              EmptyState({ message: '未找到「' + this.searchKeyword + '」', hint: '换个关键词试试' })
             } else {
-              if (this.currentBreakpoint === BreakpointTypeEnum.MD || this.currentBreakpoint === BreakpointTypeEnum.LG || this.currentBreakpoint === BreakpointTypeEnum.XL) {
-                Grid() {
-                  ForEach(this.getFilteredList(), (item: ResourceItemModel) => {
-                    GridItem() {
-                      ResourceCard({
-                        resource: item,
-                        onTap: () => { router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } }); }
-                      })
-                    }
-                  }, (item: ResourceItemModel) => item.id.toString())
-                }
-                .columnsTemplate(new BpType<string>({ md: '1fr 1fr', lg: '1fr 1fr 1fr', xl: '1fr 1fr 1fr 1fr' }).getValue(this.currentBreakpoint) ?? '1fr 1fr')
-                .rowsGap(4).columnsGap(4)
-                .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() })
-              } else {
+              GridRow({
+                columns: { xs: 1, sm: 1, md: 2, lg: 3, xl: 4 },
+                gutter: { x: Spacing.SM, y: Spacing.SM },
+                breakpoints: { value: GridLayout.BREAKPOINTS, reference: BreakpointsReference.WindowSize }
+              }) {
                 ForEach(this.getFilteredList(), (item: ResourceItemModel) => {
-                  ResourceCard({
-                    resource: item,
-                    onTap: () => { router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } }); }
-                  })
+                  GridCol({ span: 1 }) {
+                    ResourceCard({
+                      resource: item,
+                      onTap: () => { router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } }); }
+                    })
+                  }
                 }, (item: ResourceItemModel) => item.id.toString())
               }
+              .width('100%').padding({ left: this.contentPadding(), right: this.contentPadding() })
             }
           } else if (this.activeTab === 2) {
             // My Posts tab
             if (this.myPosts.length === 0) {
-              Column() {
-                Text('📝').fontSize(this.emptyIconSize()).opacity(0.3).margin({ top: 50 })
-                Text('还没有发布帖子').fontSize(this.emptyTitleSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 10 })
-                Text('去社区发个帖子吧').fontSize(this.captionFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
-              }.width('100%')
+              EmptyState({ message: '还没有发布帖子', hint: '去社区发个帖子吧' })
             } else {
               ForEach(this.myPosts, (item: PostVO) => {
                 this.PostCardBuilder(item)
@@ -693,11 +660,7 @@ export struct ProfileTab {
           } else if (this.activeTab === 3) {
             // My Comments tab
             if (this.myComments.length === 0) {
-              Column() {
-                Text('💬').fontSize(this.emptyIconSize()).opacity(0.3).margin({ top: 50 })
-                Text('还没有评论').fontSize(this.emptyTitleSize()).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 10 })
-                Text('你的评论会在这里显示').fontSize(this.captionFontSize()).fontColor(ColorTokens.textDisabled(this.isDarkMode)).margin({ top: 4 })
-              }.width('100%')
+              EmptyState({ message: '还没有评论', hint: '你的评论会在这里显示' })
             } else {
               ForEach(this.myComments, (item: MyCommentItem) => {
                 this.CommentCardBuilder(item)
@@ -733,12 +696,12 @@ struct SortChip {
 
   build() {
     Text(this.label)
-      .fontSize(new BpType<number>({ sm: 11, md: 12, lg: 13, xl: 15 }).getValue(this.currentBreakpoint) ?? 11)
+      .fontSize(new BpType<number>({ sm: FontScale.MICRO, md: FontScale.LABEL, lg: FontScale.CAPTION, xl: FontScale.BODY }).getValue(this.currentBreakpoint) ?? FontScale.MICRO)
       .fontWeight(this.active ? FontWeight.Bold : FontWeight.Regular)
       .fontColor(this.active ? ColorTokens.textOnPrimary(this.isDarkMode) : ColorTokens.textHint(this.isDarkMode))
       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
       .backgroundColor(this.active ? ColorTokens.primary(this.isDarkMode) : ColorTokens.bgInput(this.isDarkMode))
-      .borderRadius(14)
+      .borderRadius(Radii.XL)
       .margin({ right: 6 })
       .onClick(() => { this.onSort(); })
   }

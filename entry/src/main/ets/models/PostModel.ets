@@ -63,16 +63,16 @@ export function formatFileSize(bytes: number): string {
 
 export function fileIcon(type: string): string {
   const t = type.toLowerCase();
-  if (t.includes('zip') || t.includes('rar') || t.includes('7z')) return '📦';
-  if (t.includes('png') || t.includes('jpg') || t.includes('jpeg') || t.includes('svg') || t.includes('gif') || t.includes('webp')) return '🖼️';
-  if (t.includes('md') || t.includes('txt') || t.includes('markdown')) return '📝';
-  if (t.includes('doc')) return '📃';
-  if (t.includes('xls')) return '📊';
-  if (t.includes('ppt')) return '📽️';
-  if (t.includes('pdf')) return '📕';
-  if (t.includes('mp4') || t.includes('avi') || t.includes('mov')) return '🎬';
-  if (t.includes('mp3') || t.includes('wav') || t.includes('flac')) return '🎵';
-  return '📎';
+  if (t.includes('zip') || t.includes('rar') || t.includes('7z')) return '压缩';
+  if (t.includes('png') || t.includes('jpg') || t.includes('jpeg') || t.includes('svg') || t.includes('gif') || t.includes('webp')) return '图片';
+  if (t.includes('md') || t.includes('txt') || t.includes('markdown')) return '笔记';
+  if (t.includes('doc')) return '文档';
+  if (t.includes('xls')) return '表格';
+  if (t.includes('ppt')) return '演示';
+  if (t.includes('pdf')) return 'PDF';
+  if (t.includes('mp4') || t.includes('avi') || t.includes('mov')) return '视频';
+  if (t.includes('mp3') || t.includes('wav') || t.includes('flac')) return '音频';
+  return '文件';
 }
 
 // Convert backend PostVO to local Post model

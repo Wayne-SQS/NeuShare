@@ -1,5 +1,5 @@
 import router from '@ohos.router';
-import { ColorTokens, AuthStore, PageData, ApiResponse } from '@neushare/common';
+import { ColorTokens, AuthStore, PageData, ApiResponse, FontScale, Radii } from '@neushare/common';
 import { FollowApi } from '../api/FollowApi';
 import { UserApi, UserProfile } from '../api/UserApi';
 import { ResourceVO } from '../models/ResourceModel';
@@ -108,9 +108,9 @@ struct UserProfilePage {
   build() {
     Column() {
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { router.back(); })
-        Text('用户主页').fontSize(18).fontWeight(FontWeight.Bold)
+        Text('用户主页').fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold)
           .fontColor(ColorTokens.textPrimary(this.isDarkMode)).margin({ left: 12 })
       }
       .width('100%').height(52).padding({ left: 24 })
@@ -120,28 +120,30 @@ struct UserProfilePage {
         Column() {
           // Avatar + name
           Stack({ alignContent: Alignment.Center }) {
-            Column().width(88).height(88).borderRadius(44).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
+            Column().width(88).height(88).borderRadius(Radii.PILL).backgroundColor(ColorTokens.resolve(ColorTokens.BG_AVATAR, ColorTokens.BG_AVATAR_DARK, this.isDarkMode))
             if (this.avatarUrl) {
-              Image(this.avatarUrl).width(88).height(88).borderRadius(44).objectFit(ImageFit.Cover)
+              Image(this.avatarUrl).width(88).height(88).borderRadius(Radii.PILL).objectFit(ImageFit.Cover)
             } else {
-              Text('👤').fontSize(44)
+              Text(this.nickname ? this.nickname.substring(0, 1) : '')
+                .fontSize(FontScale.TITLE_MD).fontWeight(FontWeight.Bold)
+                .fontColor(ColorTokens.primary(this.isDarkMode))
             }
           }.margin({ top: 30 })
 
           Text(this.nickname)
-            .fontSize(22).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+            .fontSize(FontScale.TITLE_MD).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
             .margin({ top: 16 })
           Text('@' + this.username)
-            .fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
+            .fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 4 })
           if (this.college) {
-            Text(this.college).fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+            Text(this.college).fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
           }
 
           Button(this.isFollowing ? '已关注' : '+ 关注')
-            .fontSize(14).fontWeight(FontWeight.Bold)
+            .fontSize(FontScale.BODY_SM).fontWeight(FontWeight.Bold)
             .fontColor(this.isFollowing ? ColorTokens.textPrimary(this.isDarkMode) : ColorTokens.TEXT_WHITE)
             .backgroundColor(this.isFollowing ? ColorTokens.bgInput(this.isDarkMode) : ColorTokens.primary(this.isDarkMode))
-            .borderRadius(20).height(40).padding({ left: 28, right: 28 })
+            .borderRadius(Radii.HUGE).height(40).padding({ left: 28, right: 28 })
             .margin({ top: 20 })
             .enabled(!this.isLoading)
             .onClick(() => { this.toggleFollow(); })
@@ -149,29 +151,29 @@ struct UserProfilePage {
           // 统计信息
           Row() {
             Column() {
-              Text(this.resourceCount.toString()).fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('资源').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+              Text(this.resourceCount.toString()).fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('资源').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
             }.layoutWeight(1)
 
             Column() {
-              Text(this.followerCount.toString()).fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('粉丝').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+              Text(this.followerCount.toString()).fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('粉丝').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
             }.layoutWeight(1)
             .onClick(() => {
               router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 0 } });
             })
 
             Column() {
-              Text(this.followingCount.toString()).fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('关注').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+              Text(this.followingCount.toString()).fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('关注').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
             }.layoutWeight(1)
             .onClick(() => {
               router.pushUrl({ url: 'pages/FollowListPage', params: { tab: 1 } });
             })
 
             Column() {
-              Text(this.totalLikesReceived.toString()).fontSize(18).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
-              Text('获赞').fontSize(11).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
+              Text(this.totalLikesReceived.toString()).fontSize(FontScale.SECTION).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('获赞').fontSize(FontScale.MICRO).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 2 })
             }.layoutWeight(1)
           }
           .width('80%').margin({ top: 24 })
@@ -179,28 +181,28 @@ struct UserProfilePage {
           // 用户的资源列表
           if (this.userResources.length > 0) {
             Column() {
-              Text('📄 发布的资源')
-                .fontSize(16).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+              Text('发布的资源')
+                .fontSize(FontScale.SUBTITLE).fontWeight(FontWeight.Bold).fontColor(ColorTokens.textPrimary(this.isDarkMode))
                 .width('100%').padding({ left: 24, right: 24, top: 24 })
 
               ForEach(this.userResources, (item: ResourceVO) => {
                 Row() {
-                  Text(item.type === 'book' ? '📖' : item.type === 'video' ? '🎬' : item.type === 'software' ? '💻' : '📝')
-                    .fontSize(20)
+                  Text(ColorTokens.typeAbbreviation(item.type))
+                    .fontSize(FontScale.TITLE_SM)
                   Column() {
                     Text(item.title)
-                      .fontSize(15).fontWeight(FontWeight.Medium)
+                      .fontSize(FontScale.BODY).fontWeight(FontWeight.Medium)
                       .fontColor(ColorTokens.textPrimary(this.isDarkMode))
                       .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                     Row() {
-                      Text('❤ ' + item.likeCount).fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode))
-                      Text('👁 ' + item.viewCount).fontSize(12).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ left: 10 })
+                      Text('赞 ' + item.likeCount).fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode))
+                      Text('浏览 ' + item.viewCount).fontSize(FontScale.LABEL).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ left: 10 })
                     }.margin({ top: 4 })
                   }.layoutWeight(1).margin({ left: 10 })
-                  Text('›').fontSize(20).fontColor(ColorTokens.textHint(this.isDarkMode))
+                  Text('›').fontSize(FontScale.TITLE_SM).fontColor(ColorTokens.textHint(this.isDarkMode))
                 }
                 .width('100%').padding(12)
-                .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(12)
+                .backgroundColor(ColorTokens.bgCard(this.isDarkMode)).borderRadius(Radii.CARD)
                 .margin({ left: 24, right: 24, top: 8 })
                 .onClick(() => {
                   router.pushUrl({ url: 'pages/DetailPage', params: { resourceId: item.id } });
@@ -211,7 +213,7 @@ struct UserProfilePage {
           } else if (this.resourcesLoading) {
             Column() {
               LoadingProgress().width(24).height(24).color(ColorTokens.primary(this.isDarkMode))
-              Text('加载中...').fontSize(13).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 8 })
+              Text('加载中...').fontSize(FontScale.CAPTION).fontColor(ColorTokens.textHint(this.isDarkMode)).margin({ top: 8 })
             }.width('100%').margin({ top: 40 }).justifyContent(FlexAlign.Center)
           }
 

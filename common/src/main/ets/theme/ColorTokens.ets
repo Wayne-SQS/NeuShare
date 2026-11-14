@@ -261,6 +261,97 @@ export class ColorTokens {
   // 深色模式：仅纯白，靠大小和透明度变化
   static readonly DOT_COLOR_DARK = '#FFFFFF';
 
+  // ════════════════════════════════════════════
+  // 语义色补充 — surface / secondary / overlay / border
+  // 低饱和原则：亮色用极浅蓝灰分层，深色靠明度差分层
+  // ════════════════════════════════════════════
+
+  // ── 表面（卡片、面板） ──────────────────────
+  static readonly SURFACE_LIGHT = '#FFFFFF';
+  static readonly SURFACE_DARK = '#1C1C1F';
+  static readonly SURFACE_SECONDARY_LIGHT = '#EEF2FB';   // 次级面板 / 输入区底
+  static readonly SURFACE_SECONDARY_DARK = '#161618';
+
+  // ── 描边 ────────────────────────────────────
+  static readonly BORDER_LIGHT = '#E3E9F5';
+  static readonly BORDER_DARK = '#2A2A2E';
+
+  // ── 遮罩 / 透明 ─────────────────────────────
+  static readonly OVERLAY = '#66000000';                  // 弹窗遮罩
+  static readonly OVERLAY_LIGHT = '#33000000';
+  static readonly TRANSPARENT = '#00000000';
+
+  // ── 阴影（极浅） ────────────────────────────
+  static readonly SHADOW_CARD_LIGHT = '#0D1E2A5C';
+  static readonly SHADOW_CARD_DARK = '#33000000';
+  static readonly SHADOW_HERO_LIGHT = '#1A4A6BFF';
+  static readonly SHADOW_HERO_DARK = '#44000000';
+  static readonly SHADOW_SOFT_LIGHT = '#06000000';
+
+  // ── 语义功能色（低饱和，替代原高饱和绿/橙/红） ──
+  static readonly STATUS_SUCCESS_LIGHT = '#4C8C6B';
+  static readonly STATUS_SUCCESS_DARK = '#A8C8B5';
+  static readonly STATUS_WARNING_LIGHT = '#B8862F';
+  static readonly STATUS_WARNING_DARK = '#D8C08A';
+  static readonly STATUS_ERROR_LIGHT = '#C05450';
+  static readonly STATUS_ERROR_DARK = '#E0A8A5';
+
+  // ── 玻璃质感底色（导航栏降级用） ────────────
+  static readonly GLASS_LIGHT = '#F4F7FF';
+  static readonly GLASS_DARK = '#0E0E10';
+
+  // ── 表面 / 描边 / 遮罩 / 阴影 取值方法 ──────
+  static surface(isDark: boolean): string {
+    return isDark ? ColorTokens.SURFACE_DARK : ColorTokens.SURFACE_LIGHT;
+  }
+  static surfaceSecondary(isDark: boolean): string {
+    return isDark ? ColorTokens.SURFACE_SECONDARY_DARK : ColorTokens.SURFACE_SECONDARY_LIGHT;
+  }
+  static border(isDark: boolean): string {
+    return isDark ? ColorTokens.BORDER_DARK : ColorTokens.BORDER_LIGHT;
+  }
+  static overlay(): string {
+    return ColorTokens.OVERLAY;
+  }
+  static shadowCard(isDark: boolean): string {
+    return isDark ? ColorTokens.SHADOW_CARD_DARK : ColorTokens.SHADOW_CARD_LIGHT;
+  }
+  static shadowHero(isDark: boolean): string {
+    return isDark ? ColorTokens.SHADOW_HERO_DARK : ColorTokens.SHADOW_HERO_LIGHT;
+  }
+  static shadowSoft(): string {
+    return ColorTokens.SHADOW_SOFT_LIGHT;
+  }
+
+  // ── 语义状态色：0 待审核 / 1 正常 / 2 驳回 ──
+  static statusSuccess(isDark: boolean): string {
+    return isDark ? ColorTokens.STATUS_SUCCESS_DARK : ColorTokens.STATUS_SUCCESS_LIGHT;
+  }
+  static statusWarning(isDark: boolean): string {
+    return isDark ? ColorTokens.STATUS_WARNING_DARK : ColorTokens.STATUS_WARNING_LIGHT;
+  }
+  static statusError(isDark: boolean): string {
+    return isDark ? ColorTokens.STATUS_ERROR_DARK : ColorTokens.STATUS_ERROR_LIGHT;
+  }
+  static resourceStatusColor(status: number, isDark: boolean): string {
+    if (status === 1) {
+      return ColorTokens.statusSuccess(isDark);
+    }
+    if (status === 2) {
+      return ColorTokens.statusError(isDark);
+    }
+    return ColorTokens.statusWarning(isDark);
+  }
+  static resourceStatusLabel(status: number): string {
+    if (status === 1) {
+      return '已发布';
+    }
+    if (status === 2) {
+      return '已驳回';
+    }
+    return '待审核';
+  }
+
   // ── 兼容旧 API ──────────────────────────────
   static forType(type: string): string {
     return ColorTokens.typeColor(type, false);

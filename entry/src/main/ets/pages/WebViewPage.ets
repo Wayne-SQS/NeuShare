@@ -1,6 +1,6 @@
 import router from '@ohos.router';
 import { webview } from '@kit.ArkWeb';
-import { ColorTokens } from '@neushare/common';
+import { ColorTokens, FontScale } from '@neushare/common';
 import common from '@ohos.app.ability.common';
 import Want from '@ohos.app.ability.Want';
 
@@ -38,17 +38,17 @@ struct WebViewPage {
     Column() {
       // 顶部导航栏
       Row() {
-        Text('←').fontSize(24).fontColor(ColorTokens.textPrimary(this.isDarkMode))
+        Text('返回').fontSize(FontScale.BODY_SM).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { router.back(); })
 
         Column() {
           Text(this.pageTitle)
-            .fontSize(15).fontWeight(FontWeight.Medium)
+            .fontSize(FontScale.BODY).fontWeight(FontWeight.Medium)
             .fontColor(ColorTokens.textPrimary(this.isDarkMode)).maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }.layoutWeight(1).margin({ left: 12, right: 12 })
 
-        Text('⋮').fontSize(22).fontColor(ColorTokens.textSecondary(this.isDarkMode))
+        Text('⋮').fontSize(FontScale.TITLE_MD).fontColor(ColorTokens.textSecondary(this.isDarkMode))
           .onClick(() => { this.openInBrowser(this.url); })
       }
       .width('100%').height(48).padding({ left: 24, right: 24 })

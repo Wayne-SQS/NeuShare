@@ -1,64 +1,87 @@
 <template>
   <div class="user-manage-page">
-    <div class="user-card">
-      <div class="card-header">
-        <span>用户管理</span>
+    <div class="page-head">
+      <div class="page-head__text">
+        <span class="breadcrumb">管理后台 / 用户管理</span>
+        <h1 class="page-title">用户管理</h1>
+        <p class="page-subtitle">查看用户信息，调整账号状态</p>
+      </div>
+      <div class="page-head__actions">
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索用户..."
-          style="width: 200px"
+          placeholder="搜索用户"
           clearable
+          prefix-icon="Search"
+          class="search-input"
           @keyup.enter="handleSearch"
-        >
-          <template #append>
-            <el-button icon="Search" @click="handleSearch" />
-          </template>
-        </el-input>
+          @clear="handleSearch"
+        />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div v-if="loading" class="skeleton-list">
+        <SkeletonCard v-for="n in 5" :key="`skeleton-${n}`" variant="list" :rows="1" />
       </div>
 
-      <el-table :data="users" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名/学号" width="130" />
-        <el-table-column prop="nickname" label="昵称" width="120" />
-        <el-table-column prop="college" label="学院" width="120" />
-        <el-table-column prop="grade" label="年级" width="80">
-          <template #default="{ row }">
-            {{ row.grade ? GRADE_LABELS[row.grade - 1] : '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="role" label="角色" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getRoleType(row.role)">
-              {{ getRoleText(row.role) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === USER_STATUS.ENABLED ? 'success' : 'danger'">
-              {{ row.status === USER_STATUS.ENABLED ? '正常' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="注册时间" width="160">
-          <template #default="{ row }">
-            {{ formatTime(row.createTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              :type="row.status === USER_STATUS.ENABLED ? 'danger' : 'success'"
-              size="small"
-              @click="handleToggleStatus(row)"
-            >
-              {{ row.status === USER_STATUS.ENABLED ? '禁用' : '启用' }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div v-else class="table-wrap">
+        <el-table :data="users" stripe>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="username" label="用户名/学号" width="140" />
+          <el-table-column prop="nickname" label="昵称" width="130" />
+          <el-table-column prop="college" label="学院" width="130" />
+          <el-table-column prop="grade" label="年级" width="90">
+            <template #default="{ row }">
+              {{ row.grade ? GRADE_LABELS[row.grade - 1] : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="role" label="角色" width="110">
+            <template #default="{ row }">
+              <el-tag :type="ROLE_TAG_TYPE[row.role] || 'info'" size="small" effect="plain">
+                {{ ROLE_MAP[row.role] || row.role }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag
+                :type="row.status === USER_STATUS.ENABLED ? 'success' : 'danger'"
+                size="small"
+                effect="plain"
+              >
+                {{ row.status === USER_STATUS.ENABLED ? '正常' : '禁用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="注册时间" width="150">
+            <template #default="{ row }">
+              {{ formatTime(row.createTime) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                :type="row.status === USER_STATUS.ENABLED ? 'danger' : 'success'"
+                link
+                @click="handleToggleStatus(row)"
+              >
+                {{ row.status === USER_STATUS.ENABLED ? '禁用' : '启用' }}
+              </el-button>
+            </template>
+          </el-table-column>
 
-      <div class="pagination">
+          <template #empty>
+            <EmptyState
+              icon="User"
+              title="没有找到用户"
+              description="换个关键词再试试"
+            />
+          </template>
+        </el-table>
+      </div>
+
+      <div v-if="!loading && pagination.total > 0" class="pagination">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
@@ -74,11 +97,13 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getUserList, updateUserStatus } from '@/api/admin'
 import { USER_STATUS, ROLE_MAP, ROLE_TAG_TYPE, GRADE_LABELS } from '@/utils/constants'
 import { formatTime } from '@/utils/format'
 
-const loading = ref(false)
+const loading = ref(true)
 const users = ref([])
 const searchKeyword = ref('')
 
@@ -128,41 +153,47 @@ const handleToggleStatus = async (row) => {
   }
 }
 
-const getRoleType = (role) => ROLE_TAG_TYPE[role] || 'info'
-
-const getRoleText = (role) => ROLE_MAP[role] || role
-
 onMounted(() => {
   fetchUsers()
 })
 </script>
 
 <style scoped>
-.user-card {
-  background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-}
-
-.card-header {
+.user-manage-page {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  flex-direction: column;
 }
 
-.card-header > span {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+.search-input {
+  width: 240px;
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 24px;
+  margin-top: var(--space-5);
+}
+
+@media (max-width: 767px) {
+  .page-head__actions {
+    width: 100%;
+  }
+
+  .search-input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
 }
 </style>

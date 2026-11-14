@@ -1,64 +1,90 @@
 <template>
   <div class="resource-list-page">
-    <div class="page-container">
-      <div class="filter-section">
-        <el-form :inline="true" :model="filterForm" class="filter-form">
-          <el-form-item label="分类">
-            <el-select
-              v-model="filterForm.categoryId"
-              placeholder="全部分类"
-              clearable
-              style="width: 160px"
-              @change="handleSearch"
-            >
-              <el-option
-                v-for="category in categories"
-                :key="category.id"
-                :label="category.name"
-                :value="category.id"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-input
-              v-model="filterForm.keyword"
-              placeholder="搜索资料..."
-              clearable
-              style="width: 280px"
-              @keyup.enter="handleSearch"
-            >
-              <template #append>
-                <el-button icon="Search" @click="handleSearch" />
-              </template>
-            </el-input>
-          </el-form-item>
-        </el-form>
+    <div class="container">
+      <div class="page-head">
+        <div class="page-head__text">
+          <span class="breadcrumb">首页 / 资源广场</span>
+          <h1 class="page-title">资源广场</h1>
+        </div>
       </div>
 
-      <div class="resource-list" v-loading="loading">
-        <template v-if="resources.length > 0">
-          <div class="resource-grid">
-            <ResourceCard
-              v-for="resource in resources"
-              :key="resource.id"
-              :resource="resource"
-            />
-          </div>
+      <div class="toolbar">
+        <el-select
+          v-model="filterForm.categoryId"
+          placeholder="全部分类"
+          clearable
+          class="toolbar__select"
+          @change="handleSearch"
+        >
+          <el-option
+            v-for="category in categories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
 
-          <div class="pagination">
-            <el-pagination
-              v-model:current-page="pagination.page"
-              v-model:page-size="pagination.size"
-              :page-sizes="[12, 24, 36, 48]"
-              :total="pagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
-              @size-change="handlePageChange"
-              @current-change="handlePageChange"
-            />
-          </div>
-        </template>
+        <el-input
+          v-model="filterForm.keyword"
+          placeholder="搜索资料标题或描述"
+          clearable
+          class="toolbar__input"
+          prefix-icon="Search"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        />
 
-        <el-empty v-else description="暂无资料" />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+
+        <span v-if="!loading && !error" class="toolbar__count">
+          共 {{ pagination.total }} 份资料
+        </span>
+      </div>
+
+      <div v-if="loading" class="grid-auto">
+        <SkeletonCard v-for="n in 6" :key="`skeleton-${n}`" :rows="2" />
+      </div>
+
+      <div v-else-if="error" class="state-panel">
+        <EmptyState
+          icon="Warning"
+          title="资料加载失败"
+          description="网络或服务暂时不可用，请稍后重试"
+        >
+          <el-button type="primary" @click="fetchResources">重新加载</el-button>
+        </EmptyState>
+      </div>
+
+      <div v-else-if="resources.length > 0">
+        <div class="grid-auto">
+          <ResourceCard
+            v-for="resource in resources"
+            :key="resource.id"
+            :resource="resource"
+          />
+        </div>
+
+        <div class="pagination">
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.size"
+            :page-sizes="[12, 24, 36, 48]"
+            :total="pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handlePageChange"
+            @current-change="handlePageChange"
+          />
+        </div>
+      </div>
+
+      <div v-else class="state-panel">
+        <EmptyState
+          icon="Search"
+          title="没有找到相关资料"
+          description="换个关键词或分类再试试"
+        >
+          <el-button @click="resetFilter">清除筛选条件</el-button>
+        </EmptyState>
       </div>
     </div>
   </div>
@@ -68,10 +94,13 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ResourceCard from '@/components/ResourceCard.vue'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getResourceList, getCategories } from '@/api/resource'
 
 const route = useRoute()
-const loading = ref(false)
+const loading = ref(true)
+const error = ref(false)
 const resources = ref([])
 const categories = ref([])
 
@@ -106,6 +135,7 @@ const fetchCategories = async () => {
 
 const fetchResources = async () => {
   loading.value = true
+  error.value = false
   try {
     const res = await getResourceList({
       pageNum: pagination.page,
@@ -115,8 +145,11 @@ const fetchResources = async () => {
     })
     resources.value = res.data?.records || []
     pagination.total = res.data?.total || 0
-  } catch (error) {
-    console.error('Failed to fetch resources:', error)
+  } catch (err) {
+    console.error('Failed to fetch resources:', err)
+    resources.value = []
+    pagination.total = 0
+    error.value = true
   } finally {
     loading.value = false
   }
@@ -125,6 +158,12 @@ const fetchResources = async () => {
 const handleSearch = () => {
   pagination.page = 1
   fetchResources()
+}
+
+const resetFilter = () => {
+  filterForm.categoryId = ''
+  filterForm.keyword = ''
+  handleSearch()
 }
 
 const handlePageChange = () => {
@@ -140,56 +179,72 @@ onMounted(() => {
 
 <style scoped>
 .resource-list-page {
-  min-height: 100%;
-  padding: 28px 0;
+  padding: var(--section-gap-md) 0 var(--section-gap-lg);
 }
 
-.page-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 28px;
-}
-
-.filter-section {
-  background: var(--bg-surface);
-  padding: 20px 24px;
-  border-radius: var(--radius);
-  margin-bottom: 24px;
-  border: 1px solid var(--border-subtle);
-}
-
-.filter-form {
+.toolbar {
   display: flex;
+  align-items: center;
+  gap: var(--space-3);
   flex-wrap: wrap;
-  gap: 10px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-6);
 }
 
-.resource-list {
-  min-height: 400px;
+.toolbar__select {
+  width: 168px;
 }
 
-.resource-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+.toolbar__input {
+  flex: 1;
+  min-width: 200px;
+  max-width: 360px;
+}
+
+.toolbar__count {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 36px;
-  padding: 20px 0;
+  margin-top: var(--space-7);
 }
 
-@media (max-width: 1200px) {
-  .resource-grid { grid-template-columns: repeat(3, 1fr); }
+.state-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
 }
 
-@media (max-width: 900px) {
-  .resource-grid { grid-template-columns: repeat(2, 1fr); }
-}
+@media (max-width: 767px) {
+  .resource-list-page {
+    padding: var(--space-5) 0 var(--section-gap-md);
+  }
 
-@media (max-width: 600px) {
-  .resource-grid { grid-template-columns: 1fr; }
+  .toolbar {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .toolbar__select {
+    width: 100%;
+  }
+
+  .toolbar__input {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .toolbar__count {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 </style>

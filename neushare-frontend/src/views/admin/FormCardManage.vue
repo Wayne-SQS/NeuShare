@@ -1,68 +1,90 @@
 <template>
   <div class="form-card-manage-page">
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <span>服务卡片管理</span>
-          <p class="header-desc">控制鸿蒙设备上 NEUShare 服务卡片展示的推荐内容</p>
-        </div>
+    <div class="page-head">
+      <div class="page-head__text">
+        <span class="breadcrumb">管理后台 / 服务卡片管理</span>
+        <h1 class="page-title">服务卡片管理</h1>
+        <p class="page-subtitle">控制服务卡片展示的推荐内容</p>
+      </div>
+      <div class="page-head__actions">
         <el-button type="primary" @click="handleAdd">
           <el-icon><Plus /></el-icon>添加卡片
         </el-button>
       </div>
+    </div>
 
-      <el-table :data="cards" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="title" label="卡片标题" min-width="200" />
-        <el-table-column label="类型" width="100">
-          <template #default="{ row }">
-            <el-tag size="small" :type="typeTag(row.resourceType)">{{ typeLabel(row.resourceType) }}</el-tag>
+    <div class="panel">
+      <div v-if="loading" class="skeleton-list">
+        <SkeletonCard v-for="n in 4" :key="`skeleton-${n}`" variant="list" :rows="1" />
+      </div>
+
+      <div v-else class="table-wrap">
+        <el-table :data="cards" stripe>
+          <el-table-column prop="id" label="ID" width="70" />
+          <el-table-column prop="title" label="卡片标题" min-width="200" />
+          <el-table-column label="类型" width="110">
+            <template #default="{ row }">
+              <el-tag size="small" :type="typeTag(row.resourceType)" effect="plain">
+                {{ typeLabel(row.resourceType) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="resourceId" label="关联资源ID" width="120" />
+          <el-table-column prop="contentUrl" label="内容URL" min-width="180">
+            <template #default="{ row }">
+              <span class="link-text">{{ row.contentUrl || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="sortOrder" label="排序" width="80" align="right" />
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-switch
+                :model-value="row.status === 1"
+                @change="handleStatusChange(row)"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="140" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+              <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+
+          <template #empty>
+            <EmptyState
+              icon="Postcard"
+              title="暂无服务卡片"
+              description="添加卡片后可展示在服务卡片中"
+            >
+              <el-button type="primary" @click="handleAdd">添加卡片</el-button>
+            </EmptyState>
           </template>
-        </el-table-column>
-        <el-table-column prop="resourceId" label="关联资源ID" width="120" />
-        <el-table-column prop="contentUrl" label="内容URL" min-width="180">
-          <template #default="{ row }">
-            <span class="link-text">{{ row.contentUrl || '-' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sortOrder" label="排序" width="80" />
-        <el-table-column label="状态" width="100">
-          <template #default="{ row }">
-            <el-switch
-              :model-value="row.status === 1"
-              @change="handleStatusChange(row)"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
     </div>
 
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑卡片' : '添加卡片'"
-      width="500px"
+      width="520px"
+      destroy-on-close
     >
       <el-form
         ref="formRef"
         :model="formCardForm"
         :rules="formCardRules"
-        label-width="100px"
+        label-position="top"
       >
         <el-form-item label="卡片标题" prop="title">
           <el-input v-model="formCardForm.title" placeholder="在卡片上显示的标题" />
         </el-form-item>
         <el-form-item label="资源类型" prop="resourceType">
-          <el-select v-model="formCardForm.resourceType" placeholder="选择类型">
-            <el-option label="📖 书籍" value="book" />
-            <el-option label="🎬 视频" value="video" />
-            <el-option label="💻 软件" value="software" />
-            <el-option label="📝 教程" value="tutorial" />
+          <el-select v-model="formCardForm.resourceType" placeholder="选择类型" style="width: 100%">
+            <el-option label="书籍" value="book" />
+            <el-option label="视频" value="video" />
+            <el-option label="软件" value="software" />
+            <el-option label="教程" value="tutorial" />
           </el-select>
         </el-form-item>
         <el-form-item label="关联资源ID" prop="resourceId">
@@ -73,7 +95,7 @@
         </el-form-item>
         <el-form-item label="排序" prop="sortOrder">
           <el-input-number v-model="formCardForm.sortOrder" :min="0" :max="99" />
-          <span class="form-hint">越小越靠前，排第一的卡片会被优先展示</span>
+          <span class="form-hint">越小越靠前</span>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -89,6 +111,8 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import SkeletonCard from '@/components/SkeletonCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import {
   getFormCardList,
   addFormCard,
@@ -97,7 +121,7 @@ import {
   updateFormCardStatus
 } from '@/api/admin'
 
-const loading = ref(false)
+const loading = ref(true)
 const submitting = ref(false)
 const cards = ref([])
 const dialogVisible = ref(false)
@@ -119,7 +143,7 @@ const formCardRules = {
 }
 
 const typeLabel = (type) => {
-  const map = { book: '📖 书籍', video: '🎬 视频', software: '💻 软件', tutorial: '📝 教程' }
+  const map = { book: '书籍', video: '视频', software: '软件', tutorial: '教程' }
   return map[type] || type
 }
 
@@ -220,43 +244,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card {
-  background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-}
-
-.card-header {
+.form-card-manage-page {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  flex-direction: column;
 }
 
-.card-header > div > span {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-.header-desc {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 4px 0 0;
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
 }
 
 .link-text {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-xs);
   word-break: break-all;
 }
 
 .form-hint {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
-  margin-left: 8px;
+  margin-left: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .el-dialog {
+    width: calc(100vw - var(--space-8)) !important;
+  }
 }
 </style>
