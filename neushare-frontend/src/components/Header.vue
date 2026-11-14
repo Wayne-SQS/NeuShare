@@ -11,7 +11,10 @@
       <nav class="nav-menu">
         <router-link to="/" class="nav-item">首页</router-link>
         <router-link to="/resource" class="nav-item">资源广场</router-link>
+        <router-link to="/community" class="nav-item">社区</router-link>
+        <router-link to="/postgrad-guide" class="nav-item">考研指南</router-link>
         <router-link v-if="userStore.isLoggedIn" to="/upload" class="nav-item">上传资料</router-link>
+        <router-link v-if="userStore.isLoggedIn" to="/ai" class="nav-item">AI助手</router-link>
       </nav>
 
       <div class="header-right">
@@ -62,7 +65,10 @@
       <nav class="drawer-nav">
         <router-link to="/" class="drawer-item">首页</router-link>
         <router-link to="/resource" class="drawer-item">资源广场</router-link>
+        <router-link to="/community" class="drawer-item">社区</router-link>
+        <router-link to="/postgrad-guide" class="drawer-item">考研指南</router-link>
         <router-link v-if="userStore.isLoggedIn" to="/upload" class="drawer-item">上传资料</router-link>
+        <router-link v-if="userStore.isLoggedIn" to="/ai" class="drawer-item">AI助手</router-link>
         <template v-if="userStore.isLoggedIn">
           <router-link to="/profile/info" class="drawer-item">个人中心</router-link>
           <router-link to="/profile/resources" class="drawer-item">我的资料</router-link>

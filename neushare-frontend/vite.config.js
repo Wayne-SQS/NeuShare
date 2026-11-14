@@ -21,6 +21,11 @@ export default defineConfig({
       '/files': {
         target: 'http://localhost:8080',
         changeOrigin: true
+      },
+      // AI 智能体服务（Python FastAPI :8000），后端路由本身就是 /ai/*，无需 rewrite
+      '/ai': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
       }
     }
   }

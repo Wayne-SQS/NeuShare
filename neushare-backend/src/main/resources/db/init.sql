@@ -860,3 +860,27 @@ UPDATE `user` u SET u.follower_count = (SELECT COUNT(*) FROM `follow` f WHERE f.
 UPDATE `user` u SET u.following_count = (SELECT COUNT(*) FROM `follow` f WHERE f.follower_id = u.id);
 -- total_likes_received: 每个用户上传资源的总获赞数
 UPDATE `user` u SET u.total_likes_received = COALESCE((SELECT SUM(r.like_count) FROM `resource` r WHERE r.upload_user_id = u.id AND r.status = 1), 0);
+
+-- ===== AI Agent 对话历史（neushare-ai Python 服务使用）=====
+CREATE TABLE IF NOT EXISTS `ai_conversation` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `title` VARCHAR(200) NOT NULL DEFAULT '新对话',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_ai_conv_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `ai_message` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `conversation_id` BIGINT NOT NULL,
+  `role` VARCHAR(20) NOT NULL,
+  `content` MEDIUMTEXT NOT NULL,
+  `sources` JSON NULL,
+  `resources` JSON NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_ai_msg_conv` (`conversation_id`),
+  CONSTRAINT `fk_ai_msg_conv` FOREIGN KEY (`conversation_id`) REFERENCES `ai_conversation` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

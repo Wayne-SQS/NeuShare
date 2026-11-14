@@ -33,6 +33,12 @@ const routes = [
     meta: { title: '资料详情' }
   },
   {
+    path: '/ai',
+    name: 'AiAssistant',
+    component: () => import('@/views/AiAssistantView.vue'),
+    meta: { title: 'AI 助手', requiresAuth: true }
+  },
+  {
     path: '/upload',
     name: 'Upload',
     component: () => import('@/views/Upload.vue'),
@@ -113,6 +119,30 @@ const routes = [
     name: 'UserProfile',
     component: () => import('@/views/UserProfile.vue'),
     meta: { title: '用户主页' }
+  },
+  {
+    path: '/community',
+    name: 'Community',
+    component: () => import('@/views/CommunityView.vue'),
+    meta: { title: '学习社区' }
+  },
+  {
+    path: '/post/create',
+    name: 'CreatePost',
+    component: () => import('@/views/CreatePostView.vue'),
+    meta: { title: '发布新帖', requiresAuth: true }
+  },
+  {
+    path: '/post/:id',
+    name: 'PostDetail',
+    component: () => import('@/views/PostDetailView.vue'),
+    meta: { title: '帖子详情' }
+  },
+  {
+    path: '/postgrad-guide',
+    name: 'PostgradGuide',
+    component: () => import('@/views/PostgradGuideView.vue'),
+    meta: { title: '考研指南' }
   },
   {
     path: '/:pathMatch(.*)*',

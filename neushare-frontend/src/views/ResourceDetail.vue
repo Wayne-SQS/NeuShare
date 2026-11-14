@@ -57,6 +57,10 @@
               <el-icon><CollectionTag v-if="isFavorited" /><Collection v-else /></el-icon>
               <span>{{ isFavorited ? '已收藏' : '收藏' }}</span>
             </el-button>
+            <el-button class="action-btn action-btn--ai" @click="askAi">
+              <el-icon><ChatDotRound /></el-icon>
+              <span>问 AI</span>
+            </el-button>
           </div>
         </header>
 
@@ -203,9 +207,10 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
+import { useAiStore } from '@/store/modules/ai'
 import SkeletonCard from '@/components/SkeletonCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { getResourceDetail, likeResource, unlikeResource, checkLiked, downloadResource } from '@/api/resource'
@@ -215,7 +220,20 @@ import { formatTime, getInitial } from '@/utils/format'
 import { buildFullUrl, isExternalUrl, isPreviewable } from '@/utils/url'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
+const aiStore = useAiStore()
+
+// 唤起全局 AI 悬浮窗并注入当前资料上下文，不跳页——留在资料详情页边看边问
+// 未登录时引导登录（带回当前页 redirect），与原 /ai 守卫行为一致
+const askAi = () => {
+  if (!resource.value?.id) return
+  if (!userStore.isLoggedIn) {
+    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    return
+  }
+  aiStore.openWithContext(resource.value.id, resource.value.title)
+}
 
 const loading = ref(true)
 const resource = ref(null)
@@ -512,6 +530,20 @@ onMounted(async () => {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--info-bg);
+}
+
+.action-btn--ai {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  border-color: transparent;
+  color: #fff;
+  font-weight: var(--font-medium);
+}
+
+.action-btn--ai:hover {
+  color: #fff;
+  border-color: transparent;
+  opacity: 0.92;
+  box-shadow: var(--shadow-accent);
 }
 
 /* Content / comments */

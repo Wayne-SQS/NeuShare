@@ -1,5 +1,19 @@
 <template>
   <div class="resource-card" @click="handleClick">
+    <div class="card-cover">
+      <img
+        v-if="coverUrl && !coverBroken"
+        :src="coverUrl"
+        :alt="resource.title"
+        class="cover-img"
+        loading="lazy"
+        @error="coverBroken = true"
+      />
+      <div v-else class="cover-fallback">
+        <el-icon class="cover-icon"><Picture /></el-icon>
+        <span class="cover-text">{{ resource.categoryName || 'NeuShare' }}</span>
+      </div>
+    </div>
     <div class="card-body">
       <div class="card-header">
         <span class="category-tag">{{ resource.categoryName || '未分类' }}</span>
@@ -34,6 +48,7 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { formatTime } from '@/utils/format'
 
@@ -42,6 +57,9 @@ const props = defineProps({
 })
 
 const router = useRouter()
+
+const coverBroken = ref(false)
+const coverUrl = computed(() => props.resource.coverUrl || '')
 
 const handleClick = () => {
   router.push(`/resource/${props.resource.id}`)
@@ -62,6 +80,49 @@ const handleClick = () => {
 .resource-card:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
+}
+
+.card-cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-hover);
+  flex-shrink: 0;
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-slow);
+}
+
+.resource-card:hover .cover-img {
+  transform: scale(1.04);
+}
+
+.cover-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+}
+
+.cover-icon {
+  font-size: 28px;
+  opacity: 0.9;
+}
+
+.cover-text {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  opacity: 0.95;
 }
 
 .card-body {

@@ -2,7 +2,7 @@
   <div class="home-page">
     <section class="hero">
       <el-carousel class="hero-carousel" :interval="5000" arrow="hover" trigger="click">
-        <el-carousel-item v-for="(item, index) in localImages" :key="index">
+        <el-carousel-item v-for="(item, index) in banners" :key="index">
           <div
             class="hero-slide"
             :style="{ backgroundImage: `url(${item.imageUrl})` }"
@@ -200,6 +200,7 @@ import ResourceCard from '@/components/ResourceCard.vue'
 import SkeletonCard from '@/components/SkeletonCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { getHotResources, getResourceList } from '@/api/resource'
+import { getBannerList } from '@/api/banner'
 import { coursesByGrade } from '@/utils/courseData'
 
 const router = useRouter()
@@ -210,7 +211,8 @@ const hotLoading = ref(true)
 const latestLoading = ref(true)
 const loadFailed = ref(false)
 
-const localImages = [
+// 轮播图优先走后端 /api/banner/list，后端不可用时回退本地占位图
+const bannerFallback = [
   { imageUrl: '/images/banner/南湖主楼.png', link: '/resource' },
   { imageUrl: '/images/banner/秋天东大.jpg', link: '/resource' },
   { imageUrl: '/images/banner/红砖.jpg', link: '/upload' },
@@ -218,6 +220,30 @@ const localImages = [
   { imageUrl: '/images/banner/冬天东大.jpg', link: '/resource' },
   { imageUrl: '/images/banner/秋天.jpg', link: '/resource' }
 ]
+const banners = ref([...bannerFallback])
+
+const normalizeImage = (url) => {
+  if (!url) return ''
+  try {
+    if (/^https?:\/\//i.test(url)) return new URL(url).pathname
+  } catch (e) {}
+  return url
+}
+
+const fetchBanners = async () => {
+  try {
+    const res = await getBannerList()
+    const list = res?.data?.records || res?.data || []
+    if (Array.isArray(list) && list.length) {
+      banners.value = list.map(b => ({
+        imageUrl: normalizeImage(b.imageUrl),
+        link: b.linkUrl || b.link || '/resource'
+      }))
+    }
+  } catch (e) {
+    // 拉取失败时保留本地兜底，不报错打断页面
+  }
+}
 
 const gradeSemesterOptions = [
   { key: '1-1', label: '大一上' },
@@ -279,6 +305,7 @@ const fetchLatest = async () => {
 }
 
 onMounted(() => {
+  fetchBanners()
   fetchHot()
   fetchLatest()
 })

@@ -1,0 +1,29 @@
+# NeuShare AI Service dependencies (Python 3.11)
+# Locked versions to avoid LangChain 1.x API breakage (use LangGraph route).
+
+# ---- Web ----
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-dotenv==1.0.1
+
+# ---- Auth / DB ----
+PyJWT==2.10.1
+SQLAlchemy==2.0.36
+PyMySQL==1.1.1
+
+# ---- HTTP ----
+httpx==0.28.1
+
+# ---- LangChain ecosystem (0.3.x line, ranges let pip pick compatible patches) ----
+langchain>=0.3.20,<0.4
+langchain-core>=0.3.41,<0.4
+langchain-openai>=0.2.14,<0.3
+langgraph>=0.2.74,<0.3
+langchain-community>=0.3.20,<0.4
+langchain-text-splitters>=0.3.6,<0.4
+
+# ---- Vector store ----
+faiss-cpu==1.9.0
+
+# ---- Embedding (reuses system torch; Chinese model BAAI/bge-small-zh-v1.5) ----
+sentence-transformers==3.4.1

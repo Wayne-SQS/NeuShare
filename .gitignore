@@ -33,3 +33,6 @@ neushare-backend/uploads/
 # 临时调试脚本（含 DROP TABLE 等高危语句，禁止入库）
 _*.sql
 _insert_test_data.*
+
+# 运行时日志（服务启动 / 调试输出，禁止入库）
+*.log
