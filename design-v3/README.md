@@ -36,5 +36,5 @@
 ## 已知边界
 
 - 只有 1440 桌面画板，没有平板 / 移动稿，也没有 hover / focus / disabled / error / 空态 / 加载态规范
-- `tokens.json` 目前只有 8 个 token，而主题层有 50+ 变量；canvas 色板 `canvas #F4F7FF/#F5F7FF`、`surface #FFFFF8/#FFFFFF`、深色分隔线 `#2A2A2F/#29292E` 在画板 / CSS / token 文件之间仍有细微差异，尚未收敛为单一真源
+- `tokens.json` 只有 8 个基础 token，主题层为落地扩展了组件级变量；两者的色值已对齐（canvas `#F4F7FF`、border 亮色 `#E7EAF6` / 深色 `#2A2A2F`）。设计稿 00 画板上标 `#FFFFF8` 的卡片色以代码里的 `#FFFFFF` 为准；目前 CSS 仍由手工维护，尚未接自动生成管线
 - 画板里的资料数、浏览数、评论数均为排版示例，不是业务数据；前端页面一律显示接口返回的真实值

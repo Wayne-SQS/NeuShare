@@ -8,11 +8,11 @@
    ========================================================================== */
 
 :root {
-  --NeuShare-Tokens-canvas: #F5F7FFFF;
+  --NeuShare-Tokens-canvas: #F4F7FFFF;
   --NeuShare-Tokens-surface: #FFFFFFFF;
   --NeuShare-Tokens-ink: #171A2BFF;
   --NeuShare-Tokens-inkSecondary: #6B7085FF;
-  --NeuShare-Tokens-border: #E8EBF5FF;
+  --NeuShare-Tokens-border: #E7EAF6FF;
   --NeuShare-Tokens-brand: #4A6BFFFF;
   --NeuShare-Tokens-radiusCard: 16px;
   --NeuShare-Tokens-radiusLarge: 24px;
@@ -23,7 +23,7 @@
   --NeuShare-Tokens-surface: #1C1C1FFF;
   --NeuShare-Tokens-ink: #FFFFFFFF;
   --NeuShare-Tokens-inkSecondary: #A8A8B0FF;
-  --NeuShare-Tokens-border: #29292EFF;
+  --NeuShare-Tokens-border: #2A2A2FFF;
   --NeuShare-Tokens-brand: #FFFFFFFF;
   --NeuShare-Tokens-radiusCard: 16px;
   --NeuShare-Tokens-radiusLarge: 24px;

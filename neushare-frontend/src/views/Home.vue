@@ -441,17 +441,10 @@ onMounted(() => {
   transition: var(--transition-fast);
 }
 
-.grade-pill--tone-1 { color: var(--accent); background: rgba(var(--accent-rgb), 0.08); }
-.grade-pill--tone-2 { color: #C2557C; background: #FFEDF3; }
-.grade-pill--tone-3 { color: #8A6B10; background: #FFF7DC; }
-.grade-pill--tone-4 { color: #00878D; background: #E3F9FA; }
-
-[data-theme="dark"] .grade-pill--tone-2,
-[data-theme="dark"] .grade-pill--tone-3,
-[data-theme="dark"] .grade-pill--tone-4 {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
+.grade-pill--tone-1 { color: var(--chip-blue-ink); background: var(--chip-blue-bg); }
+.grade-pill--tone-2 { color: var(--chip-pink-ink); background: var(--chip-pink-bg); }
+.grade-pill--tone-3 { color: var(--chip-yellow-ink); background: var(--chip-yellow-bg); }
+.grade-pill--tone-4 { color: var(--chip-cyan-ink); background: var(--chip-cyan-bg); }
 
 .grade-pill:hover {
   transform: translateY(-2px);

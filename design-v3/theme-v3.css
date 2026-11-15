@@ -111,6 +111,16 @@
   --grad-card-3: linear-gradient(135deg, #6BCB77 0%, #00C2CB 100%);
   --grad-card-4: linear-gradient(135deg, #4A6BFF 0%, #7C5CFF 100%);
   --card-glyph: #FFFFFF;
+
+  /* 胶囊辅助色：亮色允许小面积彩色，深色统一翻灰阶 */
+  --chip-blue-ink: #4A6BFF;
+  --chip-blue-bg: rgba(74, 107, 255, 0.08);
+  --chip-pink-ink: #C2557C;
+  --chip-pink-bg: #FFEDF3;
+  --chip-yellow-ink: #8A6B10;
+  --chip-yellow-bg: #FFF7DC;
+  --chip-cyan-ink: #00878D;
+  --chip-cyan-bg: #E3F9FA;
 }
 
 /* --------------------------------------------------------------------------
@@ -184,6 +194,15 @@
   --grad-card-3: linear-gradient(135deg, #333338 0%, #4A4A50 100%);
   --grad-card-4: linear-gradient(135deg, #242428 0%, #3A3A40 100%);
   --card-glyph: #E8E8EA;
+
+  --chip-blue-ink: #FFFFFF;
+  --chip-blue-bg: rgba(255, 255, 255, 0.08);
+  --chip-pink-ink: #E8E8EA;
+  --chip-pink-bg: #26262B;
+  --chip-yellow-ink: #C8C8CE;
+  --chip-yellow-bg: #242428;
+  --chip-cyan-ink: #E8E8EA;
+  --chip-cyan-bg: #2A2A2F;
 }
 
 /* --- 覆盖 global.css 里写死的旧蓝 / 白底 --- */
