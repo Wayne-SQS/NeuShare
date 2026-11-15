@@ -1,89 +1,99 @@
 <template>
   <div class="resource-detail-page" v-loading="loading">
     <div class="page-container" v-if="resource">
-      <div class="resource-header">
-        <div class="resource-info">
-          <el-tag class="category-tag">{{ resource.categoryName || '未分类' }}</el-tag>
-          <h1 class="title">{{ resource.title }}</h1>
-          <div class="meta">
-            <span class="meta-item">
-              <el-icon><User /></el-icon>
-              <router-link :to="`/user/${resource.uploadUserId}`" class="uploader-link">
-                {{ resource.uploadNickname || '匿名' }}
-              </router-link>
-            </span>
-            <span class="meta-divider"></span>
-            <span class="meta-item">
-              <el-icon><Clock /></el-icon>
-              {{ formatTime(resource.createTime) }}
-            </span>
-            <span class="meta-divider"></span>
-            <span class="meta-item">
-              <el-icon><View /></el-icon>
-              {{ resource.viewCount || 0 }} 次浏览
-            </span>
-            <span class="meta-divider"></span>
-            <span class="meta-item">
-              <el-icon><Star /></el-icon>
-              {{ resource.favoriteCount || 0 }} 次收藏
-            </span>
+      <nav class="breadcrumb">
+        <router-link to="/">首页</router-link><span>/</span>
+        <router-link to="/resource">资源广场</router-link><span>/</span>
+        <span>{{ resource.categoryName || '资料' }}</span><span>/</span>
+        <span>资料详情</span>
+      </nav>
+
+      <div class="detail-layout">
+        <div class="content-card">
+          <span class="detail-pill">{{ resource.categoryName || '未分类' }}<i v-if="resource.courseName"> · {{ resource.courseName }}</i></span>
+          <h1 class="detail-title">{{ resource.title }}</h1>
+
+          <div class="detail-meta">
+            <el-avatar :size="24" :src="resource.avatarUrl">{{ getInitial(resource.uploadNickname) }}</el-avatar>
+            <router-link :to="`/user/${resource.uploadUserId}`" class="detail-author">{{ resource.uploadNickname || '匿名' }}</router-link>
+            <span>{{ formatTime(resource.createTime) }} 上传</span>
+            <span class="meta-sep">·</span>
+            <span>{{ resource.viewCount || 0 }} 次浏览</span>
+            <span class="meta-sep">·</span>
+            <span>{{ resource.favoriteCount || 0 }} 人收藏</span>
+          </div>
+
+          <p class="detail-desc">{{ resource.description || '暂无描述' }}</p>
+
+          <div class="file-strip" v-if="resource.contentUrl">
+            <span class="file-strip__icon"><el-icon :size="20"><Document /></el-icon></span>
+            <div class="file-strip__info">
+              <strong>{{ fileName }}</strong>
+              <span>{{ fileExt }} · 点击右侧按钮下载</span>
+            </div>
+            <a :href="resource.contentUrl" target="_blank" rel="noopener noreferrer" class="download-btn">下载资料</a>
+          </div>
+
+          <div class="detail-actions">
+            <button type="button" :class="['detail-action', { 'detail-action--on': isLiked }]" @click="handleLike">
+              <el-icon><StarFilled v-if="isLiked" /><Star v-else /></el-icon>点赞 {{ resource.likeCount || 0 }}
+            </button>
+            <button type="button" :class="['detail-action', { 'detail-action--on': isFavorited }]" @click="handleFavorite">
+              <el-icon><Star v-if="isFavorited" /><Collection v-else /></el-icon>{{ isFavorited ? '已收藏' : '收藏' }} {{ resource.favoriteCount || 0 }}
+            </button>
+            <button type="button" class="detail-action" @click="handleShare">分享链接</button>
+          </div>
+
+          <div class="detail-tags">
+            <span>标签</span>
+            <em>{{ resource.categoryName || '未分类' }}</em>
+            <em v-if="resource.courseName">{{ resource.courseName }}</em>
           </div>
         </div>
-        <div class="resource-actions">
-          <el-button
-            :class="['action-btn', { 'action-btn--active': isLiked }]"
-            @click="handleLike"
-          >
-            <el-icon><StarFilled v-if="isLiked" /><Star v-else /></el-icon>
-            <span>{{ resource.likeCount || 0 }}</span>
-          </el-button>
-          <el-button
-            :class="['action-btn', { 'action-btn--active': isFavorited }]"
-            @click="handleFavorite"
-          >
-            <el-icon><CollectionTag v-if="isFavorited" /><Collection v-else /></el-icon>
-            <span>{{ isFavorited ? '已收藏' : '收藏' }}</span>
-          </el-button>
-        </div>
-      </div>
 
-      <div class="content-card">
-        <div class="card-label">资料描述</div>
-        <div class="description">
-          {{ resource.description || '暂无描述' }}
-        </div>
-        <div class="file-info" v-if="resource.contentUrl">
-          <el-icon><Document /></el-icon>
-          <span>{{ resource.contentUrl }}</span>
-        </div>
+        <aside class="detail-aside">
+          <div class="aside-card uploader-card">
+            <h3>关于上传者</h3>
+            <div class="uploader-row">
+              <el-avatar :size="40" :src="resource.avatarUrl">{{ getInitial(resource.uploadNickname) }}</el-avatar>
+              <div>
+                <strong>{{ resource.uploadNickname || '匿名' }}</strong>
+                <span>NeuShare 共建者</span>
+              </div>
+            </div>
+            <router-link :to="`/user/${resource.uploadUserId}`" class="aside-btn">查看 TA 的主页</router-link>
+          </div>
+
+          <div class="aside-card related-card">
+            <h3>同分类资料</h3>
+            <p>还想找 {{ resource.categoryName || '同类' }} 的资料？去资源广场按分类继续浏览。</p>
+            <router-link :to="{ path: '/resource', query: resource.categoryId ? { categoryId: resource.categoryId } : {} }" class="aside-link">
+              查看同分类资料 <el-icon><ArrowRight /></el-icon>
+            </router-link>
+          </div>
+        </aside>
       </div>
 
       <div class="comment-card">
-        <div class="card-label">评论 ({{ totalComments }})</div>
+        <h2>评论 <span>{{ totalComments }}</span></h2>
 
         <div class="comment-form" v-if="userStore.isLoggedIn">
           <el-input
             v-model="commentForm.content"
             type="textarea"
             :rows="3"
-            placeholder="写下你的评论..."
+            placeholder="写下你的想法，或针对资料内容提问…"
             maxlength="500"
             show-word-limit
           />
-          <el-button type="primary" :loading="submitting" class="submit-btn" @click="submitComment">
-            发表评论
-          </el-button>
+          <el-button type="primary" :loading="submitting" class="submit-btn" @click="submitComment">发表评论</el-button>
         </div>
-        <div v-else class="login-tip">
-          <router-link to="/login">登录</router-link> 后参与评论
-        </div>
+        <div v-else class="login-tip"><router-link to="/login">登录</router-link> 后参与评论</div>
 
         <div class="comment-list">
           <div v-for="comment in comments" :key="comment.id" class="comment-item">
             <div class="comment-avatar" v-if="!comment.deleted">
-              <el-avatar :size="40" :src="comment.avatarUrl">
-                {{ getInitial(comment.nickname) }}
-              </el-avatar>
+              <el-avatar :size="36" :src="comment.avatarUrl">{{ getInitial(comment.nickname) }}</el-avatar>
             </div>
             <div class="comment-content">
               <template v-if="comment.deleted">
@@ -95,16 +105,15 @@
                   <span class="time">{{ formatTime(comment.createTime) }}</span>
                 </div>
                 <div class="comment-text">{{ comment.content }}</div>
+                <div class="comment-actions" v-if="userStore.isLoggedIn">
+                  <button type="button" @click="handleReply(comment)">回复</button>
+                </div>
               </template>
               <div class="comment-replies" v-if="comment.children && comment.children.length > 0">
                 <div v-for="reply in comment.children" :key="reply.id" class="reply-item">
-                  <el-avatar :size="28" :src="reply.avatarUrl" v-if="!reply.deleted">
-                    {{ getInitial(reply.nickname) }}
-                  </el-avatar>
+                  <el-avatar :size="26" :src="reply.avatarUrl" v-if="!reply.deleted">{{ getInitial(reply.nickname) }}</el-avatar>
                   <div class="reply-content">
-                    <template v-if="reply.deleted">
-                      <span class="reply-deleted">该评论已被删除</span>
-                    </template>
+                    <template v-if="reply.deleted"><span class="reply-deleted">该评论已被删除</span></template>
                     <template v-else>
                       <span class="reply-nickname">{{ reply.nickname }}</span>
                       <span class="reply-text">{{ reply.content }}</span>
@@ -112,9 +121,6 @@
                     </template>
                   </div>
                 </div>
-              </div>
-              <div class="comment-actions" v-if="userStore.isLoggedIn && !comment.deleted">
-                <el-button type="primary" link size="small" @click="handleReply(comment)">回复</el-button>
               </div>
             </div>
           </div>
@@ -146,11 +152,14 @@ const isFavorited = ref(false)
 const submitting = ref(false)
 const replyingTo = ref(null)
 
-const commentForm = reactive({
-  content: ''
-})
-
+const commentForm = reactive({ content: '' })
 const resourceId = computed(() => route.params.id)
+
+const fileName = computed(() => {
+  const url = resource.value?.contentUrl || ''
+  try { return decodeURIComponent(url.split('/').pop() || '') } catch (e) { return url.split('/').pop() || '' }
+})
+const fileExt = computed(() => (fileName.value.split('.').pop() || 'FILE').toUpperCase())
 
 const totalComments = computed(() => {
   let count = 0
@@ -165,16 +174,11 @@ const fetchResource = async () => {
   try {
     const res = await getResourceDetail(resourceId.value)
     resource.value = res.data
-    // 在获取资源详情成功后检查点赞状态
     if (userStore.token) {
       try {
         const likeRes = await checkLiked(resourceId.value)
-        if (likeRes.code === 200) {
-          isLiked.value = likeRes.data
-        }
-      } catch (e) {
-        // 未登录或接口报错，忽略
-      }
+        if (likeRes.code === 200) isLiked.value = likeRes.data
+      } catch (e) { /* 未登录或接口报错，忽略 */ }
     }
   } catch (error) {
     console.error('Failed to fetch resource:', error)
@@ -204,23 +208,14 @@ const loadAllData = async () => {
   loading.value = true
   isLiked.value = false
   isFavorited.value = false
-  await Promise.all([
-    fetchResource(),
-    fetchComments(),
-    checkFavoriteStatus()
-  ])
+  await Promise.all([fetchResource(), fetchComments(), checkFavoriteStatus()])
   loading.value = false
 }
 
-watch(resourceId, () => {
-  loadAllData()
-})
+watch(resourceId, () => { loadAllData() })
 
 const handleLike = async () => {
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录')
-    return
-  }
+  if (!userStore.isLoggedIn) { ElMessage.warning('请先登录'); return }
   try {
     if (isLiked.value) {
       await unlikeResource(resourceId.value)
@@ -238,10 +233,7 @@ const handleLike = async () => {
 }
 
 const handleFavorite = async () => {
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录')
-    return
-  }
+  if (!userStore.isLoggedIn) { ElMessage.warning('请先登录'); return }
   try {
     if (isFavorited.value) {
       await removeFavorite(resourceId.value)
@@ -256,16 +248,22 @@ const handleFavorite = async () => {
   }
 }
 
+const handleShare = async () => {
+  try {
+    await navigator.clipboard.writeText(window.location.href)
+    ElMessage.success('链接已复制')
+  } catch (e) {
+    ElMessage.warning('复制失败，请手动复制地址栏链接')
+  }
+}
+
 const handleReply = (comment) => {
   replyingTo.value = comment
   commentForm.content = `@${comment.nickname} `
 }
 
 const submitComment = async () => {
-  if (!commentForm.content.trim()) {
-    ElMessage.warning('请输入评论内容')
-    return
-  }
+  if (!commentForm.content.trim()) { ElMessage.warning('请输入评论内容'); return }
   submitting.value = true
   try {
     const parentId = replyingTo.value ? replyingTo.value.id : null
@@ -281,258 +279,155 @@ const submitComment = async () => {
   }
 }
 
-onMounted(async () => {
-  await loadAllData()
-})
+onMounted(async () => { await loadAllData() })
 </script>
 
 <style scoped>
-.resource-detail-page {
-  min-height: 100%;
-  padding: 28px 0;
-}
+.resource-detail-page { min-height: 100%; padding: 28px 0 64px; }
+.page-container { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
 
-.page-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 28px;
+.breadcrumb {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-muted); margin-bottom: 22px;
 }
+.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--accent); }
 
-/* Header */
-.resource-header {
+.detail-layout { display: grid; grid-template-columns: 1fr 260px; gap: 22px; align-items: start; }
+
+.content-card, .comment-card, .aside-card {
   background: var(--bg-surface);
-  padding: 32px;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  margin-bottom: 20px;
-  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
-.resource-info {
-  margin-bottom: 24px;
+.content-card { padding: 30px 32px; }
+
+.detail-pill {
+  display: inline-block; padding: 5px 13px; border-radius: var(--radius-full);
+  background: rgba(var(--accent-rgb), 0.10); color: var(--accent);
+  font-size: 12px; font-weight: 600;
+}
+.detail-pill i { font-style: normal; opacity: 0.8; }
+
+.detail-title {
+  margin: 18px 0 16px; font-size: 28px; line-height: 1.35;
+  font-weight: 700; letter-spacing: -0.025em; color: var(--text-primary);
 }
 
-.category-tag {
-  margin-bottom: 14px;
-  background: rgba(200, 164, 78, 0.12);
-  border: none;
-  color: var(--accent);
-  font-weight: 500;
+.detail-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  font-size: 12px; color: var(--text-muted);
+}
+.detail-author { color: var(--text-secondary); font-weight: 600; text-decoration: none; }
+.detail-author:hover { color: var(--accent); }
+.meta-sep { opacity: 0.6; }
+
+.detail-desc {
+  margin: 24px 0; font-size: 14px; line-height: 1.9;
+  color: var(--text-secondary); white-space: pre-wrap;
 }
 
-.title {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 18px;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
+.file-strip {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: var(--radius);
+  background: var(--bg-elevated); border: 1px solid var(--border-default);
+}
+.file-strip__icon {
+  width: 38px; height: 38px; flex-shrink: 0; display: flex;
+  align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); background: rgba(var(--accent-rgb), 0.10); color: var(--accent);
+}
+.file-strip__info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.file-strip__info strong { font-size: 13px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-strip__info span { font-size: 11px; color: var(--text-muted); }
+.download-btn {
+  flex-shrink: 0; padding: 9px 18px; border-radius: var(--radius-sm);
+  background: var(--accent); color: var(--text-inverse);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.download-btn:hover { background: var(--accent-light); }
+
+.detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.detail-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default); background: var(--bg-elevated);
+  color: var(--text-secondary); font-size: 13px; cursor: pointer;
+  transition: var(--transition-fast);
+}
+.detail-action:hover { border-color: var(--border-accent); color: var(--accent); }
+.detail-action--on { border-color: var(--accent); color: var(--accent); background: rgba(var(--accent-rgb), 0.08); }
+
+.detail-tags {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-subtle);
+  font-size: 12px; color: var(--text-muted);
+}
+.detail-tags em {
+  font-style: normal; padding: 4px 10px; border-radius: var(--radius-full);
+  background: var(--bg-hover); color: var(--text-secondary);
 }
 
-.meta {
-  display: flex;
-  gap: 16px;
-  color: var(--text-muted);
-  font-size: 14px;
-  align-items: center;
+.detail-aside { display: flex; flex-direction: column; gap: 18px; }
+.aside-card { padding: 20px; }
+.aside-card h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+.uploader-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.uploader-row div { display: flex; flex-direction: column; }
+.uploader-row strong { font-size: 14px; color: var(--text-primary); }
+.uploader-row span { font-size: 12px; color: var(--text-muted); }
+.aside-btn {
+  display: block; text-align: center; padding: 10px; border-radius: var(--radius-sm);
+  background: var(--accent); color: var(--text-inverse);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.aside-btn:hover { background: var(--accent-light); }
+.related-card p { font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+.aside-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 14px; font-size: 13px; font-weight: 600;
+  color: var(--accent); text-decoration: none;
 }
 
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.comment-card { margin-top: 22px; padding: 28px 32px; }
+.comment-card h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; }
+.comment-card h2 span { font-family: var(--font-mono); color: var(--accent); margin-left: 4px; }
+.comment-form { margin-bottom: 24px; }
+.comment-form .el-textarea { margin-bottom: 12px; }
+.login-tip { text-align: center; padding: 20px; color: var(--text-muted); font-size: 14px; }
+.login-tip a { color: var(--accent); }
+
+.comment-list { margin-top: 12px; }
+.comment-item { display: flex; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--border-subtle); }
+.comment-item:last-child { border-bottom: none; }
+.comment-content { flex: 1; min-width: 0; }
+.comment-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.username { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+.time { color: var(--text-muted); font-size: 12px; }
+.comment-text { color: var(--text-secondary); line-height: 1.7; font-size: 14px; }
+.comment-deleted, .reply-deleted { color: var(--text-muted); font-style: italic; font-size: 13px; }
+.comment-replies { margin-top: 14px; padding-left: 16px; border-left: 2px solid var(--border-default); }
+.reply-item { display: flex; gap: 8px; padding: 10px 0; }
+.reply-content { flex: 1; font-size: 13px; }
+.reply-nickname { font-weight: 600; color: var(--text-primary); margin-right: 8px; }
+.reply-text { color: var(--text-secondary); }
+.reply-time { color: var(--text-muted); font-size: 12px; margin-left: 8px; }
+.comment-actions { margin-top: 8px; }
+.comment-actions button {
+  border: none; background: transparent; padding: 0;
+  color: var(--accent); font-size: 12px; cursor: pointer;
 }
 
-.meta-divider {
-  width: 1px;
-  height: 14px;
-  background: var(--border-strong);
+@media (max-width: 900px) {
+  .detail-layout { grid-template-columns: 1fr; }
+  .detail-aside { flex-direction: row; }
+  .aside-card { flex: 1; }
 }
-
-.resource-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-btn {
-  background: var(--bg-elevated) !important;
-  border: 1px solid var(--border-default) !important;
-  color: var(--text-secondary) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 10px 20px !important;
-}
-
-.action-btn:hover {
-  border-color: var(--border-accent) !important;
-  color: var(--accent-light) !important;
-}
-
-.action-btn--active {
-  border-color: var(--accent) !important;
-  color: var(--accent) !important;
-  background: rgba(200, 164, 78, 0.08) !important;
-}
-
-/* Content & Comment cards */
-.content-card,
-.comment-card {
-  background: var(--bg-surface);
-  padding: 28px 32px;
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
-  border: 1px solid var(--border-subtle);
-}
-
-.card-label {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.description {
-  line-height: 1.75;
-  color: var(--text-secondary);
-  margin-bottom: 20px;
-  font-size: 15px;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 13px;
-  border: 1px solid var(--border-subtle);
-}
-
-/* Comments */
-.comment-form {
-  margin-bottom: 24px;
-}
-
-.comment-form .el-textarea {
-  margin-bottom: 12px;
-}
-
-.submit-btn {
-  margin-top: 8px;
-}
-
-.login-tip {
-  text-align: center;
-  padding: 20px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.login-tip a {
-  color: var(--accent);
-}
-
-.comment-list {
-  margin-top: 20px;
-}
-
-.comment-item {
-  display: flex;
-  gap: 14px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.comment-item:last-child {
-  border-bottom: none;
-}
-
-.comment-content {
-  flex: 1;
-}
-
-.comment-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.username {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.time {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.comment-text {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 14px;
-}
-
-.comment-deleted {
-  color: #C0C4CC;
-  font-style: italic;
-  font-size: 14px;
-}
-
-.reply-deleted {
-  color: #C0C4CC;
-  font-style: italic;
-  font-size: 13px;
-}
-
-.comment-replies {
-  margin-top: 14px;
-  padding-left: 16px;
-  border-left: 2px solid var(--border-default);
-}
-
-.reply-item {
-  display: flex;
-  gap: 8px;
-  padding: 10px 0;
-}
-
-.reply-content {
-  flex: 1;
-  font-size: 13px;
-}
-
-.reply-nickname {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-right: 8px;
-}
-
-.reply-text {
-  color: var(--text-secondary);
-}
-
-.reply-time {
-  color: var(--text-muted);
-  font-size: 12px;
-  margin-left: 8px;
-}
-
-.comment-actions {
-  margin-top: 6px;
-}
-
-.uploader-link {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.uploader-link:hover {
-  color: var(--accent);
+@media (max-width: 640px) {
+  .content-card, .comment-card { padding: 22px 18px; }
+  .detail-title { font-size: 22px; }
+  .detail-aside { flex-direction: column; }
+  .file-strip { flex-wrap: wrap; }
 }
 </style>

@@ -126,7 +126,7 @@ const handleLogin = async () => {
 .login-left {
   flex: 1;
   background:
-    radial-gradient(ellipse at 30% 50%, rgba(200, 164, 78, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 30% 50%, rgba(var(--accent-rgb), 0.06) 0%, transparent 60%),
     var(--bg-base);
   display: flex;
   align-items: center;
@@ -154,7 +154,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .brand-text {
