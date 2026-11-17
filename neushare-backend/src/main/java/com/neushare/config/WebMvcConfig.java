@@ -36,6 +36,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/resource/hot",
                         "/api/resource/detail/**",
                         "/api/resource/search",
+                        "/api/resource/suggest",
+                        "/api/resource/filters",
                         "/api/banner/list",
                         "/api/comment/list/**",
                         "/api/category/list",

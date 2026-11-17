@@ -23,8 +23,14 @@ ALTER TABLE `resource` ADD INDEX `idx_school_year` (`school_year`);
 ALTER TABLE `resource` ADD INDEX `idx_type` (`type`);
 
 -- 3. 中文全文索引（ngram 分词器，默认 2 字切分，适配中文）
---    注意：ngram_token_size 是 MySQL 实例级参数（默认 2），需在 my.cnf 配置后重启才生效
-CREATE FULLTEXT INDEX `ft_resource_search` ON `resource` (`title`, `description`, `tags`) WITH PARSER ngram;
+--    注意 1：ngram_token_size 是 MySQL 实例级参数（默认 2），需在 my.cnf 配置后重启才生效
+--    注意 2：tags 是 JSON 列，MySQL 不允许直接对 JSON 建 FULLTEXT（ERROR 3152），
+--            先加一列存储型生成列把 tags 数组摊平成文本，再对生成列建索引
+ALTER TABLE `resource`
+    ADD COLUMN `tags_text` TEXT GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(`tags`, '$[*]'))) STORED
+    COMMENT 'tags 文本化视图，供全文索引使用（JSON 列不能直接建 FULLTEXT）' AFTER `tags`;
+
+CREATE FULLTEXT INDEX `ft_resource_search` ON `resource` (`title`, `description`, `tags_text`) WITH PARSER ngram;
 
 -- 4. 搜索日志表：记录用户搜了什么、搜到多少，用于发现「搜不到」的高频词
 CREATE TABLE IF NOT EXISTS `search_log` (

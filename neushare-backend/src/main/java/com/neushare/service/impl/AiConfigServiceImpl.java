@@ -1,6 +1,7 @@
 package com.neushare.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.neushare.dto.AiConfigUpdateDTO;
 import com.neushare.entity.UserAiApiConfig;
@@ -47,7 +48,26 @@ public class AiConfigServiceImpl extends ServiceImpl<UserAiApiConfigMapper, User
             String trimmed = dto.getTavilyKey().trim();
             config.setTavilyKeyEnc(trimmed.isEmpty() ? null : aesGcmUtil.encrypt(trimmed));
         }
-        saveOrUpdate(config);
+        if (config.getId() == null) {
+            save(config);
+            return;
+        }
+        // 不能用 saveOrUpdate：MyBatis-Plus 默认忽略 null 字段，
+        // 传 "" 清除 key 时 null 不会写库，表现为「清不掉」。这里显式 set。
+        LambdaUpdateWrapper<UserAiApiConfig> wrapper = new LambdaUpdateWrapper<UserAiApiConfig>()
+                .eq(UserAiApiConfig::getId, config.getId());
+        boolean changed = false;
+        if (dto.getDeepseekKey() != null) {
+            wrapper.set(UserAiApiConfig::getDeepseekKeyEnc, config.getDeepseekKeyEnc());
+            changed = true;
+        }
+        if (dto.getTavilyKey() != null) {
+            wrapper.set(UserAiApiConfig::getTavilyKeyEnc, config.getTavilyKeyEnc());
+            changed = true;
+        }
+        if (changed) {
+            update(wrapper);
+        }
     }
 
     @Override

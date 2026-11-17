@@ -31,6 +31,26 @@ public class ResourceVO {
     private String categoryName;
 
     /**
+     * 课程名称
+     */
+    private String courseName;
+
+    /**
+     * 授课教师
+     */
+    private String teacher;
+
+    /**
+     * 学年，如 2024-2025
+     */
+    private String schoolYear;
+
+    /**
+     * 学期：spring / summer / autumn / winter
+     */
+    private String term;
+
+    /**
      * 资源类型
      */
     private String type;
@@ -114,4 +134,9 @@ public class ResourceVO {
      * 收藏时间（仅在收藏列表中返回）
      */
     private LocalDateTime favoriteTime;
+
+    /**
+     * 全文检索相关度（仅关键词搜索时有值）
+     */
+    private Double relevance;
 }
