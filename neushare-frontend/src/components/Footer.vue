@@ -71,7 +71,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .logo-text {

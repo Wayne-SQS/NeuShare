@@ -67,7 +67,7 @@ const handleSelect = (index) => {
 }
 
 .sidebar-menu .el-menu-item.is-active {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(var(--accent-rgb), 0.08);
   color: var(--accent);
   border-right: 2px solid var(--accent);
 }

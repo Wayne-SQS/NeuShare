@@ -1,13 +1,23 @@
 <template>
-  <div class="resource-card" @click="handleClick">
-    <div class="card-accent"></div>
+  <article class="resource-card" :class="`resource-card--tone-${tone}`" @click="handleClick">
+    <div class="card-cover">
+      <div class="card-cover__sheen"></div>
+      <el-icon :size="40" class="card-cover__icon">
+        <Document v-if="tone === 1" />
+        <Collection v-else-if="tone === 2" />
+        <Reading v-else-if="tone === 3" />
+        <DataAnalysis v-else />
+      </el-icon>
+      <span class="card-cover__corner">{{ String(resource.id || '').slice(-2).padStart(2, '0') }}</span>
+    </div>
     <div class="card-body">
-      <div class="card-header">
-        <span class="category-tag">{{ resource.categoryName || '未分类' }}</span>
+      <div class="card-tags">
+        <span class="card-tag">{{ resource.categoryName || '未分类' }}</span>
+        <span v-if="resource.courseName" class="card-course">{{ resource.courseName }}</span>
       </div>
-      <h3 class="title" v-html="highlightedTitle"></h3>
+      <h3 class="card-title" v-html="highlightedTitle"></h3>
 
-      <!-- 结构化归属信息：既是结果可信度的信号，也是二次筛选的入口 -->
+      <!-- 结构化归属信息：既是结果可信度的信号，也是二次筛选的入口（V5/V6） -->
       <div class="structured-meta" v-if="structuredTags.length">
         <span
           v-for="tag in structuredTags"
@@ -19,33 +29,15 @@
           {{ tag.text }}
         </span>
       </div>
-
-      <p class="description" v-html="highlightedDescription"></p>
       <div class="card-meta">
-        <div class="meta-item">
-          <el-icon><User /></el-icon>
-          <router-link
-            :to="`/user/${resource.uploadUserId}`"
-            @click.stop
-            class="uploader-link"
-          >
-            {{ resource.uploadNickname || '匿名' }}
-          </router-link>
-        </div>
-        <div class="meta-item">
-          <el-icon><View /></el-icon>
-          <span>{{ resource.viewCount || 0 }}</span>
-        </div>
-        <div class="meta-item">
-          <el-icon><Star /></el-icon>
-          <span>{{ resource.likeCount || 0 }}</span>
-        </div>
-      </div>
-      <div class="card-footer">
-        <span class="time">{{ formatTime(resource.createTime) }}</span>
+        <span class="card-author">{{ resource.uploadNickname || '匿名' }}</span>
+        <span class="card-dot">·</span>
+        <span>{{ resource.viewCount || 0 }} 浏览</span>
+        <span class="card-dot">·</span>
+        <span>{{ resource.favoriteCount ?? resource.likeCount ?? 0 }} 收藏</span>
       </div>
     </div>
-  </div>
+  </article>
 </template>
 
 <script setup>
@@ -60,6 +52,9 @@ const props = defineProps({
 })
 
 const router = useRouter()
+
+// 四色渐变按 id 轮转；深色主题下由 theme-v3.css 统一翻成灰阶
+const tone = computed(() => ((Number(props.resource.id) || 0) % 4) + 1)
 
 const handleClick = () => {
   router.push(`/resource/${props.resource.id}`)
@@ -77,64 +72,90 @@ const structuredTags = computed(() => buildStructuredTags(props.resource))
 
 <style scoped>
 .resource-card {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  cursor: pointer;
   overflow: hidden;
+  cursor: pointer;
   transition: var(--transition);
 }
 
 .resource-card:hover {
   border-color: var(--border-accent);
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
-.resource-card:hover .card-accent {
-  opacity: 1;
+.card-cover {
+  position: relative;
+  height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
-.card-accent {
+.resource-card--tone-1 .card-cover { background: var(--grad-card-1); }
+.resource-card--tone-2 .card-cover { background: var(--grad-card-2); }
+.resource-card--tone-3 .card-cover { background: var(--grad-card-3); }
+.resource-card--tone-4 .card-cover { background: var(--grad-card-4); }
+
+.card-cover__sheen {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  opacity: 0;
-  transition: opacity var(--transition);
+  inset: 0;
+  background: linear-gradient(180deg, rgba(var(--surface-rgb), 0.16) 0%, transparent 70%);
+}
+
+.card-cover__icon {
+  position: relative;
+  color: var(--card-glyph);
+  opacity: 0.92;
+}
+
+.card-cover__corner {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--card-glyph);
+  opacity: 0.6;
 }
 
 .card-body {
-  padding: 20px;
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-.card-header {
-  margin-bottom: 10px;
+.card-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+  min-height: 20px;
 }
 
-.category-tag {
+.card-tag {
   font-size: 11px;
   font-weight: 600;
   color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: rgba(37, 99, 235, 0.08);
-  padding: 3px 8px;
-  border-radius: var(--radius-xs);
+  background: rgba(var(--accent-rgb), 0.10);
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
 }
 
-.title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 8px;
+.card-course {
+  font-size: 11px;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  letter-spacing: -0.01em;
 }
 
 .structured-meta {
@@ -164,57 +185,46 @@ const structuredTags = computed(() => buildStructuredTags(props.resource))
   border-color: var(--border-accent);
 }
 
-/* 搜索结果高亮：不用纯黄底，和靛蓝/极简双主题都能搭 */
+/* 搜索结果高亮：跟随主题强调色（v3 已把硬编码色值变量化） */
 :deep(mark.hl) {
-  background: rgba(37, 99, 235, 0.16);
+  background: rgba(var(--accent-rgb), 0.16);
   color: var(--accent);
   padding: 0 1px;
   border-radius: 2px;
 }
 
-.description {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.55;
-  height: 40px;
-  overflow: hidden;
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+  min-height: 42px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  margin-bottom: 14px;
+  overflow: hidden;
 }
 
 .card-meta {
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.meta-item {
-  display: flex;
   align-items: center;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
   font-size: 12px;
   color: var(--text-muted);
 }
 
-.card-footer {
-  padding-top: 12px;
-  border-top: 1px solid var(--border-subtle);
+.card-author {
+  color: var(--text-secondary);
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.time {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.uploader-link {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 12px;
-}
-
-.uploader-link:hover {
-  color: var(--accent);
+.card-dot {
+  opacity: 0.6;
 }
 </style>

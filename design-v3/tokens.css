@@ -1,0 +1,30 @@
+/* ==========================================================================
+   NeuShare Tokens — 从 Ardot 设计稿「NeuShare Web 界面改版设计」导出的原始变量
+   fileId: 747589935320212  ·  变量集: NeuShare Tokens  ·  双模式 Light / Dark
+   --------------------------------------------------------------------------
+   这是设计稿的原始导出，变量名沿用画布命名，适合喂给设计工具或做二次映射。
+   项目里实际使用请直接用 theme-v3.css（已按 global.css 的变量名对齐）。
+   切换主题：document.documentElement.dataset.theme = 'dark'
+   ========================================================================== */
+
+:root {
+  --NeuShare-Tokens-canvas: #F4F7FFFF;
+  --NeuShare-Tokens-surface: #FFFFFFFF;
+  --NeuShare-Tokens-ink: #171A2BFF;
+  --NeuShare-Tokens-inkSecondary: #6B7085FF;
+  --NeuShare-Tokens-border: #E7EAF6FF;
+  --NeuShare-Tokens-brand: #4A6BFFFF;
+  --NeuShare-Tokens-radiusCard: 16px;
+  --NeuShare-Tokens-radiusLarge: 24px;
+}
+
+[data-theme="dark"] {
+  --NeuShare-Tokens-canvas: #0E0E10FF;
+  --NeuShare-Tokens-surface: #1C1C1FFF;
+  --NeuShare-Tokens-ink: #FFFFFFFF;
+  --NeuShare-Tokens-inkSecondary: #A8A8B0FF;
+  --NeuShare-Tokens-border: #2A2A2FFF;
+  --NeuShare-Tokens-brand: #FFFFFFFF;
+  --NeuShare-Tokens-radiusCard: 16px;
+  --NeuShare-Tokens-radiusLarge: 24px;
+}

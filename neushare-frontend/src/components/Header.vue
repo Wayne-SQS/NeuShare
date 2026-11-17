@@ -16,6 +16,15 @@
       </nav>
 
       <div class="header-right">
+        <button
+          class="theme-toggle"
+          type="button"
+          :aria-label="isDark ? '切换到亮色主题' : '切换到深色主题'"
+          :title="isDark ? '切换到亮色主题' : '切换到深色主题'"
+          @click="onToggleTheme"
+        >
+          <el-icon :size="17"><Moon v-if="!isDark" /><Sunny v-else /></el-icon>
+        </button>
         <template v-if="userStore.isLoggedIn">
           <el-dropdown trigger="click" @command="handleCommand" popper-class="header-dropdown">
             <span class="user-info">
@@ -46,13 +55,22 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import { ElMessageBox } from 'element-plus'
+import { Moon, Sunny } from '@element-plus/icons-vue'
 import { getInitial } from '@/utils/format'
+import { getTheme, toggleTheme } from '@/utils/theme'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+const isDark = ref(getTheme() === 'dark')
+const onToggleTheme = () => {
+  toggleTheme()
+  isDark.value = getTheme() === 'dark'
+}
 
 const handleCommand = (command) => {
   switch (command) {
@@ -83,7 +101,7 @@ const handleCommand = (command) => {
 .header-bg {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(var(--surface-rgb), 0.78);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
 }
@@ -115,7 +133,7 @@ const handleCommand = (command) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .logo-text {
@@ -155,6 +173,26 @@ const handleCommand = (command) => {
   gap: 10px;
 }
 
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--border-accent);
+  background: var(--bg-hover);
+}
+
 .btn-login {
   background: transparent;
   border: 1px solid var(--border-strong);
@@ -170,7 +208,7 @@ const handleCommand = (command) => {
 .btn-register {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--text-inverse);
   font-weight: 600;
 }
 

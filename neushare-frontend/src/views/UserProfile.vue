@@ -230,7 +230,7 @@ onMounted(() => {
   font-size: 36px;
   font-weight: 600;
   color: var(--accent);
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-rgb), 0.16) 100%);
 }
 
 .info-section {
