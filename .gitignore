@@ -28,3 +28,17 @@ neushare-backend/uploads/
 # 临时调试脚本（含 DROP TABLE 等高危语句，禁止入库）
 _*.sql
 _insert_test_data.*
+
+# 密钥与本地环境配置（公开仓库，绝不入库；.env.example 是模板，保留）
+.env
+.env.*
+!.env.example
+
+# Python / neushare-ai 运行产物
+neushare-ai/.venv/
+neushare-ai/venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/

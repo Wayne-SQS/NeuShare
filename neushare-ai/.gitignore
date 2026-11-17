@@ -1,0 +1,14 @@
+# 密钥绝不入库（仓库根 .gitignore 也有一份，这里再兜一次）
+.env
+.env.*
+# 模板文件要保留在仓库里
+!.env.example
+
+# Python 运行产物
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+htmlcov/
+.coverage

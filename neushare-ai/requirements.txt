@@ -1,0 +1,19 @@
+# NeuShare AI 服务依赖
+# 版本基线：LangChain 1.4.0 / Python 3.11+（3.14 实测可跑）
+# 安装：pip install -r requirements.txt
+
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic-settings>=2.5,<3.0
+httpx>=0.27,<1.0
+python-dotenv>=1.0,<2.0
+
+# LangChain 1.x 主栈（版本与本机教程环境对齐）
+langchain==1.4.0
+langchain-core==1.6.3
+langchain-deepseek==1.1.0
+langgraph==1.2.11
+
+# Tavily 联网搜索：LangChain 官方集成
+# 装不上也没关系，app/tools/web_search.py 会自动回退到 httpx 直调同一个 REST 接口
+langchain-tavily>=0.2.0
