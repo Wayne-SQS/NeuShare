@@ -40,6 +40,11 @@ jwt:
   secret: ${JWT_SECRET:neushare2024secretkeyforjwttoken123456789}
   expiration: 86400000
 
+# 用户自带 AI API Key（BYOK）的落库加密主密钥
+# 生产环境必须换掉默认值（换密钥 = 旧密文全部作废，需全量重加密）
+ai:
+  key-encrypt-secret: ${AI_KEY_ENCRYPT_SECRET:neushare-byok-dev-secret-do-not-use-in-prod}
+
 file:
   upload:
     path: uploads
