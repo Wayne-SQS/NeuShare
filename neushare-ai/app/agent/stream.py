@@ -17,8 +17,8 @@ async def stream_answer(question: str, history: list | None = None, resource_id:
         )
     messages.append({"role": "user", "content": user_content})
 
-    collected = {"content": "", "sources": [], "resources": []}
-    seen_note, seen_res = set(), set()
+    collected = {"content": "", "sources": [], "resources": [], "web_sources": []}
+    seen_note, seen_res, seen_web = set(), set(), set()
 
     try:
         agent = get_agent()
@@ -54,6 +54,20 @@ async def stream_answer(question: str, history: list | None = None, resource_id:
                                 seen_res.add(rid)
                                 collected["resources"].append(r)
                         yield ("resources", list(collected["resources"]))
+                    # 联网来源：带 type=web 与完整 URL，与站内来源分渠道
+                    if data.get("mode") in ("tavily", "unavailable", "mock"):
+                        for w in data.get("results") or []:
+                            url = w.get("url") or ""
+                            if url and url not in seen_web:
+                                seen_web.add(url)
+                                collected["web_sources"].append({
+                                    "type": "web", "title": w.get("title") or "",
+                                    "url": url, "content": (w.get("content") or "")[:800],
+                                })
+                        if collected["web_sources"]:
+                            yield ("web_sources", list(collected["web_sources"]))
+                        if data.get("mode") in ("unavailable", "mock"):
+                            yield ("notice", data.get("note") or "联网检索当前不可用")
     except Exception as e:  # noqa: BLE001
         yield ("error", str(e))
 

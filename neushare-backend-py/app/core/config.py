@@ -14,13 +14,10 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # .../neushare-backend-py
 load_dotenv(BASE_DIR / ".env")
 
-# Dev-only fallback, MUST stay in sync with neushare-ai's DEV_JWT_SECRET so that
-# tokens remain interchangeable even when JWT_SECRET is unset on one side.
-DEV_JWT_SECRET = "neushare-dev-jwt-secret-please-change-in-production-2026"
-
 log = logging.getLogger("config")
-if not os.getenv("JWT_SECRET"):
-    log.warning("JWT_SECRET env not set; using DEV fallback (must match neushare-ai).")
+# 安全红线：JWT_SECRET 必须由环境变量注入，且与 neushare-ai 共用同一个值。
+# 公开仓库里曾出现过明文密钥，绝不再提供硬编码 fallback；缺配置时启动即失败，
+# 比「悄悄用一个谁都知道的密钥签发 token」安全得多。
 
 
 def _get(key, default=None):
@@ -30,7 +27,7 @@ def _get(key, default=None):
 
 class Settings:
     # ---- JWT ----
-    jwt_secret = _get("JWT_SECRET") or DEV_JWT_SECRET
+    jwt_secret = _get("JWT_SECRET") or ""
     jwt_expiration = int(_get("JWT_EXPIRATION", "86400000"))  # ms, matches Java
 
     # ---- MySQL (asyncmy) ----
@@ -49,8 +46,20 @@ class Settings:
     # ---- CORS ----
     cors_origins = [o.strip() for o in _get("CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
 
+    # ---- V7 BYOK ----
+    ai_key_encrypt_secret = _get("AI_KEY_ENCRYPT_SECRET", "")
+
+    # ---- V5 search ----
+    search_fulltext_enabled = _get("SEARCH_FULLTEXT_ENABLED", "true").lower() == "true"
+
     # ---- Service ----
     port = int(_get("PORT", "8080"))
+
+    def validate(self) -> None:
+        if not self.jwt_secret:
+            raise RuntimeError(
+                "JWT_SECRET 未配置。请在 .env 中设置，并与 neushare-ai 使用同一值（HS256/384/512）。"
+            )
 
     @property
     def db_url(self) -> str:
@@ -68,3 +77,4 @@ class Settings:
 
 
 settings = Settings()
+settings.validate()

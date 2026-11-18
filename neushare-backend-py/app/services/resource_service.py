@@ -29,6 +29,7 @@ _SELECT_COLS = (
     "r.id, r.title, r.category_id, c.name AS category_name, r.type, r.content_url, "
     "r.description, r.cover_url, r.source, r.tags, r.upload_user_id, r.status, "
     "r.view_count, r.like_count, r.favorite_count, r.create_time, r.update_time, "
+    "r.course_name, r.teacher, r.school_year, r.term, "
     "u.username AS upload_username, u.nickname AS upload_nickname, u.avatar_url AS upload_avatar"
 )
 _FROM = " FROM resource r LEFT JOIN user u ON r.upload_user_id = u.id LEFT JOIN category c ON r.category_id = c.id"
@@ -58,11 +59,21 @@ def to_resource_vo(row: dict, favorite_time=None) -> dict:
         "uploadNickname": row.get("upload_nickname"),
         "uploadAvatar": row.get("upload_avatar"),
         "favoriteTime": fmt_dt(favorite_time),
+        "courseName": row.get("course_name"),
+        "teacher": row.get("teacher"),
+        "schoolYear": row.get("school_year"),
+        "term": row.get("term"),
+        "relevance": row.get("relevance"),
     }
 
 
 def _order(sort_by: str) -> str:
-    return "r.view_count DESC, r.like_count DESC" if sort_by == "hot" else "r.create_time DESC"
+    """原有契约：hot 按浏览+点赞，其余按时间倒序。
+    relevance 排序由 search_service 在带全文表达式时单独处理，这里安全降级为时间序，
+    避免旧库未建 ngram 索引时生成引用不存在列的 SQL。"""
+    if sort_by == "hot":
+        return "r.view_count DESC, r.like_count DESC"
+    return "r.create_time DESC"
 
 
 def _build_where(status=None, category_id=None, keyword=None, user_id=None, force_status=None):

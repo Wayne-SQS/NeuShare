@@ -33,6 +33,7 @@ from app.api.v1 import (
     follow as follow_router,
     notification as notification_router,
     admin as admin_router,
+    ai_config as ai_config_router,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -75,6 +76,7 @@ app.include_router(favorite_router.router)
 app.include_router(follow_router.router)
 app.include_router(notification_router.router)
 app.include_router(admin_router.router)
+app.include_router(ai_config_router.router)
 
 # 静态文件：上传目录映射为 /files/**（与 Java WebMvcConfig 一致，供封面图 / 附件访问）
 settings.upload_dir.mkdir(parents=True, exist_ok=True)

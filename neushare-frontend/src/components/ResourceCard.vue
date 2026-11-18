@@ -17,8 +17,18 @@
     <div class="card-body">
       <div class="card-header">
         <span class="category-tag">{{ resource.categoryName || '未分类' }}</span>
+        <span v-if="resource.courseName" class="course-tag">{{ resource.courseName }}</span>
       </div>
-      <h3 class="title">{{ resource.title }}</h3>
+      <h3 class="title" v-html="highlightedTitle"></h3>
+      <div v-if="structuredTags.length" class="structured-meta">
+        <span
+          v-for="tag in structuredTags"
+          :key="tag.text"
+          class="meta-chip"
+          :title="`只看「${tag.text}」的资料`"
+          @click.stop="router.push({ path: '/resource', query: tag.query })"
+        >{{ tag.text }}</span>
+      </div>
       <p class="description">{{ resource.description || '暂无描述' }}</p>
       <div class="card-meta">
         <div class="meta-item">
@@ -50,16 +60,22 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { formatTime } from '@/utils/format'
+import { formatTime, buildStructuredTags, highlight } from '@/utils/format'
 
 const props = defineProps({
-  resource: { type: Object, required: true }
+  resource: { type: Object, required: true },
+  keyword: { type: String, default: '' }
 })
 
 const router = useRouter()
 
 const coverBroken = ref(false)
 const coverUrl = computed(() => props.resource.coverUrl || '')
+
+// 命中词高亮：format.js 里先 escapeHtml 再插 <mark>，不会开 XSS 口子
+const highlightedTitle = computed(() => highlight(props.resource.title, props.keyword))
+// 课程 / 教师 / 学年学期：有值才展示，点击带 query 二次筛选
+const structuredTags = computed(() => buildStructuredTags(props.resource))
 
 const handleClick = () => {
   router.push(`/resource/${props.resource.id}`)
@@ -211,4 +227,46 @@ const handleClick = () => {
 .uploader-link:hover {
   color: var(--accent);
 }
+
+.course-tag {
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structured-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 2px 0 8px;
+}
+
+.meta-chip {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta-chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+:deep(mark.hl) {
+  background: var(--bg-hover);
+  color: var(--accent);
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
 </style>

@@ -70,7 +70,9 @@ def _own_conversation(db, cid: int, user_id: int) -> AiConversation:
 
 @app.get("/ai/health")
 def health():
-    return {"status": "ok", "index_exists": builder.index_exists()}
+    """自检：联网状态、降级模式、索引状态；不返回任何密钥值。"""
+    from app.agent.guardrails import health_payload
+    return {"code": 0, "data": health_payload(builder.index_exists())}
 
 
 # ---------------- conversations ----------------
@@ -201,7 +203,7 @@ async def chat(body: ChatRequest, authorization: Optional[str] = Header(None)):
     finally:
         db.close()
 
-    full, sources, resources = "", [], []
+    full, sources, resources, web_sources, notice = "", [], [], [], ""
     async for etype, payload in agent_stream.stream_answer(body.question, history, body.resource_id):
         if etype == "token":
             full += payload
@@ -209,6 +211,10 @@ async def chat(body: ChatRequest, authorization: Optional[str] = Header(None)):
             sources = payload
         elif etype == "resources":
             resources = payload
+        elif etype == "web_sources":
+            web_sources = payload
+        elif etype == "notice":
+            notice = payload
         elif etype == "error":
             return JSONResponse({"code": 500, "message": payload, "data": None}, 500)
 
@@ -226,7 +232,9 @@ async def chat(body: ChatRequest, authorization: Optional[str] = Header(None)):
         db.commit()
     finally:
         db.close()
-    return {"code": 0, "data": {"conversation_id": cid, "content": full, "sources": sources, "resources": resources}}
+    return {"code": 0, "data": {"conversation_id": cid, "content": full,
+                                "sources": sources, "resources": resources,
+                                "web_sources": web_sources, "notice": notice}}
 
 
 @app.post("/ai/chat/stream")
@@ -260,6 +268,10 @@ async def chat_stream(body: ChatRequest, authorization: Optional[str] = Header(N
                 elif etype == "resources":
                     resources = payload
                     yield f"event: resources\ndata: {json.dumps({'resources': payload}, ensure_ascii=False)}\n\n"
+                elif etype == "web_sources":
+                    yield f"event: web_sources\ndata: {json.dumps({'sources': payload}, ensure_ascii=False)}\n\n"
+                elif etype == "notice":
+                    yield f"event: notice\ndata: {json.dumps({'message': payload}, ensure_ascii=False)}\n\n"
                 elif etype == "error":
                     yield f"event: error\ndata: {json.dumps({'message': payload}, ensure_ascii=False)}\n\n"
                 elif etype == "done":

@@ -27,3 +27,5 @@ faiss-cpu==1.9.0
 
 # ---- Embedding (reuses system torch; Chinese model BAAI/bge-small-zh-v1.5) ----
 sentence-transformers==3.4.1
+
+# 取优合并：联网检索走 httpx 直调 REST，无需额外 SDK；保留降级链

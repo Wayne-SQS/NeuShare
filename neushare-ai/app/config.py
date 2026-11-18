@@ -13,13 +13,14 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent  # .../neushare-ai
 load_dotenv(BASE_DIR / ".env")
 
-# Dev-only fallback (>=32 bytes). Used only when JWT_SECRET env is absent.
-# When launching the Java backend for the demo, set the SAME value.
-DEV_JWT_SECRET = "neushare-dev-jwt-secret-please-change-in-production-2026"
-
 log = logging.getLogger("config")
+# 安全红线：JWT_SECRET 只从环境变量读，绝不提供硬编码 fallback。
+# 这个仓库是公开的，历史上曾把明文密钥写进 config.py / .env.example / 计划文档。
+# 缺配置时启动即失败，比「悄悄用一个人尽皆知的密钥验签」安全得多。
 if not os.getenv("JWT_SECRET"):
-    log.warning("JWT_SECRET env not set; using DEV fallback. Set it to match Java backend in production.")
+    raise RuntimeError(
+        "JWT_SECRET 未配置。请在 .env 中设置，并与主后端使用同一值（HS256/384/512）。"
+    )
 if not os.getenv("DEEPSEEK_API_KEY"):
     log.warning("DEEPSEEK_API_KEY env not set; LLM calls will fail until configured.")
 
@@ -42,13 +43,13 @@ class Settings:
     zhipu_embedding_model = _get("ZHIPU_EMBEDDING_MODEL", "embedding-3")
 
     # ---- JWT ----
-    jwt_secret = _get("JWT_SECRET") or DEV_JWT_SECRET
+    jwt_secret = _get("JWT_SECRET") or ""
 
     # ---- MySQL ----
     mysql_host = _get("MYSQL_HOST", "127.0.0.1")
     mysql_port = int(_get("MYSQL_PORT", "3307"))
     mysql_user = _get("MYSQL_USER", "root")
-    mysql_password = _get("MYSQL_PASSWORD", "NeuShare@2026")
+    mysql_password = _get("MYSQL_PASSWORD", "")
     mysql_db = _get("MYSQL_DB", "neushare")
 
     # ---- Java backend (resource search tool) ----

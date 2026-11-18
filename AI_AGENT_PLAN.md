@@ -15,7 +15,7 @@
 ## 语料现状（已核实）
 - `neushare-backend/uploads/` 下 18 份 `.md` 笔记 + 1 份 `.c` + 1 份 `.sql`（可全文索引）
 - MySQL 3307 `neushare.resource`：114 条已发布，其中 local-file 18 条、external 96 条；类型 document 22 / video 56 / tutorial 36 / other 1
-- 演示库：端口 3307，root 密码 `NeuShare@2026`（仅本地演示，不入库）
+- 演示库：端口 3307，root 密码由 .env 注入（明文密钥已从公开仓库清除）
 
 ---
 

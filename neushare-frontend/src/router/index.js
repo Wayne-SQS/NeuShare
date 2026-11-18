@@ -73,6 +73,12 @@ const routes = [
         name: 'ProfileInfo',
         component: () => import('@/views/profile/ProfileInfo.vue'),
         meta: { title: '个人资料' }
+      },
+      {
+        path: 'ai',
+        name: 'AiSettings',
+        component: () => import('@/views/profile/AiSettings.vue'),
+        meta: { title: 'AI 助手设置' }
       }
     ]
   },

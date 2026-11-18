@@ -216,7 +216,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import { getResourceDetail, likeResource, unlikeResource, checkLiked, downloadResource } from '@/api/resource'
 import { getComments, addComment } from '@/api/comment'
 import { addFavorite, removeFavorite, checkFavorite } from '@/api/favorite'
-import { formatTime, getInitial } from '@/utils/format'
+import { formatTime, getInitial, buildStructuredTags } from '@/utils/format'
 import { buildFullUrl, isExternalUrl, isPreviewable } from '@/utils/url'
 
 const route = useRoute()
@@ -249,6 +249,7 @@ const commentForm = reactive({
 })
 
 const resourceId = computed(() => route.params.id)
+const structuredTags = computed(() => buildStructuredTags(resource.value))
 
 // 是否为外链资源（外链视为文件存在，走"访问原链接"）
 const isExternal = computed(() => isExternalUrl(resource.value?.contentUrl))
@@ -823,4 +824,27 @@ onMounted(async () => {
     gap: var(--space-3);
   }
 }
+
+.structured-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+}
+
+.structured-chip {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  text-decoration: none;
+}
+
+.structured-chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 </style>

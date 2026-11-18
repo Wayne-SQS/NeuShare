@@ -17,6 +17,10 @@
         <el-icon><Star /></el-icon>
         <span>我的收藏</span>
       </el-menu-item>
+      <el-menu-item index="/profile/ai">
+        <el-icon><MagicStick /></el-icon>
+        <span>AI 助手设置</span>
+      </el-menu-item>
     </el-menu>
   </aside>
 </template>

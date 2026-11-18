@@ -24,17 +24,45 @@
           />
         </el-select>
 
-        <el-input
+        <el-autocomplete
           v-model="filterForm.keyword"
+          :fetch-suggestions="querySuggest"
           placeholder="搜索资料标题或描述"
           clearable
           class="toolbar__input"
-          prefix-icon="Search"
           @keyup.enter="handleSearch"
+          @select="handleSearch"
           @clear="handleSearch"
-        />
+        >
+          <template #prefix><el-icon><Search /></el-icon></template>
+        </el-autocomplete>
+
+        <!-- V5/V6 结构化筛选：选项来自 /resource/filters 的真实数据 -->
+        <el-select v-model="filterForm.courseName" placeholder="全部课程" clearable filterable class="toolbar__select" @change="handleSearch">
+          <el-option v-for="c in filterOptions.courses" :key="c" :label="c" :value="c" />
+        </el-select>
+        <el-select v-model="filterForm.teacher" placeholder="全部教师" clearable filterable class="toolbar__select" @change="handleSearch">
+          <el-option v-for="t in filterOptions.teachers" :key="t" :label="t" :value="t" />
+        </el-select>
+        <el-select v-model="filterForm.schoolYear" placeholder="全部学年" clearable class="toolbar__select" @change="handleSearch">
+          <el-option v-for="y in schoolYears" :key="y" :label="y" :value="y" />
+        </el-select>
+        <el-select v-model="filterForm.term" placeholder="全部学期" clearable class="toolbar__select" @change="handleSearch">
+          <el-option label="春季" value="spring" /><el-option label="夏季" value="summer" />
+          <el-option label="秋季" value="autumn" /><el-option label="冬季" value="winter" />
+        </el-select>
+        <el-select v-model="filterForm.type" placeholder="全部类型" clearable class="toolbar__select" @change="handleSearch">
+          <el-option label="文档" value="document" /><el-option label="视频" value="video" />
+          <el-option label="图片" value="image" /><el-option label="外部链接" value="link" />
+          <el-option label="其他" value="other" />
+        </el-select>
+        <el-select v-model="filterForm.sortBy" class="toolbar__select" @change="handleSearch">
+          <el-option label="相关度" value="relevance" /><el-option label="按热度" value="hot" />
+          <el-option label="按最新" value="new" />
+        </el-select>
 
         <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button v-if="hasFilter" link @click="resetFilter">重置</el-button>
 
         <span v-if="!loading && !error" class="toolbar__count">
           共 {{ pagination.total }} 份资料
@@ -61,6 +89,7 @@
             v-for="resource in resources"
             :key="resource.id"
             :resource="resource"
+            :keyword="filterForm.keyword"
           />
         </div>
 
@@ -91,12 +120,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ResourceCard from '@/components/ResourceCard.vue'
 import SkeletonCard from '@/components/SkeletonCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { getResourceList, getCategories } from '@/api/resource'
+import { getResourceList, getCategories, getResourceFilters, suggestResources } from '@/api/resource'
 
 const route = useRoute()
 const loading = ref(true)
@@ -104,10 +133,28 @@ const error = ref(false)
 const resources = ref([])
 const categories = ref([])
 
+const filterOptions = reactive({ courses: [], teachers: [] })
+const currentYear = new Date().getFullYear()
+const schoolYears = Array.from({ length: 5 }, (_, i) => {
+  const start = currentYear - i
+  return `${start}-${start + 1}`
+})
+
 const filterForm = reactive({
   categoryId: '',
-  keyword: ''
+  keyword: '',
+  courseName: '',
+  teacher: '',
+  schoolYear: '',
+  term: '',
+  type: '',
+  sortBy: 'new'
 })
+
+const hasFilter = computed(() => Boolean(
+  filterForm.keyword || filterForm.categoryId || filterForm.courseName ||
+  filterForm.teacher || filterForm.schoolYear || filterForm.term || filterForm.type
+))
 
 const pagination = reactive({
   page: 1,
@@ -122,6 +169,9 @@ const initFromQuery = () => {
   if (route.query.categoryId) {
     filterForm.categoryId = Number(route.query.categoryId)
   }
+  for (const key of ['courseName', 'teacher', 'schoolYear', 'term', 'type']) {
+    if (route.query[key]) filterForm[key] = route.query[key]
+  }
 }
 
 const fetchCategories = async () => {
@@ -133,6 +183,26 @@ const fetchCategories = async () => {
   }
 }
 
+const fetchFilterOptions = async () => {
+  try {
+    const res = await getResourceFilters()
+    filterOptions.courses = res.data?.courses || []
+    filterOptions.teachers = res.data?.teachers || []
+  } catch (err) {
+    console.error('Failed to fetch filter options:', err)
+  }
+}
+
+const querySuggest = async (queryString, cb) => {
+  if (!queryString) { cb([]); return }
+  try {
+    const res = await suggestResources(queryString, 8)
+    cb((res.data || []).map((title) => ({ value: title })))
+  } catch (err) {
+    cb([])
+  }
+}
+
 const fetchResources = async () => {
   loading.value = true
   error.value = false
@@ -141,7 +211,13 @@ const fetchResources = async () => {
       pageNum: pagination.page,
       pageSize: pagination.size,
       categoryId: filterForm.categoryId || undefined,
-      keyword: filterForm.keyword || undefined
+      keyword: filterForm.keyword || undefined,
+      courseName: filterForm.courseName || undefined,
+      teacher: filterForm.teacher || undefined,
+      schoolYear: filterForm.schoolYear || undefined,
+      term: filterForm.term || undefined,
+      type: filterForm.type || undefined,
+      sortBy: filterForm.sortBy
     })
     resources.value = res.data?.records || []
     pagination.total = res.data?.total || 0
@@ -161,8 +237,10 @@ const handleSearch = () => {
 }
 
 const resetFilter = () => {
-  filterForm.categoryId = ''
-  filterForm.keyword = ''
+  Object.assign(filterForm, {
+    categoryId: '', keyword: '', courseName: '', teacher: '',
+    schoolYear: '', term: '', type: '', sortBy: 'new'
+  })
   handleSearch()
 }
 
@@ -173,8 +251,18 @@ const handlePageChange = () => {
 
 onMounted(() => {
   initFromQuery()
-  Promise.all([fetchCategories(), fetchResources()])
+  Promise.all([fetchCategories(), fetchFilterOptions(), fetchResources()])
 })
+
+// 卡片标签点进来时路由不变、只有 query 变，必须监听否则列表不刷新
+watch(
+  () => route.query,
+  (next, prev) => {
+    if (JSON.stringify(next) === JSON.stringify(prev)) return
+    initFromQuery()
+    handleSearch()
+  }
+)
 </script>
 
 <style scoped>

@@ -25,11 +25,23 @@ export function getHotResources(limit = 6) {
 }
 
 export function searchResources(keyword, sortBy = 'new') {
+  // 兼容旧调用（字符串关键词）与新调用（完整 params 对象）
+  const params = (keyword && typeof keyword === 'object') ? keyword : { keyword, sortBy }
   return request({
     url: '/resource/search',
     method: 'get',
-    params: { keyword, sortBy }
+    params
   })
+}
+
+/** V5：已发布资源中出现过的课程与教师 */
+export function getResourceFilters() {
+  return request({ url: '/resource/filters', method: 'get' })
+}
+
+/** V5：搜索联想，返回标题候选 */
+export function suggestResources(keyword, limit = 10) {
+  return request({ url: '/resource/suggest', method: 'get', params: { keyword, limit } })
 }
 
 export function createResource(data, onProgress) {

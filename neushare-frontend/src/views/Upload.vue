@@ -43,6 +43,52 @@
             </el-select>
           </el-form-item>
 
+          <!-- V5/V6 结构化归属：决定资料能否被「按课程+教师+学年」精确找到 -->
+          <el-form-item label="课程名称">
+            <el-select
+              v-model="uploadForm.courseName"
+              placeholder="选择或输入课程名，如「操作系统」"
+              filterable allow-create default-first-option clearable
+              style="width: 100%"
+              @change="handleCourseChange"
+            >
+              <el-option v-for="name in courseOptions" :key="name" :label="name" :value="name" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="授课教师">
+            <el-select
+              v-model="uploadForm.teacher"
+              placeholder="选择或输入教师姓名（选填）"
+              filterable allow-create default-first-option clearable
+              style="width: 100%"
+            >
+              <el-option v-for="name in filterOptions.teachers" :key="name" :label="name" :value="name" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="学年学期">
+            <div class="inline-group">
+              <el-select v-model="uploadForm.schoolYear" placeholder="学年（选填）" clearable style="flex: 1">
+                <el-option v-for="y in schoolYears" :key="y" :label="y" :value="y" />
+              </el-select>
+              <el-select v-model="uploadForm.term" placeholder="学期（选填）" clearable style="flex: 1">
+                <el-option label="春季" value="spring" /><el-option label="夏季" value="summer" />
+                <el-option label="秋季" value="autumn" /><el-option label="冬季" value="winter" />
+              </el-select>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="资料类型">
+            <el-select v-model="uploadForm.type" placeholder="选择类型" style="width: 100%">
+              <el-option label="文档" value="document" /><el-option label="视频" value="video" />
+              <el-option label="图片" value="image" /><el-option label="外部链接" value="link" />
+              <el-option label="其他" value="other" />
+            </el-select>
+          </el-form-item>
+
+          <p class="structured-hint">课程、教师、学年学期决定这份资料能否被精确检索到。</p>
+
           <el-form-item label="资料描述" prop="description">
             <el-input
               v-model="uploadForm.description"
@@ -97,7 +143,8 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getCategories, createResource, updateResource, getResourceDetail } from '@/api/resource'
+import { getCategories, createResource, updateResource, getResourceDetail, getResourceFilters } from '@/api/resource'
+import { getAllCourses } from '@/utils/courseData'
 
 const route = useRoute()
 const router = useRouter()
@@ -111,12 +158,35 @@ const uploadProgress = ref(0)
 
 const isEdit = computed(() => !!route.params.id)
 
+const filterOptions = reactive({ courses: [], teachers: [] })
+const courseCategoryMap = new Map()
+getAllCourses().forEach((c) => {
+  if (c.categoryId != null && !courseCategoryMap.has(c.name)) courseCategoryMap.set(c.name, c.categoryId)
+})
+const courseOptions = computed(() =>
+  Array.from(new Set([...filterOptions.courses, ...courseCategoryMap.keys()])))
+const currentYear = new Date().getFullYear()
+const schoolYears = Array.from({ length: 5 }, (_, i) => {
+  const start = currentYear - i
+  return `${start}-${start + 1}`
+})
+
 const uploadForm = reactive({
   title: '',
+  courseName: '',
+  teacher: '',
+  schoolYear: '',
+  term: '',
+  type: 'document',
   categoryId: '',
   description: '',
   file: null
 })
+
+const handleCourseChange = (name) => {
+  const categoryId = courseCategoryMap.get(name)
+  if (categoryId != null && !uploadForm.categoryId) uploadForm.categoryId = categoryId
+}
 
 const uploadRules = {
   title: [
@@ -129,6 +199,16 @@ const uploadRules = {
   description: [
     { required: true, message: '请输入资料描述', trigger: 'blur' }
   ]
+}
+
+const fetchFilterOptions = async () => {
+  try {
+    const res = await getResourceFilters()
+    filterOptions.courses = res.data?.courses || []
+    filterOptions.teachers = res.data?.teachers || []
+  } catch (err) {
+    console.error('Failed to fetch filter options:', err)
+  }
 }
 
 const fetchCategories = async () => {
@@ -148,6 +228,11 @@ const fetchResource = async () => {
     uploadForm.title = data.title
     uploadForm.categoryId = data.categoryId
     uploadForm.description = data.description
+    uploadForm.courseName = data.courseName || ''
+    uploadForm.teacher = data.teacher || ''
+    uploadForm.schoolYear = data.schoolYear || ''
+    uploadForm.term = data.term || ''
+    uploadForm.type = data.type || 'document'
   } catch (error) {
     console.error('Failed to fetch resource:', error)
   }
@@ -216,7 +301,7 @@ const handleReset = () => {
 }
 
 onMounted(() => {
-  Promise.all([fetchCategories(), fetchResource()])
+  Promise.all([fetchCategories(), fetchFilterOptions(), fetchResource()])
 })
 </script>
 
@@ -304,4 +389,12 @@ onMounted(() => {
     margin-left: 0;
   }
 }
+
+.inline-group { display: flex; gap: var(--space-3); width: 100%; }
+.structured-hint {
+  margin: -6px 0 var(--space-5);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 </style>

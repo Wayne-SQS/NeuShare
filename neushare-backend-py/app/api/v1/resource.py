@@ -10,7 +10,7 @@ from app.core.exceptions import BusinessException
 from app.core.response import success, success_page, error
 from app.db.session import get_db
 from app.middleware.auth import get_current_user, get_optional_user
-from app.services import resource_service
+from app.services import resource_service, search_service
 
 router = APIRouter(prefix="/api/resource", tags=["resource"])
 
@@ -41,16 +41,48 @@ async def get_resource_list(
     categoryId: Optional[int] = Query(None),
     keyword: Optional[str] = Query(None),
     sortBy: str = Query("new"),
+    courseName: Optional[str] = Query(None),
+    teacher: Optional[str] = Query(None),
+    schoolYear: Optional[str] = Query(None),
+    term: Optional[str] = Query(None),
+    type: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
     user: Optional[dict] = Depends(get_optional_user),
 ):
     # 公开接口：非管理员只能看已发布资源
     is_admin = user is not None and user.get("role") == "admin"
     effective_status = status if (status is not None and is_admin) else 1
-    records, total = await resource_service.get_page(
-        db, pageNum, pageSize, effective_status, categoryId, keyword, sortBy
-    )
+    query = {
+        "status": effective_status, "categoryId": categoryId, "keyword": keyword,
+        "sortBy": sortBy, "courseName": courseName, "teacher": teacher,
+        "schoolYear": schoolYear, "term": term, "type": type,
+    }
+    # 无 V5 参数时走原有路径，保证 147/147 契约对拍逐字段不变
+    if not search_service.has_structured(query) and sortBy in (None, "", "new", "hot"):
+        records, total = await resource_service.get_page(
+            db, pageNum, pageSize, effective_status, categoryId, keyword, sortBy
+        )
+    else:
+        records, total = await search_service.structured_page(
+            db, query, pageNum, pageSize, user_id=(user or {}).get("userId")
+        )
     return success_page(records, total, pageNum, pageSize)
+
+
+@router.get("/filters")
+async def get_resource_filters(db: AsyncSession = Depends(get_db)):
+    """V5：已发布资源中出现过的课程与教师，供筛选下拉使用。"""
+    return success(await search_service.filter_options(db))
+
+
+@router.get("/suggest")
+async def suggest_resources(
+    keyword: str = Query(...),
+    limit: int = Query(10),
+    db: AsyncSession = Depends(get_db),
+):
+    """V5：搜索联想，只返回真实存在的标题。"""
+    return success(await search_service.suggest(db, keyword, limit))
 
 
 @router.get("/detail/{id}")
@@ -79,9 +111,26 @@ async def search_resources(
     pageNum: int = Query(1),
     pageSize: int = Query(10),
     sortBy: str = Query("new"),
+    categoryId: Optional[int] = Query(None),
+    courseName: Optional[str] = Query(None),
+    teacher: Optional[str] = Query(None),
+    schoolYear: Optional[str] = Query(None),
+    term: Optional[str] = Query(None),
+    type: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
+    user: Optional[dict] = Depends(get_optional_user),
 ):
-    records, total = await resource_service.search_page(db, pageNum, pageSize, keyword, sortBy)
+    query = {
+        "status": 1, "keyword": keyword, "sortBy": sortBy, "categoryId": categoryId,
+        "courseName": courseName, "teacher": teacher, "schoolYear": schoolYear,
+        "term": term, "type": type,
+    }
+    if any(query.get(k) not in (None, "") for k in ("courseName", "teacher", "schoolYear", "term", "type", "categoryId")):
+        records, total = await search_service.structured_page(
+            db, query, pageNum, pageSize, user_id=(user or {}).get("userId")
+        )
+    else:
+        records, total = await resource_service.search_page(db, pageNum, pageSize, keyword, sortBy)
     return success_page(records, total, pageNum, pageSize)
 
 
