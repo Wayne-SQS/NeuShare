@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Environment (never commit real secrets)
+.env
+
+# Test / cache
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp / scratch (probe scripts, schema dumps, smoke tests)
+_probe_*.py
+_dump_*.py
+_schema.sql
+_schema*.txt
+_smoke_*.py
+_dbcheck*.py
+_diag_*.py
+_api_contract.md
+
+# Uploads / runtime
+uploads/
+logs/
+*.log
+
+# Contract diff reports (generated, kept out of git)
+tests/contract/reports/

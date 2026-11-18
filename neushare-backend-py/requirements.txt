@@ -1,0 +1,14 @@
+fastapi>=0.115
+uvicorn[standard]
+sqlalchemy[asyncio]>=2.0
+asyncmy>=0.2
+cryptography
+redis>=5
+pyjwt>=2
+bcrypt>=4
+python-multipart
+python-dotenv
+slowapi
+httpx
+pytest
+pytest-asyncio
