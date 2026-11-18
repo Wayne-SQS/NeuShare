@@ -1,6 +1,8 @@
 # NeuShare — 东北大学校园学习资料分享平台
 
-> 全栈项目：Vue 3 Web 端 + Spring Boot 3 后端 + HarmonyOS 移动端
+> 全栈项目：Vue 3 Web 端 + Python FastAPI 后端 + AI 智能体服务 + HarmonyOS 移动端
+>
+> ⚠️ Spring Boot 后端已于 2026-11-18 退役，现全部为 Python 后端（FastAPI）。
 
 ---
 
@@ -11,21 +13,22 @@
 ### 三端架构
 
 ```
-        ┌──────────────────────────────────────────┐
-        │           NeuShare Platform              │
-        ├──────────────┬────────────┬──────────────┤
-        │  🌐 Web      │  ☕ API    │  📱 App      │
-        │  Vue 3       │  Spring   │  HarmonyOS   │
-        │  :3000       │  :8080    │  NEXT        │
-        └──────────────┴────────────┴──────────────┘
-                        │
-                    🗄️ MySQL 8
+        ┌──────────────────────────────────────────────┐
+        │              NeuShare Platform               │
+        ├──────────────┬──────────────┬────────────────┤
+        │  🌐 Web      │  🐍 API      │  🤖 AI         │
+        │  Vue 3       │  FastAPI     │  LangGraph     │
+        │  :3000       │  :8080       │  :8000         │
+        └──────────────┴──────────────┴────────────────┘
+                        │              │
+                    🗄️ MySQL 8    🗄️ MySQL 8 + FAISS
 ```
 
 | 端 | 技术栈 | 说明 |
 |----|--------|------|
-| **Web 前端** | Vue 3 + Vite 5 + Element Plus + Pinia + ECharts | SPA 应用，用户端 + 管理后台 |
-| **后端 API** | Spring Boot 3.3.7 + MyBatis-Plus 3.5.13 + JWT | RESTful，角色权限 + 通知系统 |
+| **Web 前端** | Vue 3 + Vite 5 + Element Plus + Pinia + ECharts | SPA 应用，用户端 + 管理后台 + AI 悬浮窗 |
+| **后端 API** | FastAPI + SQLAlchemy 2.0 (asyncmy) + JWT | RESTful，89 个端点，与旧 Spring 后端契约 100% 兼容 |
+| **AI 服务** | FastAPI + LangGraph + LangChain 0.3.x + FAISS | RAG 学伴、联网检索、BYOK、SSE 流式输出 |
 | **移动端** | HarmonyOS NEXT + ArkUI + ArkTS | 鸿蒙原生，3 层 HAR 架构，5 级断点 |
 | **数据库** | MySQL 8 | 16 张表，预置种子数据 |
 
@@ -33,22 +36,33 @@
 
 ## 快速开始
 
-> 后端不再内置任何默认口令：启动前必须提供 `DB_PASSWORD` 与 `JWT_SECRET` 两个环境变量（`JWT_SECRET` 长度需 ≥ 32 字节）。
+> 后端不再内置任何默认口令：启动前必须提供 `MYSQL_PASSWORD` 与 `JWT_SECRET` 两个环境变量（`JWT_SECRET` 长度需 ≥ 32 字节，**主后端与 AI 服务必须同值**）。BYOK 还需要 `AI_KEY_ENCRYPT_SECRET`。
 
 ```bash
 # 0. 配置环境变量（任选其一）
-cp .env.example .env && vim .env      # 方式 A：供 docker compose 使用
-export DB_PASSWORD=你的口令            # 方式 B：本机直接运行后端
-export JWT_SECRET=至少32字节的随机字符串
+cp neushare-backend-py/.env.example neushare-backend-py/.env   # 主后端
+cp neushare-ai/.env.example neushare-ai/.env                   # AI 服务
+# 或一次性用 docker compose（根目录 .env：MYSQL_ROOT_PASSWORD / JWT_SECRET / AI_KEY_ENCRYPT_SECRET）
+
+# 数据库：MySQL 8 建库后执行 sql/init.sql（建表 + 种子数据）
+mysql -uroot -p < sql/init.sql
+mysql -uroot -p neushare < sql/migration_V5V6V7_for_python_backend.sql   # V5/V6/V7 增量（幂等）
+
+# 主后端 (Python 3.11+)
+cd neushare-backend-py
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8080      # → localhost:8080
+python -m pytest tests/contract -q             # 契约回归（需先起一个实例并灌种子数据）
+
+# AI 服务 (Python 3.11+)
+cd neushare-ai
+pip install -r requirements.txt
+uvicorn app.main:app --port 8000               # → localhost:8000
+python -m pytest tests -q                      # 护栏测试，不需要 API key
 
 # Web 前端
 cd neushare-frontend
 npm install && npm run dev        # → localhost:3000
-
-# 后端 (JDK 17+)
-cd neushare-backend
-mvn spring-boot:run              # → localhost:8080
-mvn test                         # 运行单元测试
 
 # 鸿蒙 App
 # DevEco Studio 打开项目根目录 → Sync → Run
@@ -93,15 +107,20 @@ NeuShare/
 │       ├── store/              # Pinia 状态管理
 │       └── utils/              # 常量 · 格式化 · 课程数据
 │
-├── neushare-backend/           # Spring Boot 后端
-│   └── src/main/java/com/neushare/
-│       ├── controller/         # 14 个 REST 控制器
-│       ├── service/            # 业务逻辑层
-│       ├── mapper/             # MyBatis-Plus + XML
-│       ├── entity/ dto/ vo/    # 数据对象
-│       ├── config/             # CORS · 分页 · WebMvc
-│       ├── interceptor/        # JWT + 管理员权限
-│       └── util/               # JWT · BCrypt · 文件上传
+├── neushare-backend-py/        # Python 主后端（FastAPI, :8080）
+│   ├── app/api/v1/             # 16 个路由模块，89 个端点
+│   ├── app/services/           # 业务逻辑（含 V5/V6 结构化检索）
+│   ├── app/models/ · db/       # SQLAlchemy 模型 · 异步会话
+│   ├── app/core/               # 配置 · 鉴权 · 响应信封 · 异常处理器
+│   ├── tests/contract/         # 147 条契约用例 + 由旧后端采集的黄金基准
+│   └── tools/                  # capture_golden · diff_backends
+│
+├── neushare-ai/                # AI 智能体服务（FastAPI + LangGraph, :8000）
+│   ├── app/agent/              # LangGraph 图 · 工具 · 护栏
+│   ├── app/auth/ db/ ingestion/# JWT 互通 · 会话持久化 · FAISS 向量入库
+│   └── tests/                  # 护栏测试（无 key 可跑）
+│
+├── sql/                        # 建表 init.sql + 各版本迁移
 │
 ├── common/                     # 鸿蒙公共 HAR
 │   └── src/main/ets/

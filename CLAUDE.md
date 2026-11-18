@@ -4,11 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # NeuShare — 校园资料分享平台
 
+> ⚠️ **2026-11-18 架构变更**：Spring Boot 后端已退役并从仓库移除，主后端改为
+> `neushare-backend-py`（FastAPI，仍占 :8080，API 契约与旧后端 100% 兼容）。
+> 本文档中凡涉及 `neushare-backend/` 路径、`mvn` 命令的段落均为历史记录，
+> 实际以 `neushare-backend-py/` 与 `neushare-ai/` 为准。
+
 ## 项目概览
 
 东北大学（NEU）学习资料分享平台。学生/教师可上传、搜索、浏览、评论、点赞、收藏课程资料。管理员审核资料、管理用户和轮播图。
 
-三端架构：**Vue 3 Web 前端** + **Spring Boot 3 后端** + **HarmonyOS NEXT 移动端**
+架构：**Vue 3 Web 前端** + **FastAPI 主后端 (:8080)** + **FastAPI AI 服务 (:8000)** + **HarmonyOS NEXT 移动端**
 
 ---
 
@@ -17,9 +22,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 层 | 技术 |
 |---|------|
 | Web 前端 | Vue 3 (Composition API `<script setup>`), Vite 5, Element Plus 2.6, Pinia, Vue Router 4, Axios, ECharts 5 |
-| 后端 | Spring Boot 3.3.7, MyBatis-Plus 3.5.13, MySQL 8, JWT (jjwt 0.13.0), BCrypt |
+| 主后端 | FastAPI, SQLAlchemy 2.0 (asyncmy), MySQL 8, PyJWT, bcrypt, Redis(可选) |
+| AI 服务 | FastAPI, LangGraph 0.2.x, LangChain 0.3.x, FAISS, Tavily 联网检索, SSE |
 | 移动端 | HarmonyOS NEXT API 22, ArkUI + ArkTS, 双模块 HAR 架构 |
-| 构建 | Maven (backend), npm/vite (frontend), DevEco Studio (HarmonyOS) |
+| 构建 | pip/uvicorn (backend), npm/vite (frontend), DevEco Studio (HarmonyOS), docker compose |
 
 ---
 
@@ -28,19 +34,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Web 前端
 cd neushare-frontend
-npm install && npm run dev      # → localhost:3000，API 代理到 localhost:8080
+npm install && npm run dev      # → localhost:3000，/api 代理到 8080、/ai 代理到 8000
 npm run build                   # 生产构建 → dist/
 npm run preview                 # 预览生产构建
 
-# 后端 (JDK 17+)
-cd neushare-backend
-mvn spring-boot:run              # → localhost:8080
-mvn test                         # 运行测试
-mvn package                      # 打包 JAR → target/
+# 主后端（FastAPI, :8080）
+cd neushare-backend-py
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8080
+python -m pytest tests/contract -q     # 契约回归（需种子态数据库）
+
+# AI 服务（FastAPI, :8000）
+cd neushare-ai
+pip install -r requirements.txt
+uvicorn app.main:app --port 8000
+python -m pytest tests -q              # 护栏测试，无需 API key
 
 # 数据库初始化
 # 1. 确保 MySQL 8 运行中
-# 2. 执行 neushare-backend/src/main/resources/db/init.sql 建库+建表+种子数据
+# 2. 执行 sql/init.sql 建库+建表+种子数据
+# 3. 执行 sql/migration_V5V6V7_for_python_backend.sql（V5/V6/V7 增量，幂等）
 
 # 鸿蒙 App
 # DevEco Studio 打开项目根目录 → Sync → Run
@@ -54,24 +67,33 @@ mvn package                      # 打包 JAR → target/
 NeuShare/
 ├── neushare-frontend/          # Vue 3 Web 前端
 │   └── src/
-│       ├── api/                # Axios 请求模块: auth, resource, comment, favorite, follow, notification, user, admin, banner, request
-│       ├── components/         # Header, Footer, ResourceCard, Sidebar
+│       ├── api/                # Axios 请求模块: auth, resource, comment, favorite, follow, notification, user, admin, banner, ai, aiConfig, post, request
+│       ├── components/         # Header, Footer, ResourceCard, Sidebar, AiFloatingWindow, CommentItem, EmptyState, SkeletonCard
 │       ├── router/index.js     # Vue Router + beforeEach 守卫
-│       ├── store/modules/      # Pinia 用户状态（token, userInfo）
+│       ├── store/modules/      # Pinia 用户状态（token, userInfo）+ AI 会话
 │       ├── styles/global.css   # CSS 变量、重置、动画
-│       ├── utils/              # constants, format, courseData
-│       └── views/              # Home, ResourceDetail, Upload, Login/Register, UserProfile + profile/ + admin/
+│       ├── utils/              # constants, format, courseData, url
+│       └── views/              # Home, ResourceDetail, Upload, Login/Register, UserProfile, Community, PostDetail, CreatePost, PostgradGuide, AiAssistant + profile/ + admin/
 │
-├── neushare-backend/           # Spring Boot 后端
-│   └── src/main/java/com/neushare/
-│       ├── controller/         # 14 个 REST 控制器（见下方 API 清单）
-│       ├── service/            # 业务接口 + impl 实现
-│       ├── mapper/             # MyBatis-Plus BaseMapper + 自定义 XML
-│       ├── entity/ dto/ vo/    # 数据对象
-│       ├── config/             # CORS, 分页, WebMvcConfig（拦截器注册）
-│       ├── interceptor/        # JwtInterceptor（JWT 校验 + 管理员权限）
-│       ├── task/               # CounterCalibrationTask（计数器定时校准）
-│       └── util/               # JwtUtil, BCryptUtil, FileUploadUtil
+├── neushare-backend-py/        # Python 主后端（FastAPI, :8080）
+│   └── app/
+│       ├── api/v1/             # 16 个路由模块，89 个端点（见下方 API 清单）
+│       ├── services/           # 业务逻辑（含 search_service：V5/V6 结构化检索）
+│       ├── models/ · schemas/  # SQLAlchemy 模型 · Pydantic 模型
+│       ├── db/                 # 异步会话 · Redis
+│       ├── core/               # 配置, 响应信封 {code,message,data}, 异常处理器, 鉴权
+│       ├── middleware/         # JWT 中间件
+│       └── utils/              # 分页窗口 · 时间格式化
+│
+├── neushare-ai/                # AI 智能体服务（FastAPI + LangGraph, :8000）
+│   └── app/
+│       ├── agent/              # LangGraph 图 · 工具 · 护栏(guardrails) · SSE 流
+│       ├── auth/               # JWT 与主后端互通（同一 JWT_SECRET）
+│       ├── db/                 # 会话/消息持久化
+│       ├── ingestion/          # 资源 → 切分 → FAISS 向量入库
+│       └── middleware/         # 限流
+│
+├── sql/                        # init.sql 建表 + 各版本迁移
 │
 ├── common/                     # 鸿蒙公共 HAR 模块（被 entry 依赖）
 │   └── src/main/ets/
@@ -379,7 +401,7 @@ httpClient.del<T>('/api/resource/delete/' + id);
 ## 数据库
 
 - 库名: `neushare`
-- 初始化脚本: `neushare-backend/src/main/resources/db/init.sql`
+- 初始化脚本: `sql/init.sql`（原 `neushare-backend/src/main/resources/db/init.sql`，随 Java 退役搬迁）
 - 表: user, resource, category, comment, favorite, banner, form_card, resource_like, notification, follow, post, post_comment, post_like, post_favorite
 - 预置种子数据：8 个用户（密码 BCrypt 加密，原始值见 init.sql）、12 个分类、14 个资源、17 条评论、12 条收藏、3 张轮播图、119 条课程链接
 

@@ -52,13 +52,13 @@ class Settings:
     mysql_password = _get("MYSQL_PASSWORD", "")
     mysql_db = _get("MYSQL_DB", "neushare")
 
-    # ---- Java backend (resource search tool) ----
+    # ---- 主后端（resource search tool）。Java 后端已于 2026-11-18 退役，端口仍是 8080 ----
     java_backend_url = _get("JAVA_BACKEND_URL", "http://localhost:8080").rstrip("/")
 
     # ---- Service ----
     ai_service_port = int(_get("AI_SERVICE_PORT", "8000"))
     vectorstore_dir = str((BASE_DIR / _get("VECTORSTORE_DIR", "./vectorstore")).resolve())
-    uploads_dir = str((BASE_DIR / _get("UPLOADS_DIR", "../neushare-backend/uploads")).resolve())
+    uploads_dir = str((BASE_DIR / _get("UPLOADS_DIR", "../uploads")).resolve())
     rate_limit_per_minute = int(_get("RATE_LIMIT_PER_MINUTE", "10"))
 
     @property

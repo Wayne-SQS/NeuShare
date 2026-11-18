@@ -11,8 +11,14 @@
 **/.test
 /.appanalyzer
 
-# Maven build output
-neushare-backend/target/
+# Python（Java 后端已退役，2026-11-18）
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+neushare-ai/vectorstore/
 
 # Claude internal
 .agents/
@@ -28,7 +34,7 @@ Thumbs.db
 /docker-compose.override.yml
 
 # 运行时上传目录（用户上传的文件，不入库）
-neushare-backend/uploads/
+/uploads/
 
 # 临时调试脚本（含 DROP TABLE 等高危语句，禁止入库）
 _*.sql
